@@ -1,0 +1,18 @@
+<ion-card class="feature-card ion-no-margin">
+  <ion-card-content>
+    <div class="feature-card__row">
+      <div class="feature-card__icon">
+        @if (imageSrc) {
+          <img [src]="imageSrc" [alt]="imageAlt || title" [style.object-fit]="imageFit" />
+        } @else {
+          <ion-icon [name]="icon"></ion-icon>
+        }
+      </div>
+
+      <div class="feature-card__content">
+        <h3 class="feature-card__title">{{ title }}</h3>
+        <p class="feature-card__description">{{ description }}</p>
+      </div>
+    </div>
+  </ion-card-content>
+</ion-card>

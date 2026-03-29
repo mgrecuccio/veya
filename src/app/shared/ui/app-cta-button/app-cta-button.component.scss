@@ -1,0 +1,20 @@
+.app-cta-button {
+  --background: linear-gradient(135deg, #7a63f6 0%, #9c8bff 100%);
+  --background-activated: linear-gradient(135deg, #6a54e8 0%, #8b79ff 100%);
+
+  --color: white;
+
+  --border-radius: 999px;
+  --padding-top: 18px;
+  --padding-bottom: 18px;
+
+  --box-shadow: 0 14px 28px rgba(122, 99, 246, 0.25);
+
+  font-weight: 700;
+  text-transform: none;
+}
+
+.app-cta-button::part(native) {
+  border-radius: 999px;
+  overflow: hidden;
+}

@@ -1,0 +1,26 @@
+.app-outline-button {
+  --background: transparent; /* ← remove white block */
+  --background-activated: rgba(122, 99, 246, 0.08);
+
+  --color: var(--app-color-primary);
+
+  --border-color: rgba(var(--app-color-primary-rgb), 0.35);
+  --border-width: 1.5px;
+
+
+  --border-radius: 999px;
+  --padding-top: 16px;
+  --padding-bottom: 16px;
+  --box-shadow: none;
+
+  font-weight: 600;
+  text-transform: none;
+
+  backdrop-filter: blur(6px);
+}
+
+.app-outline-button::part(native) {
+  border-radius: 999px;
+  background: transparent;
+  overflow: hidden;
+}
