@@ -1,0 +1,20 @@
+.app-primary-button {
+  --background: #f4766a; /* softer coral */
+  --background-activated: #e6675c;
+
+  --color: #ffffff;
+
+  --border-radius: 999px;
+  --padding-top: 16px;
+  --padding-bottom: 16px;
+
+  --box-shadow: 0 10px 20px rgba(244, 118, 106, 0.25);
+
+  font-weight: 600;
+  text-transform: none;
+}
+
+.app-primary-button::part(native) {
+  border-radius: 999px;
+  overflow: hidden;
+}

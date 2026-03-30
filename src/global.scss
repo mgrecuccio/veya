@@ -1,37 +1,58 @@
-/*
- * App Global CSS
- * ----------------------------------------------------------------------------
- * Put style rules here that you want to apply globally. These styles are for
- * the entire app and not just one component. Additionally, this file can be
- * used as an entry point to import other CSS/Sass files to be included in the
- * output CSS.
- * For more information on global stylesheets, visit the documentation:
- * https://ionicframework.com/docs/layout/global-stylesheets
- */
+html,
+body,
+ion-app,
+ion-content {
+  font-family: var(--app-font-family);
+}
 
-/* Core CSS required for Ionic components to work properly */
-@import "@ionic/angular/css/core.css";
+body {
+  color: var(--app-color-text);
+  background: var(--app-gradient-main);
+}
 
-/* Basic CSS for apps built with Ionic */
-@import "@ionic/angular/css/normalize.css";
-@import "@ionic/angular/css/structure.css";
-@import "@ionic/angular/css/typography.css";
-@import "@ionic/angular/css/display.css";
+ion-content.app-gradient-content {
+  --background: var(--app-gradient-main);
+}
 
-/* Optional CSS utils that can be commented out */
-@import "@ionic/angular/css/padding.css";
-@import "@ionic/angular/css/float-elements.css";
-@import "@ionic/angular/css/text-alignment.css";
-@import "@ionic/angular/css/text-transformation.css";
-@import "@ionic/angular/css/flex-utils.css";
+ion-button {
+  --ripple-color: transparent; /* remove blue ripple */
+}
 
-/**
- * Ionic Dark Mode
- * -----------------------------------------------------
- * For more info, please see:
- * https://ionicframework.com/docs/theming/dark-mode
- */
+ion-button::part(native) {
+  -webkit-tap-highlight-color: transparent;
+}
 
-/* @import "@ionic/angular/css/palettes/dark.always.css"; */
-/* @import "@ionic/angular/css/palettes/dark.class.css"; */
-@import '@ionic/angular/css/palettes/dark.system.css';
+.app-page {
+  min-height: 100%;
+  padding: var(--app-space-6) var(--app-space-5) var(--app-space-7);
+  display: flex;
+  flex-direction: column;
+}
+
+.app-page--centered {
+  justify-content: center;
+}
+
+.actions-grid {
+  margin-top: 8px;
+}
+
+.app-text-muted {
+  color: var(--app-color-text-muted);
+}
+
+.app-surface {
+  background: var(--app-color-surface);
+  border: 1px solid var(--app-color-border);
+  box-shadow: var(--app-shadow-card);
+  border-radius: var(--app-radius-lg);
+}
+
+.app-section + .app-section {
+  margin-top: var(--app-space-7);
+}
+
+.app-stack-sm { display: flex; flex-direction: column; gap: var(--app-space-3); }
+.app-stack-md { display: flex; flex-direction: column; gap: var(--app-space-4); }
+.app-stack-lg { display: flex; flex-direction: column; gap: var(--app-space-6); }
+.app-stack-xl { display: flex; flex-direction: column; gap: var(--app-space-7); }

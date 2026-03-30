@@ -1,2 +1,33 @@
-// For information on how to create your own theme, please refer to:
-// https://ionicframework.com/docs/theming/
+:root {
+  /* Brand */
+  --app-color-primary: #7a63f6;
+  --app-color-primary-rgb: 122, 99, 246;
+  --app-color-primary-contrast: #ffffff;
+
+  --app-color-accent: #ff7f73;
+  --app-color-accent-rgb: 255, 127, 115;
+  --app-color-accent-contrast: #ffffff;
+
+  /* Backgrounds */
+  --app-color-bg: #fff8f6;
+  --app-color-bg-soft: #f7efff;
+  --app-color-surface: rgba(255, 255, 255, 0.85);
+
+  /* Text */
+  --app-color-text: #5a4680;
+  --app-color-text-muted: #7e7198;
+
+  /* Borders */
+  --app-color-border: rgba(122, 99, 246, 0.12);
+
+  /* Gradient */
+  --app-gradient-main:
+    linear-gradient(180deg, #f8a99a 0%, #f1bfd2 28%, #f6ecf7 62%, #e3d7ff 100%);
+
+  --app-gradient-hero:
+    linear-gradient(135deg, #f8ae9d 0%, #e7c2f5 48%, #cfc5ff 100%);
+
+  /* Shadows */
+  --app-shadow-card: 0 10px 28px rgba(122, 99, 246, 0.10);
+  --app-shadow-button: 0 10px 20px rgba(122, 99, 246, 0.18);
+}

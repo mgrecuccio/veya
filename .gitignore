@@ -68,3 +68,27 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+
+# dependencies
+node_modules/
+
+# Angular / Ionic build output
+.angular/
+dist/
+www/
+coverage/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS / editor
+.DS_Store
+.idea/
+
+# environment files if you use local-only variants
+src/environments/*.local.ts
+
+/android
+/ios
