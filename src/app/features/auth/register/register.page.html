@@ -1,0 +1,136 @@
+<ion-content class="app-gradient-content" [fullscreen]="true">
+  <div class="app-page app-page--centered auth-page">
+    <div class="auth-shell">
+      <div class="auth-brand">Veya</div>
+
+      <section class="app-surface auth-card">
+        <div class="auth-header">
+          <h1 class="auth-title">Create your account</h1>
+          <p class="auth-subtitle">
+            Start planning spontaneous moments with the people you care about.
+          </p>
+        </div>
+
+        <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <div class="auth-field">
+            <label class="auth-label" for="register-name">Name</label>
+            <ion-item
+              lines="none"
+              class="auth-input-item"
+              [class.auth-input-item--invalid]="isInvalid('name')"
+            >
+              <ion-input
+                id="register-name"
+                class="auth-input"
+                type="text"
+                autocomplete="name"
+                placeholder="Your name"
+                formControlName="name"
+              ></ion-input>
+            </ion-item>
+
+            @if (isInvalid('name')) {
+              <div class="auth-error">Name is required.</div>
+            }
+          </div>
+
+          <div class="auth-field">
+            <label class="auth-label" for="register-email">Email</label>
+            <ion-item
+              lines="none"
+              class="auth-input-item"
+              [class.auth-input-item--invalid]="isInvalid('email')"
+            >
+              <ion-input
+                id="register-email"
+                class="auth-input"
+                type="email"
+                inputmode="email"
+                autocomplete="email"
+                placeholder="you@example.com"
+                formControlName="email"
+              ></ion-input>
+            </ion-item>
+
+            @if (isInvalid('email')) {
+              <div class="auth-error">
+                @if (email.errors?.['required']) {
+                  <span>Email is required.</span>
+                } @else if (email.errors?.['email']) {
+                  <span>Enter a valid email address.</span>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="auth-field">
+            <label class="auth-label" for="register-password">Password</label>
+            <ion-item
+              lines="none"
+              class="auth-input-item"
+              [class.auth-input-item--invalid]="isInvalid('password')"
+            >
+              <ion-input
+                id="register-password"
+                class="auth-input"
+                type="password"
+                autocomplete="new-password"
+                placeholder="Create a password"
+                formControlName="password"
+              ></ion-input>
+            </ion-item>
+
+            @if (isInvalid('password')) {
+              <div class="auth-error">
+                @if (password.errors?.['required']) {
+                  <span>Password is required.</span>
+                } @else if (password.errors?.['minlength']) {
+                  <span>Password must be at least 8 characters.</span>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="auth-field">
+            <label class="auth-label" for="register-confirm-password">Confirm password</label>
+            <ion-item
+              lines="none"
+              class="auth-input-item"
+              [class.auth-input-item--invalid]="isInvalid('confirmPassword')"
+            >
+              <ion-input
+                id="register-confirm-password"
+                class="auth-input"
+                type="password"
+                autocomplete="new-password"
+                placeholder="Repeat your password"
+                formControlName="confirmPassword"
+              ></ion-input>
+            </ion-item>
+
+            @if (isInvalid('confirmPassword')) {
+              <div class="auth-error">
+                @if (confirmPassword.errors?.['required']) {
+                  <span>Please confirm your password.</span>
+                } @else if (confirmPassword.errors?.['mismatch']) {
+                  <span>Passwords do not match.</span>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="auth-submit">
+            <app-primary-button (click)="submit()">Create Account</app-primary-button>
+          </div>
+        </form>
+
+        <div class="auth-footer">
+          Already have an account?
+          <a class="auth-footer-link" routerLink="/auth/login">
+            Log in
+          </a>
+        </div>
+      </section>
+    </div>
+  </div>
+</ion-content>

@@ -1,0 +1,92 @@
+<ion-content class="app-gradient-content" [fullscreen]="true">
+  <div class="app-page app-page--centered auth-page">
+    <div class="auth-shell">
+      <div class="auth-brand">Veya</div>
+
+      <section class="app-surface auth-card">
+        <div class="auth-header">
+          <h1 class="auth-title">Welcome back</h1>
+          <p class="auth-subtitle">
+            Log in to pick up where your plans left off.
+          </p>
+        </div>
+
+        <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <div class="auth-field">
+            <label class="auth-label" for="login-email">Email</label>
+            <ion-item
+              lines="none"
+              class="auth-input-item"
+              [class.auth-input-item--invalid]="isInvalid('email')"
+            >
+              <ion-input
+                id="login-email"
+                class="auth-input"
+                type="email"
+                inputmode="email"
+                autocomplete="email"
+                placeholder="you@example.com"
+                formControlName="email"
+              ></ion-input>
+            </ion-item>
+
+            @if (isInvalid('email')) {
+              <div class="auth-error">
+                @if (email.errors?.['required']) {
+                  <span>Email is required.</span>
+                } @else if (email.errors?.['email']) {
+                  <span>Enter a valid email address.</span>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="auth-field">
+            <label class="auth-label" for="login-password">Password</label>
+            <ion-item
+              lines="none"
+              class="auth-input-item"
+              [class.auth-input-item--invalid]="isInvalid('password')"
+            >
+              <ion-input
+                id="login-password"
+                class="auth-input"
+                type="password"
+                autocomplete="current-password"
+                placeholder="Enter your password"
+                formControlName="password"
+              ></ion-input>
+            </ion-item>
+
+            @if (isInvalid('password')) {
+              <div class="auth-error">
+                @if (password.errors?.['required']) {
+                  <span>Password is required.</span>
+                } @else if (password.errors?.['minlength']) {
+                  <span>Password must be at least 8 characters.</span>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="auth-row">
+            <button type="button" class="auth-text-button" (click)="forgotPassword()">
+              Forgot password?
+            </button>
+          </div>
+
+          <div class="auth-submit">
+            <app-primary-button (click)="submit()">Log In</app-primary-button>
+          </div>
+        </form>
+
+        <div class="auth-footer">
+          Don’t have an account?
+          <a class="auth-footer-link" routerLink="/auth/register">
+            Sign up
+          </a>
+        </div>
+      </section>
+    </div>
+  </div>
+</ion-content>

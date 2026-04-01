@@ -18,8 +18,8 @@
 
     <!-- ACTIONS -->
     <div class="actions-grid">
-      <app-outline-button>Log In</app-outline-button>
-      <app-primary-button>Sign Up</app-primary-button>
+      <app-outline-button (click)="goToLogin()">Log In</app-outline-button>
+      <app-primary-button (click)="goToRegister()">Sign Up</app-primary-button>
     </div>
 
     <!-- FEATURES -->
@@ -50,7 +50,7 @@
       Join Veya and make plans in the moment!
     </div>
 
-    <app-cta-button>Get Started</app-cta-button>
+    <app-cta-button (click)="goToRegister()">Get Started</app-cta-button>
 
   </div>
 </ion-content>
