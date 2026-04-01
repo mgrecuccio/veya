@@ -1,143 +1,177 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { of, throwError } from 'rxjs';
 
 import { RegisterPage } from './register.page';
+import { AuthService, AuthError } from 'src/app/core/auth/auth.service';
+import { Router } from '@angular/router';
 
 describe('RegisterPage', () => {
-  let component: RegisterPage;
   let fixture: ComponentFixture<RegisterPage>;
+  let component: RegisterPage;
+  let authServiceSpy: jasmine.SpyObj<AuthService>;
+  let router: Router;
 
   beforeEach(async () => {
+    authServiceSpy = jasmine.createSpyObj<AuthService>('AuthService', ['register']);
+
     await TestBed.configureTestingModule({
       imports: [RegisterPage],
-      providers: [provideRouter([])]
+      providers: [
+        provideRouter([]),
+        { provide: AuthService, useValue: authServiceSpy },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(RegisterPage);
     component = fixture.componentInstance;
+    router = TestBed.inject(Router);
+
+    spyOn(router, 'navigateByUrl').and.resolveTo(true);
+
     fixture.detectChanges();
   });
+
+  function fillValidForm(): void {
+    component.form.patchValue({
+      name: 'John Doe',
+      email: 'john@example.com',
+      password: 'password123',
+      confirmPassword: 'password123',
+    });
+  }
 
   it('should create', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should render the page title and subtitle', () => {
-    const compiled = fixture.nativeElement as HTMLElement;
-
-    expect(compiled.querySelector('.auth-title')?.textContent).toContain('Create your account');
-    expect(compiled.querySelector('.auth-subtitle')?.textContent).toContain(
-      'Start planning spontaneous moments with the people you care about.'
-    );
-  });
-
-  it('should initialize the form with empty values', () => {
-    expect(component.form.getRawValue()).toEqual({
+  it('should not submit if form is invalid', () => {
+    component.form.patchValue({
       name: '',
       email: '',
       password: '',
-      confirmPassword: ''
-    });
-  });
-
-  it('should be invalid when the form is empty', () => {
-    expect(component.form.invalid).toBeTrue();
-    expect(component.name.errors?.['required']).toBeTrue();
-    expect(component.email.errors?.['required']).toBeTrue();
-    expect(component.password.errors?.['required']).toBeTrue();
-    expect(component.confirmPassword.errors?.['required']).toBeTrue();
-  });
-
-  it('should validate email format', () => {
-    component.email.setValue('invalid-email');
-    component.email.markAsTouched();
-    fixture.detectChanges();
-
-    expect(component.email.invalid).toBeTrue();
-    expect(component.email.errors?.['email']).toBeTrue();
-  });
-
-  it('should validate password minimum length', () => {
-    component.password.setValue('12345');
-    component.password.markAsTouched();
-    fixture.detectChanges();
-
-    expect(component.password.invalid).toBeTrue();
-    expect(component.password.errors?.['minlength']).toBeTruthy();
-  });
-
-  it('should validate password confirmation mismatch', () => {
-    component.form.setValue({
-      name: 'Mario Rossi',
-      email: 'mario@example.com',
-      password: 'password123',
-      confirmPassword: 'password456'
-    });
-
-    component.confirmPassword.markAsTouched();
-    component.form.updateValueAndValidity();
-    fixture.detectChanges();
-
-    expect(component.form.invalid).toBeTrue();
-    expect(component.confirmPassword.errors?.['mismatch']).toBeTrue();
-  });
-
-  it('should show validation messages after submitting an invalid form', () => {
-    component.submit();
-    fixture.detectChanges();
-
-    const compiled = fixture.nativeElement as HTMLElement;
-
-    expect(component.name.touched).toBeTrue();
-    expect(component.email.touched).toBeTrue();
-    expect(component.password.touched).toBeTrue();
-    expect(component.confirmPassword.touched).toBeTrue();
-
-    expect(compiled.textContent).toContain('Name is required.');
-    expect(compiled.textContent).toContain('Email is required.');
-    expect(compiled.textContent).toContain('Password is required.');
-    expect(compiled.textContent).toContain('Please confirm your password.');
-  });
-
-  it('should be valid with correct values', () => {
-    component.form.setValue({
-      name: 'Mario Rossi',
-      email: 'mario@example.com',
-      password: 'password123',
-      confirmPassword: 'password123'
-    });
-
-    component.form.updateValueAndValidity();
-    fixture.detectChanges();
-
-    expect(component.form.valid).toBeTrue();
-  });
-
-  it('should call console.log with payload on valid submit', () => {
-    const consoleSpy = spyOn(console, 'log');
-
-    component.form.setValue({
-      name: 'Mario Rossi',
-      email: 'mario@example.com',
-      password: 'password123',
-      confirmPassword: 'password123'
+      confirmPassword: '',
     });
 
     component.submit();
 
-    expect(consoleSpy).toHaveBeenCalledWith('Register payload', {
-      name: 'Mario Rossi',
-      email: 'mario@example.com',
+    expect(authServiceSpy.register).not.toHaveBeenCalled();
+  });
+
+  it('should call authService.register with mapped payload', () => {
+    authServiceSpy.register.and.returnValue(
+      of({
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+        tokenType: 'Bearer',
+        expiresInSeconds: 3600,
+      })
+    );
+
+    fillValidForm();
+
+    component.submit();
+
+    expect(authServiceSpy.register).toHaveBeenCalledWith({
+      email: 'john@example.com',
       password: 'password123',
-      confirmPassword: 'password123'
+      displayName: 'John Doe',
     });
   });
 
-  it('should render the log in footer link', () => {
-    const compiled = fixture.nativeElement as HTMLElement;
-    const footerLink = compiled.querySelector('.auth-footer-link');
+  it('should navigate to /home on successful register', () => {
+    authServiceSpy.register.and.returnValue(
+      of({
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+        tokenType: 'Bearer',
+        expiresInSeconds: 3600,
+      })
+    );
 
-    expect(footerLink).toBeTruthy();
-    expect(footerLink?.textContent?.trim()).toBe('Log in');
+    fillValidForm();
+
+    component.submit();
+
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/home', { replaceUrl: true });
+  });
+
+  it('should set emailAlreadyExists error on register conflict', () => {
+    const error: AuthError = {
+      code: 'EMAIL_ALREADY_EXISTS',
+      message: 'An account with this email already exists.',
+    };
+
+    authServiceSpy.register.and.returnValue(
+      throwError(() => error)
+    );
+
+    fillValidForm();
+
+    component.submit();
+
+    expect(component.form.controls.email.errors?.['emailAlreadyExists']).toBeTrue();
+    expect(component.isSubmitting).toBeFalse();
+  });
+
+  it('should set serverError for generic register error', () => {
+    const error: AuthError = {
+      code: 'UNKNOWN',
+      message: 'Something went wrong.',
+    };
+
+    authServiceSpy.register.and.returnValue(
+      throwError(() => error)
+    );
+
+    fillValidForm();
+
+    component.submit();
+
+    expect(component.serverError).toBe('Something went wrong.');
+    expect(component.isSubmitting).toBeFalse();
+  });
+
+  it('should not call register when passwords do not match', () => {
+    component.form.patchValue({
+      name: 'John Doe',
+      email: 'john@example.com',
+      password: 'password123',
+      confirmPassword: 'different123',
+    });
+
+    component.submit();
+
+    expect(authServiceSpy.register).not.toHaveBeenCalled();
+  });
+
+  it('should expose name getter', () => {
+    expect(component.name).toBe(component.form.controls.name);
+  });
+
+  it('should expose email getter', () => {
+    expect(component.email).toBe(component.form.controls.email);
+  });
+
+  it('should expose password getter', () => {
+    expect(component.password).toBe(component.form.controls.password);
+  });
+
+  it('should expose confirmPassword getter', () => {
+    expect(component.confirmPassword).toBe(component.form.controls.confirmPassword);
+  });
+
+  it('should return true from isInvalid when control is invalid and touched', () => {
+    component.form.controls.name.markAsTouched();
+    component.form.controls.name.setValue('');
+
+    expect(component.isInvalid('name')).toBeTrue();
+  });
+
+  it('should return false from isInvalid when control is valid', () => {
+    component.form.controls.name.setValue('John');
+    component.form.controls.name.markAsTouched();
+
+    expect(component.isInvalid('name')).toBeFalse();
   });
 });

@@ -69,14 +69,40 @@
             }
           </div>
 
+          @if (form.errors?.['invalidCredentials']) {
+            <div class="auth-error auth-error--form">
+              <span>Invalid email or password.</span>
+            </div>
+          }
+
+          @if (serverError) {
+            <div class="auth-error auth-error--form">
+              <span>{{ serverError }}</span>
+            </div>
+          }
+
           <div class="auth-row">
-            <button type="button" class="auth-text-button" (click)="forgotPassword()">
+            <button
+              type="button"
+              class="auth-text-button"
+              (click)="forgotPassword()"
+              [disabled]="isSubmitting"
+            >
               Forgot password?
             </button>
           </div>
 
           <div class="auth-submit">
-            <app-primary-button (click)="submit()">Log In</app-primary-button>
+            <app-primary-button
+              type="submit"
+              [disabled]="form.invalid || isSubmitting"
+            >
+              @if (isSubmitting) {
+                Logging in...
+              } @else {
+                Log In
+              }
+            </app-primary-button>
           </div>
         </form>
 

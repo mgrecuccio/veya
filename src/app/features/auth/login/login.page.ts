@@ -1,14 +1,18 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, DestroyRef, inject } from '@angular/core';
 import {
   FormBuilder,
   ReactiveFormsModule,
   Validators
 } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { IonicModule } from '@ionic/angular';
 
 import { AppPrimaryButtonComponent } from '../../../shared/ui/app-primary-button/app-primary-button.component';
+import { LoginRequest } from 'src/app/core/models/login-request.model';
+import { AuthError, AuthService } from 'src/app/core/auth/auth.service';
+import { finalize } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-login',
@@ -25,6 +29,12 @@ import { AppPrimaryButtonComponent } from '../../../shared/ui/app-primary-button
 })
 export class LoginPage {
   private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  isSubmitting = false;
+  serverError: string | null = null;
 
   readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -45,16 +55,54 @@ export class LoginPage {
   }
 
   submit(): void {
-    if (this.form.invalid) {
+    if (this.form.invalid || this.isSubmitting) {
       this.form.markAllAsTouched();
       return;
     }
 
-    const payload = this.form.getRawValue();
-    console.log('Login payload', payload);
+    this.serverError = null;
+    this.clearInvalidCredentialsError();
+
+    const payload: LoginRequest = {
+      email: this.form.controls.email.value?.trim() ?? '',
+      password: this.form.controls.password.value ?? '',
+    };
+
+    this.isSubmitting = true;
+    this.authService.login(payload).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => {
+        this.isSubmitting = false;
+      })
+    ).subscribe({
+      next: () => {
+        void this.router.navigateByUrl('/home', { replaceUrl: true });
+      },
+      error: (error: AuthError) => {
+        if (error.code === 'INVALID_CREDENTIALS') {
+          this.form.setErrors({
+            ...(this.form.errors ?? {}),
+            invalidCredentials: true
+          });
+          return;
+        }
+
+        this.serverError = error.message;
+      },
+    });
   }
 
   forgotPassword(): void {
     console.log('Forgot password tapped');
+  }
+
+  private clearInvalidCredentialsError(): void {
+    const errors = this.form.errors;
+    if (!errors?.['invalidCredentials']) {
+      return;
+    }
+
+    const { invalidCredentials, ...rest } = errors;
+    this.form.setErrors(Object.keys(rest).length ? rest : null);
   }
 }

@@ -30,7 +30,11 @@
             </ion-item>
 
             @if (isInvalid('name')) {
-              <div class="auth-error">Name is required.</div>
+              <div class="auth-error">
+                @if (name.errors?.['required']) {
+                  <span>Name is required.</span>
+                }
+              </div>
             }
           </div>
 
@@ -52,12 +56,14 @@
               ></ion-input>
             </ion-item>
 
-            @if (isInvalid('email')) {
+            @if (isInvalid('email') || email.errors?.['emailAlreadyExists']) {
               <div class="auth-error">
                 @if (email.errors?.['required']) {
                   <span>Email is required.</span>
                 } @else if (email.errors?.['email']) {
                   <span>Enter a valid email address.</span>
+                } @else if (email.errors?.['emailAlreadyExists']) {
+                  <span>An account with this email already exists.</span>
                 }
               </div>
             }
@@ -108,19 +114,34 @@
               ></ion-input>
             </ion-item>
 
-            @if (isInvalid('confirmPassword')) {
+            @if (isInvalid('confirmPassword') || form.errors?.['passwordMismatch']) {
               <div class="auth-error">
                 @if (confirmPassword.errors?.['required']) {
                   <span>Please confirm your password.</span>
-                } @else if (confirmPassword.errors?.['mismatch']) {
+                } @else if (confirmPassword.errors?.['mismatch'] || form.errors?.['passwordMismatch']) {
                   <span>Passwords do not match.</span>
                 }
               </div>
             }
           </div>
 
+          @if (serverError) {
+            <div class="auth-error auth-error--form">
+              <span>{{ serverError }}</span>
+            </div>
+          }
+
           <div class="auth-submit">
-            <app-primary-button (click)="submit()">Create Account</app-primary-button>
+            <app-primary-button
+              type="submit"
+              [disabled]="form.invalid || isSubmitting"
+            >
+              @if (isSubmitting) {
+                Creating account...
+              } @else {
+                Create Account
+              }
+            </app-primary-button>
           </div>
         </form>
 
