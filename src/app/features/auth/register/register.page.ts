@@ -1,5 +1,4 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
 import {
   AbstractControl,
   FormBuilder,
@@ -10,6 +9,13 @@ import {
 } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { IonicModule } from '@ionic/angular';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { finalize } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+
+import { AuthService, AuthError } from 'src/app/core/auth/auth.service';
+import { RegisterRequest } from 'src/app/core/models/register-request.model';
 
 import { AppPrimaryButtonComponent } from '../../../shared/ui/app-primary-button/app-primary-button.component';
 
@@ -60,6 +66,12 @@ function matchFieldsValidator(
 })
 export class RegisterPage {
   private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  isSubmitting = false;
+  serverError: string | null = null;
 
   readonly form = this.fb.nonNullable.group(
     {
@@ -97,12 +109,53 @@ export class RegisterPage {
   }
 
   submit(): void {
-    if (this.form.invalid) {
+    if (this.form.invalid || this.isSubmitting) {
       this.form.markAllAsTouched();
       return;
     }
 
-    const payload = this.form.getRawValue();
-    console.log('Register payload', payload);
+    this.serverError = null;
+    this.clearEmailAlreadyExistsError();
+
+    const payload: RegisterRequest = {
+      email: this.form.controls.email.value?.trim() ?? '',
+      password: this.form.controls.password.value ?? '',
+      displayName: this.form.controls.name.value?.trim() ?? '',
+    };
+
+    this.isSubmitting = true;
+
+    this.authService.register(payload).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => {
+        this.isSubmitting = false;
+      })
+    ).subscribe({
+      next: () => {
+        void this.router.navigateByUrl('/home', { replaceUrl: true });
+      },
+      error: (error: AuthError) => {
+        if (error.code === 'EMAIL_ALREADY_EXISTS') {
+          this.form.controls.email.setErrors({
+            ...(this.form.controls.email.errors ?? {}),
+            emailAlreadyExists: true
+          });
+          return;
+        }
+
+        this.serverError = error.message;
+      },
+    });
+  }
+
+  private clearEmailAlreadyExistsError(): void {
+    const errors = this.form.controls.email.errors;
+    
+    if (!errors?.['emailAlreadyExists']) {
+      return;
+    }
+
+    const { emailAlreadyExists, ...rest } = errors;
+    this.form.controls.email.setErrors(Object.keys(rest).length ? rest : null);
   }
 }

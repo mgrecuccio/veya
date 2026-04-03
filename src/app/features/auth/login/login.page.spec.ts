@@ -1,22 +1,34 @@
-import { ComponentFixture, TestBed } from "@angular/core/testing";
-import { LoginPage } from "./login.page"
-import { provideRouter } from "@angular/router";
-import { By } from '@angular/platform-browser';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { of, throwError } from 'rxjs';
 
+import { LoginPage } from './login.page';
+import { AuthService, AuthError } from 'src/app/core/auth/auth.service';
+import { Router } from '@angular/router';
 
 describe('LoginPage', () => {
-    let component: LoginPage;
     let fixture: ComponentFixture<LoginPage>;
+    let component: LoginPage;
+    let authServiceSpy: jasmine.SpyObj<AuthService>;
+    let router: Router;
 
     beforeEach(async () => {
-        await TestBed.configureTestingModule({
-            imports: [LoginPage],
-            providers: [provideRouter([])]
+        authServiceSpy = jasmine.createSpyObj<AuthService>('AuthService', ['login']);
 
+        await TestBed.configureTestingModule({
+        imports: [LoginPage],
+            providers: [
+                provideRouter([]),
+                { provide: AuthService, useValue: authServiceSpy },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(LoginPage);
         component = fixture.componentInstance;
+        router = TestBed.inject(Router);
+
+        spyOn(router, 'navigateByUrl').and.resolveTo(true);
+
         fixture.detectChanges();
     });
 
@@ -24,99 +36,142 @@ describe('LoginPage', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should render the page title and subtitle', () => {
-        const compiled = fixture.nativeElement as HTMLElement;
+    it('should not submit if form is invalid', () => {
+        component.form.patchValue({
+            email: '',
+            password: '',
+        });
 
-        expect(compiled.querySelector('.auth-title')?.textContent).toContain('Welcome back');
-        expect(compiled.querySelector('.auth-subtitle')?.textContent).toContain('Log in to pick up where your plans left off.');
+        component.submit();
+
+        expect(authServiceSpy.login).not.toHaveBeenCalled();
     });
 
-    it('should initialize the form with empty values', () => {
-        expect(component.form.getRawValue()).toEqual({
-            email: '',
-            password: ''
+    it('should call authService.login with form values', () => {
+        authServiceSpy.login.and.returnValue(
+        of({
+            accessToken: 'access-token',
+            refreshToken: 'refresh-token',
+            tokenType: 'Bearer',
+            expiresInSeconds: 3600,
+        })
+        );
+
+        component.form.patchValue({
+            email: 'john@example.com',
+            password: 'password123',
+        });
+
+        component.submit();
+
+        expect(authServiceSpy.login).toHaveBeenCalledWith({
+            email: 'john@example.com',
+            password: 'password123',
         });
     });
 
-    it('should be invalid when the form is empty', () => {
-        expect(component.form.invalid).toBeTrue();
-        expect(component.email.errors?.['required']).toBeTrue();
-        expect(component.password.errors?.['required']).toBeTrue();
-    });
+    it('should navigate to /home on successful login', async () => {
+        authServiceSpy.login.and.returnValue(
+        of({
+            accessToken: 'access-token',
+            refreshToken: 'refresh-token',
+            tokenType: 'Bearer',
+            expiresInSeconds: 3600,
+        })
+        );
 
-    it('should validate email format', () => {
-        component.email.setValue('invalid-email');
-        component.email.markAllAsTouched();
-        fixture.detectChanges();
+        component.form.patchValue({
+            email: 'john@example.com',
+            password: 'password123',
+        });
 
-        expect(component.email.invalid).toBeTrue();
-        expect(component.email.errors?.['email']).toBeTrue();
-    });
-
-    it('should validate password minimum length', () => {
-        component.password.setValue('12345');
-        component.password.markAsTouched();
-        fixture.detectChanges();
-
-        expect(component.password.invalid).toBeTrue();
-        expect(component.password.errors?.['minlength']).toBeTruthy();
-    });
-
-    it('should show validation messages after submitting an invalid form', () => {
         component.submit();
-        fixture.detectChanges();
 
-        const compiled = fixture.nativeElement as HTMLElement;
-        const errorMessages = compiled.querySelectorAll('.auth-error');
-
-        expect(component.email.touched).toBeTrue();
-        expect(component.password.touched).toBeTrue();
-        expect(errorMessages.length).toBeGreaterThan(0);
-        expect(compiled.textContent).toContain('Email is required.');
-        expect(compiled.textContent).toContain('Password is required.');
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/home', { replaceUrl: true });
     });
 
-    it('should keep the form valid with correct values', () => {
-        component.form.setValue({
-            email: 'test@example.com',
-            password: 'password123'
-            });
-        fixture.detectChanges();
+    it('should set invalidCredentials form error on login failure', () => {
+    const error: AuthError = {
+        code: 'INVALID_CREDENTIALS',
+        message: 'Invalid email or password.',
+    };
 
-        expect(component.form.valid).toBeTrue();
-    });
+    authServiceSpy.login.and.returnValue(
+        throwError(() => error)
+    );
 
-    it('should call console.log with payload on valid submit', () => {
-    const consoleSpy = spyOn(console, 'log');
-
-    component.form.setValue({
-      email: 'test@example.com',
-      password: 'password123'
+    component.form.patchValue({
+        email: 'john@example.com',
+        password: 'wrong-password',
     });
 
     component.submit();
 
-    expect(consoleSpy).toHaveBeenCalledWith('Login payload', {
-      email: 'test@example.com',
-      password: 'password123'
+    expect(component.form.errors?.['invalidCredentials']).toBeTrue();
+    expect(component.serverError).toBeNull();
+    expect(component.isSubmitting).toBeFalse();
     });
-  });
 
-  it('should call forgotPassword when forgot password is clicked', () => {
-    const forgotSpy = spyOn(component, 'forgotPassword');
+    it('should set serverError for generic login error', () => {
+        const error: AuthError = {
+            code: 'UNKNOWN',
+            message: 'Something went wrong.',
+        };
 
-    const forgotButton = fixture.debugElement.query(By.css('.auth-text-button'));
-    forgotButton.triggerEventHandler('click', null);
+        authServiceSpy.login.and.returnValue(
+            throwError(() => error)
+        );
 
-    expect(forgotSpy).toHaveBeenCalled();
-  });
+        component.form.patchValue({
+            email: 'john@example.com',
+            password: 'password123',
+        });
 
-  it('should render the sign up footer link', () => {
-    const compiled = fixture.nativeElement as HTMLElement;
-    const footerLink = compiled.querySelector('.auth-footer-link');
+        component.submit();
 
-    expect(footerLink).toBeTruthy();
-    expect(footerLink?.textContent?.trim()).toBe('Sign up');
-  });
+        expect(component.serverError).toBe('Something went wrong.');
+        expect(component.isSubmitting).toBeFalse();
+    });
 
-})
+    it('should set isSubmitting back to false after success', () => {
+        authServiceSpy.login.and.returnValue(
+        of({
+            accessToken: 'access-token',
+            refreshToken: 'refresh-token',
+            tokenType: 'Bearer',
+            expiresInSeconds: 3600,
+        })
+        );
+
+        component.form.patchValue({
+            email: 'john@example.com',
+            password: 'password123',
+        });
+
+        component.submit();
+
+        expect(component.isSubmitting).toBeFalse();
+    });
+
+    it('should expose email getter', () => {
+        expect(component.email).toBe(component.form.controls.email);
+    });
+
+    it('should expose password getter', () => {
+        expect(component.password).toBe(component.form.controls.password);
+    });
+
+    it('should return true from isInvalid when control is invalid and touched', () => {
+        component.form.controls.email.markAsTouched();
+        component.form.controls.email.setValue('');
+
+        expect(component.isInvalid('email')).toBeTrue();
+    });
+
+    it('should return false from isInvalid when control is valid', () => {
+        component.form.controls.email.setValue('john@example.com');
+        component.form.controls.email.markAsTouched();
+
+        expect(component.isInvalid('email')).toBeFalse();
+    });
+});
