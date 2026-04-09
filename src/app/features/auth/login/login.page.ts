@@ -76,7 +76,7 @@ export class LoginPage {
       })
     ).subscribe({
       next: () => {
-        void this.router.navigateByUrl('/home', { replaceUrl: true });
+        void this.router.navigateByUrl('/app/home', { replaceUrl: true });
       },
       error: (error: AuthError) => {
         if (error.code === 'INVALID_CREDENTIALS') {

@@ -1,0 +1,53 @@
+<ion-content class="app-gradient-content" [fullscreen]="true" [scrollY]="false">
+  <div class="app-page onboarding-page">
+
+    <div class="onboarding-main">
+      <!-- HERO -->
+      <div class="hero">
+
+        <div class="hero-brand">Veya</div>
+
+        <h1 class="hero-title">
+          Reconnect with your friends,<br />
+          <span>when you're both free!</span>
+        </h1>
+
+        <div class="hero-visual">
+          <img class="hero-visual__image" src="assets/onboarding/header_card.png" alt="Friends reconnecting" />
+        </div>
+      </div>
+
+      <!-- ACTIONS -->
+      <div class="actions-grid">
+        <app-outline-button (click)="goToLogin()">Log In</app-outline-button>
+        <app-primary-button (click)="goToRegister()">Sign Up</app-primary-button>
+      </div>
+
+      <!-- FEATURES -->
+      <div class="features-section">
+        <app-feature-card
+          imageSrc="assets/onboarding/friends_card.png"
+          imageAlt="Friends card"
+          title="Connect with Friends"
+          description="Invite and chat with trusted contacts."
+        ></app-feature-card>
+
+        <app-feature-card
+          imageSrc="assets/onboarding/map_card.png"
+          imageAlt="Map card"
+          title="Meet Up Spontaneously"
+          description="Find the best time to reconnect."
+        ></app-feature-card>
+      </div>
+    </div>
+
+    <div class="onboarding-footer">
+      <!-- CTA -->
+      <div class="cta-text">
+        Join Veya and make plans in the moment!
+      </div>
+
+      <app-cta-button (click)="goToRegister()">Get Started</app-cta-button>
+    </div>
+  </div>
+</ion-content>

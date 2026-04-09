@@ -93,7 +93,7 @@ describe('RegisterPage', () => {
 
     component.submit();
 
-    expect(router.navigateByUrl).toHaveBeenCalledWith('/home', { replaceUrl: true });
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/app/home', { replaceUrl: true });
   });
 
   it('should set emailAlreadyExists error on register conflict', () => {

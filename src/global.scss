@@ -45,6 +45,17 @@ ion-button::part(native) {
   flex-direction: column;
 }
 
+/* Hide visual scrollbars while keeping scroll enabled for mobile-first feel */
+ion-content::part(scroll) {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Legacy Edge/IE */
+}
+
+ion-content::part(scroll)::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
 .app-page--centered {
   justify-content: center;
 }
@@ -72,3 +83,55 @@ ion-button::part(native) {
 .app-stack-md { display: flex; flex-direction: column; gap: var(--app-space-4); }
 .app-stack-lg { display: flex; flex-direction: column; gap: var(--app-space-6); }
 .app-stack-xl { display: flex; flex-direction: column; gap: var(--app-space-7); }
+
+.app-header ion-toolbar {
+  --background: transparent;
+  --border-color: transparent;
+  --padding-top: calc(8px + env(safe-area-inset-top));
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --min-height: 72px;
+}
+
+.app-header__brand {
+  font-size: 1.95rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+.app-header__title {
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: var(--app-color-text);
+  letter-spacing: -0.03em;
+}
+
+.app-header__subtitle {
+  margin-top: 4px;
+  font-size: 0.95rem;
+  color: var(--app-color-text-muted);
+}
+
+.app-header__action {
+  --background: rgba(255, 255, 255, 0.72);
+  --color: var(--app-color-text);
+  --border-radius: 999px;
+  --box-shadow: 0 8px 18px rgba(122, 99, 246, 0.12);
+  width: 40px;
+  height: 40px;
+}
+
+.app-content-shell {
+  padding: 8px 16px 24px;
+}
+
+.app-content-shell--auth {
+  padding-top: 8px;
+  padding-bottom: 24px;
+}
+
+.app-content-shell--tabs {
+  padding-top: 8px;
+  padding-bottom: 28px;
+}

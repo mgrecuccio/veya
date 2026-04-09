@@ -1,8 +1,16 @@
-<ion-content class="app-gradient-content" [fullscreen]="true">
-  <div class="app-page app-page--centered auth-page">
-    <div class="auth-shell">
-      <div class="auth-brand">Veya</div>
+<ion-header class="app-header ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/auth/onboarding"></ion-back-button>
+    </ion-buttons>
 
+    <ion-title class="app-header__brand">Veya</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="app-gradient-content" [fullscreen]="true">
+  <div class="app-content-shell app-content-shell--auth">
+    <div class="auth-shell">
       <section class="app-surface auth-card">
         <div class="auth-header">
           <h1 class="auth-title">Welcome back</h1>

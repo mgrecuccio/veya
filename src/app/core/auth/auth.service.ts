@@ -7,6 +7,7 @@ import { LoginRequest } from '../models/login-request.model';
 import { RegisterRequest } from '../models/register-request.model';
 import { TokenStorageService } from './token-storage.service';
 import { AuthTokens } from '../models/auth-tokens.model';
+import { environment } from "src/environments/environment";
 
 export interface AuthError {
   code:
@@ -27,10 +28,11 @@ interface RefreshTokenRequest {
 })
 export class AuthService {
   private readonly http = inject(HttpClient);
+  private readonly apiBaseUrl = environment.apiBaseUrl;
   private readonly tokenStorage = inject(TokenStorageService);
 
-  private readonly baseUrl = 'http://localhost:8080';
-  private readonly authApiUrl = `${this.baseUrl}/api/v1/auth`;
+
+  private readonly authApiUrl = `${this.apiBaseUrl}/api/v1/auth`;
 
   private readonly authStateSubject = new BehaviorSubject<AuthTokens | null>(
     this.tokenStorage.getStoredTokens()

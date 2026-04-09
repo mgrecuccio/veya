@@ -87,7 +87,7 @@ describe('LoginPage', () => {
 
         component.submit();
 
-        expect(router.navigateByUrl).toHaveBeenCalledWith('/home', { replaceUrl: true });
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/app/home', { replaceUrl: true });
     });
 
     it('should set invalidCredentials form error on login failure', () => {

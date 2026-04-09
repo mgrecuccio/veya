@@ -1,0 +1,307 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar class="home-toolbar">
+    <ion-title class="home-brand">Veya</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="app-gradient-content home-content" [fullscreen]="true">
+  <div class="app-page home-page">
+    <div class="home-shell">
+      @if (vmState$ | async; as state) {
+        @if (state.kind === 'loading') {
+          <section class="app-surface home-hero home-skeleton">
+            <div class="skeleton-line skeleton-line--sm"></div>
+            <div class="skeleton-line skeleton-line--lg"></div>
+            <div class="skeleton-line skeleton-line--md"></div>
+            <div class="skeleton-card"></div>
+          </section>
+
+          <section class="app-surface dashboard-card app-section home-skeleton">
+            <div class="skeleton-line skeleton-line--md"></div>
+            <div class="skeleton-card"></div>
+          </section>
+
+          <section class="app-surface dashboard-card app-section home-skeleton">
+            <div class="skeleton-line skeleton-line--md"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+          </section>
+        } @else if (state.kind === 'error') {
+          <section class="app-surface dashboard-card app-section">
+            <div class="card-header">
+              <div>
+                <h3 class="card-title">Home unavailable</h3>
+                <p class="card-subtitle app-text-muted">
+                  {{ state.message }}
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              class="primary-cta-card"
+              (click)="retry()"
+            >
+              <div class="primary-cta-card__content">
+                <span class="primary-cta-card__kicker">Retry</span>
+                <strong class="primary-cta-card__title">Reload dashboard</strong>
+                <span class="primary-cta-card__subtitle">
+                  Try fetching your contacts and availability again.
+                </span>
+              </div>
+
+              <span class="primary-cta-card__arrow">→</span>
+            </button>
+          </section>
+        } @else {
+          <section
+            class="app-surface home-hero"
+            [class.home-hero--active]="freeNowState.active"
+          >
+            <div class="home-hero__glow"></div>
+
+            <div class="home-hero__content">
+              <p class="home-hero__eyebrow">
+                Readiness dashboard
+              </p>
+
+              <h1 class="home-hero__title">
+                Hi, {{ state.data.dashboard.displayName }}
+              </h1>
+
+              <h2 class="home-hero__status">
+                {{ state.data.readinessContent.title }}
+              </h2>
+
+              <p class="home-hero__subtitle app-text-muted">
+                {{ state.data.readinessContent.subtitle }}
+              </p>
+
+              <button
+                type="button"
+                class="free-now-card"
+                [class.free-now-card--active]="freeNowState.active"
+                (click)="toggleFreeNow()"
+                [attr.aria-pressed]="freeNowState.active"
+              >
+                <div class="free-now-card__copy">
+                  <div class="free-now-card__label">
+                    {{ freeNowState.active ? "You're free now ✨" : "Free now" }}
+                  </div>
+
+                  <div class="free-now-card__text">
+                    {{
+                      freeNowState.active
+                        ? "We'll look for available contacts"
+                        : "Let friends know you're available right now"
+                    }}
+                  </div>
+                </div>
+
+                <div class="free-now-card__action">
+                  <span
+                    class="free-now-pill"
+                    [class.free-now-pill--active]="freeNowState.active"
+                  >
+                    {{ freeNowState.active ? 'On now' : 'Turn on' }}
+                  </span>
+                </div>
+              </button>
+            </div>
+          </section>
+
+          <section class="app-surface dashboard-card app-section">
+            <div class="card-header">
+              <div>
+                <h3 class="card-title">Next best action</h3>
+                <p class="card-subtitle app-text-muted">
+                  One simple step to keep Veya ready.
+                </p>
+              </div>
+            </div>
+
+            @if (state.data.nextBestAction.kind !== 'ready') {
+              <a
+                class="primary-cta-card"
+                [routerLink]="state.data.nextBestAction.route"
+              >
+                <div class="primary-cta-card__content">
+                  <span class="primary-cta-card__kicker">
+                    {{ state.data.nextBestAction.kicker }}
+                  </span>
+                  <strong class="primary-cta-card__title">
+                    {{ state.data.nextBestAction.title }}
+                  </strong>
+                  <span class="primary-cta-card__subtitle">
+                    {{ state.data.nextBestAction.subtitle }}
+                  </span>
+                </div>
+
+                <span class="primary-cta-card__arrow">→</span>
+              </a>
+            } @else {
+              <div class="ready-state-card">
+                <div class="ready-state-card__badge">Ready</div>
+                <div>
+                  <strong class="ready-state-card__title">
+                    You’re set for spontaneous reconnects.
+                  </strong>
+                  <p class="ready-state-card__text app-text-muted">
+                    Your contacts, availability, and invitations are all in a good place.
+                    Keep “Free now” handy whenever you want to be discovered in the moment.
+                  </p>
+                </div>
+              </div>
+            }
+          </section>
+
+          @if (state.data.readinessLevel !== 'ready') {
+            <section class="app-surface dashboard-card app-section">
+              <div class="card-header">
+                <div>
+                  <h3 class="card-title">Setup progress</h3>
+                  <p class="card-subtitle app-text-muted">
+                    A few small steps make spontaneous reconnects easier.
+                  </p>
+                </div>
+
+                <div class="progress-badge">
+                  {{ state.data.completedSetupItems }}/{{ state.data.setupItems.length }}
+                </div>
+              </div>
+
+              <div class="checklist">
+                @for (item of state.data.setupItems; track item.key) {
+                  <div
+                    class="checklist-item"
+                    [class.checklist-item--done]="item.complete"
+                  >
+                    <div class="checklist-item__icon">
+                      {{ item.complete ? '✓' : '○' }}
+                    </div>
+
+                    <div class="checklist-item__body">
+                      <div class="checklist-item__title">{{ item.label }}</div>
+                      <div class="checklist-item__status app-text-muted">
+                        {{ item.complete ? 'Done' : 'Still needed' }}
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            </section>
+          }
+
+          <section class="app-surface dashboard-card app-section">
+            <div class="card-header">
+              <div>
+                <h3 class="card-title">Upcoming availability</h3>
+                <p class="card-subtitle app-text-muted">
+                  The next windows when reconnects could happen naturally.
+                </p>
+              </div>
+            </div>
+
+            @if (state.data.availabilityErrorMessage) {
+              <div class="inline-notice app-text-muted">
+                {{ state.data.availabilityErrorMessage }}
+              </div>
+            }
+
+            @if (state.data.dashboard.upcomingAvailability.length > 0) {
+              <div class="checklist">
+                @for (item of state.data.dashboard.upcomingAvailability; track item.id) {
+                  <div class="checklist-item">
+                    <div class="checklist-item__icon">◌</div>
+
+                    <div class="checklist-item__body">
+                      <div class="checklist-item__title">
+                        {{ item.label }} · {{ item.timeRange }}
+                      </div>
+                      <div class="checklist-item__status app-text-muted">
+                        {{ item.channel }}
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="ready-state-card">
+                <div>
+                  <strong class="ready-state-card__title">
+                    No upcoming availability yet
+                  </strong>
+                  <p class="ready-state-card__text app-text-muted">
+                    Add recurring availability so Veya can show your next reconnect windows.
+                  </p>
+                </div>
+              </div>
+            }
+          </section>
+
+          <section class="app-surface dashboard-card app-section">
+            <div class="card-header">
+              <div>
+                <h3 class="card-title">Contacts snapshot</h3>
+                <p class="card-subtitle app-text-muted">
+                  Your trusted circle is starting to take shape.
+                </p>
+              </div>
+            </div>
+
+            <div class="stats-grid">
+              <div class="stat-tile">
+                <div class="stat-tile__value">
+                  {{ state.data.dashboard.contactsCount }}
+                </div>
+                <div class="stat-tile__label app-text-muted">Contacts</div>
+              </div>
+
+              <div class="stat-tile">
+                <div class="stat-tile__value">
+                  {{ state.data.dashboard.pendingInvitationsCount }}
+                </div>
+                <div class="stat-tile__label app-text-muted">
+                  Pending invitations
+                </div>
+              </div>
+            </div>
+
+            <a class="secondary-link-card" routerLink="/app/contacts">
+              <div>
+                <strong>Open Contacts</strong>
+                <p class="app-text-muted">
+                  Manage trusted people, invitations, and future favorites.
+                </p>
+              </div>
+
+              <span class="secondary-link-card__arrow">→</span>
+            </a>
+          </section>
+
+          <section class="app-surface dashboard-card app-section">
+            <div class="card-header">
+              <div>
+                <h3 class="card-title">Coming soon</h3>
+                <p class="card-subtitle app-text-muted">
+                  More lightweight ways to stay ready without turning Home into a feed.
+                </p>
+              </div>
+            </div>
+
+            <div class="ready-state-card">
+              <div>
+                <strong class="ready-state-card__title">
+                  Smarter reconnect signals
+                </strong>
+                <p class="ready-state-card__text app-text-muted">
+                  Future updates can make this dashboard even more helpful without changing its calm, action-first feel.
+                </p>
+              </div>
+            </div>
+          </section>
+        }
+      }
+    </div>
+  </div>
+</ion-content>
