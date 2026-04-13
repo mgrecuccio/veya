@@ -132,7 +132,7 @@ export class RegisterPage {
       })
     ).subscribe({
       next: () => {
-        void this.router.navigateByUrl('/home', { replaceUrl: true });
+        void this.router.navigateByUrl('/app/home', { replaceUrl: true });
       },
       error: (error: AuthError) => {
         if (error.code === 'EMAIL_ALREADY_EXISTS') {
