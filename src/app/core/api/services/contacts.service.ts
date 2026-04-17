@@ -4,6 +4,9 @@ import { Observable } from "rxjs";
 import { ContactView } from "../model/contact-view.model";
 import { PendingContactInvitationView } from "../model/pending-contact-invitation-view.model";
 import { environment } from "src/environments/environment";
+import { ContactInvitationView } from "../model/contact-invitation-view.model";
+import { SendInvitationRequest } from "../request/send-invitation.request";
+import { EditContactRequest } from "../request/edit-contact.request";
 
 
 @Injectable({ providedIn: 'root' })
@@ -19,6 +22,37 @@ export class ContactsService {
         return this.http.get<PendingContactInvitationView[]>(`${this.apiBaseUrl}/api/v1/contacts/invitations/pending`);
     }
 
-    
+    sendInvitation(payload: SendInvitationRequest): Observable<ContactInvitationView> {
+        return this.http.post<ContactInvitationView>(
+            `${this.apiBaseUrl}/api/v1/contacts/invitations`,
+            payload,
+        );
+    }
 
+    acceptInvitation(invitationId: number): Observable<void> {
+        return this.http.post<void>(
+            `${this.apiBaseUrl}/api/v1/contacts/invitations/${invitationId}/accept`,
+            {},
+        );
+    }
+
+    removeContact(contactUserId: number): Observable<void> {
+        return this.http.delete<void>(
+            `${this.apiBaseUrl}/api/v1/contacts/${contactUserId}`,
+        );
+    }
+
+    blockContact(contactUserId: number): Observable<void> {
+        return this.http.post<void>(
+            `${this.apiBaseUrl}/api/v1/contacts/${contactUserId}/block`,
+            {},
+        );
+    }
+
+    editContact(contactUserId: number, payload: EditContactRequest): Observable<ContactView> {
+        return this.http.put<ContactView>(
+            `${this.apiBaseUrl}/api/v1/contacts/${contactUserId}`,
+            payload
+        )
+    }
 }

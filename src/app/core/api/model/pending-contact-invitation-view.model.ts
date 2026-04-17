@@ -1,7 +1,9 @@
 export interface PendingContactInvitationView {
-    invitationId: string;
-    senderUserId: string;
+    invitationId: number;
+    senderUserId?: number | null;
+    senderEmail?: string | null;
     senderDisplayName?: string | null;
-    status: string;
-    createdAt: string;
+    nickName?: string | null;
+    status?: string | null;
+    createdAt?: string | null;
 }

@@ -57,6 +57,7 @@ describe('HomeDashboardService', () => {
     contactsService.getContacts.and.returnValue(
       of([
         {
+          id: 1,
           contactUserId: 'contact-1',
           nickName: 'Alex',
           favorite: false,
@@ -165,8 +166,8 @@ describe('HomeDashboardService', () => {
     contactsService.getPendingInvitations.and.returnValue(
       of([
         {
-          invitationId: 'invite-1',
-          senderUserId: 'sender-1',
+          invitationId: 1,
+          senderUserId: 2,
           senderDisplayName: 'Nina',
           status: 'PENDING',
           createdAt: '2026-04-09T12:00:00.000Z',
@@ -228,19 +229,19 @@ describe('HomeDashboardService', () => {
     });
   });
 
-    it('fails the whole dashboard when a core request fails', (done) => {
-    mockBase();
+  it('fails the whole dashboard when a core request fails', (done) => {
+      mockBase();
 
-    userService.getMe.and.returnValue(
-      throwError(() => new Error('user failed')),
-    );
+      userService.getMe.and.returnValue(
+        throwError(() => new Error('user failed')),
+      );
 
-    service.getDashboardState(new Date('2026-04-10T09:00:00.000Z')).subscribe({
-      next: () => fail('unexpected error'),
-      error: (error: Error) => {
-        expect(error.message).toBe('We couldn’t load your dashboard right now. Please try again.');
-        done();
-      },
-    });
+      service.getDashboardState(new Date('2026-04-10T09:00:00.000Z')).subscribe({
+        next: () => fail('unexpected error'),
+        error: (error: Error) => {
+          expect(error.message).toBe('We couldn’t load your dashboard right now. Please try again.');
+          done();
+        },
+      });
   });
 });
