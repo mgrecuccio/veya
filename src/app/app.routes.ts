@@ -41,6 +41,11 @@ export const routes: Routes = [
           import('./features/contacts/contacts.page').then((m) => m.ContactsPage),
       },
       {
+        path: 'availability',
+        loadComponent: () =>
+          import('./features/availability/availability.page').then((m) => m.AvailabilityPage),
+      },
+      {
         path: '',
         redirectTo: 'home',
         pathMatch: 'full',

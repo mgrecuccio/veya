@@ -41,7 +41,6 @@ describe('home-availability-format.util', () => {
                 id: jasmine.any(String) as unknown as string,
                 label: 'Today',
                 timeRange: '18:00–20:00',
-                channel: 'Available',
                 startDateTime: '2026-04-10T18:00:00.000Z',
                 endDateTime: '2026-04-10T20:00:00.000Z',
             }
