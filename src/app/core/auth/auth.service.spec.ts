@@ -69,6 +69,7 @@ describe('AuthService', () => {
             email: 'john@example.com',
             password: 'password123',
             displayName: 'John',
+            timezone: 'Europe/Brussels',
         };
 
         service.register(payload).subscribe((response) => {
@@ -88,6 +89,7 @@ describe('AuthService', () => {
             email: 'john@example.com',
             password: 'password123',
             displayName: 'John',
+            timezone: 'Europe/Brussels',
         };
 
         service.register(payload).subscribe((response) => {
@@ -150,6 +152,7 @@ describe('AuthService', () => {
             email: 'john@example.com',
             password: 'password123',
             displayName: 'John',
+            timezone: 'Europe/Brussels',
         };
 
         service.register(payload).subscribe({

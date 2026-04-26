@@ -71,12 +71,15 @@ describe('HomeDashboardService', () => {
     availabilityService.getRules.and.returnValue(
       of([
         {
-          id: 'rule-1',
-          dayOfWeek: 5,
+          id: 1,
+          userId: 2,
+          dayOfWeek: 'FRIDAY',
           startTime: '18:00',
           endTime: '20:00',
           channelType: 'CHAT',
           enabled: true,
+          createdAt: '2026-04-10T09:00:00.000Z',
+          updatedAt: '2026-04-10T09:00:00.000Z',
         },
       ]),
     );
@@ -94,7 +97,12 @@ describe('HomeDashboardService', () => {
   it('maps API responses into dashboard state', (done) => {
     mockBase();
 
-    service.getDashboardState(new Date('2026-04-10T09:00:00.000Z')).subscribe((state) => {
+    const now = new Date('2026-04-10T09:00:00.000Z');
+    const expectedTo = new Date(now);
+    expectedTo.setDate(expectedTo.getDate() + 1);
+    expectedTo.setHours(0, 0, 0, 0);
+
+    service.getDashboardState(now).subscribe((state) => {
       expect(state.dashboard.displayName).toBe('Maya');
       expect(state.dashboard.contactsCount).toBe(1);
       expect(state.dashboard.pendingInvitationsCount).toBe(0);
@@ -105,17 +113,20 @@ describe('HomeDashboardService', () => {
         jasmine.objectContaining({
           label: 'Today',
           timeRange: '18:00–20:00',
-          channel: 'Available',
           startDateTime: '2026-04-10T18:00:00.000Z',
           endDateTime: '2026-04-10T20:00:00.000Z',
         }),
+      );
+      expect(availabilityService.getEffectiveAvailability).toHaveBeenCalledWith(
+        '2026-04-10T09:00:00.000Z',
+        expectedTo.toISOString(),
       );
 
       done();
     });
   });
 
-  it('computes ready readiness when contacts and enabled rules exist with no pending invitations', (done) => {
+  it('computes ready readiness when contacts exist with no pending invitations', (done) => {
     mockBase();
 
     service.getDashboardState(new Date('2026-04-10T09:00:00.000Z')).subscribe((state) => {
@@ -137,30 +148,34 @@ describe('HomeDashboardService', () => {
     });
   });
 
-  it('Uses Set your availability when contacts exist but no enabled rules exist', (done) => {
+  it('stays ready when contacts exist but no enabled rules exist', (done) => {
     mockBase();
 
     availabilityService.getRules.and.returnValue(
       of([{
-          id: 'rule-1',
-          dayOfWeek: 5,
+          id: 1,
+          userId: 2,
+          dayOfWeek: 'MONDAY',
           startTime: '18:00',
           endTime: '20:00',
-        channelType: 'CHAT',
+          channelType: 'CHAT',
           enabled: false,
+          createdAt: '2026-04-10T09:00:00.000Z',
+          updatedAt: '2026-04-10T09:00:00.000Z'
         },
       ])
     );
 
     service.getDashboardState(new Date('2026-04-10T09:00:00.000Z')).subscribe((state) => {
       expect(state.dashboard.hasAvailabilityRules).toBeFalse();
-      expect(state.nextBestAction.kind).toBe('availability');
+      expect(state.readinessLevel).toBe('ready');
+      expect(state.nextBestAction.kind).toBe('ready');
       
       done();
     });
   });
 
-  it('proritizes Review invitations after contacts and availability exist', (done) => {
+  it('prioritizes Review invitations after contacts exist', (done) => {
     mockBase();
 
     contactsService.getPendingInvitations.and.returnValue(
@@ -178,7 +193,18 @@ describe('HomeDashboardService', () => {
     service.getDashboardState(new Date('2026-04-10T09:00:00.000Z')).subscribe((state) => {
       expect(state.nextBestAction.kind).toBe('invitations');
       expect(state.nextBestAction.title).toBe('Review invitations');
+      expect(state.readinessLevel).toBe('almost-ready');
       
+      done();
+    });
+  });
+
+  it('does not include availability in setup progress', (done) => {
+    mockBase();
+
+    service.getDashboardState(new Date('2026-04-10T09:00:00.000Z')).subscribe((state) => {
+      expect(state.setupItems.map((item) => item.key)).toEqual(['contacts', 'invitations']);
+      expect(state.completedSetupItems).toBe(2);
       done();
     });
   });
@@ -224,7 +250,7 @@ describe('HomeDashboardService', () => {
     service.getDashboardState(new Date('2026-04-10T09:00:00.000Z')).subscribe((state) => {
       expect(state.dashboard.contactsCount).toBe(1);
       expect(state.dashboard.upcomingAvailability).toEqual([]);
-      expect(state.availabilityErrorMessage).toBe('Upcoming availability could not be loaded right now.');
+      expect(state.availabilityErrorMessage).toBe('Today’s availability could not be loaded right now.');
       done();
     });
   });

@@ -59,6 +59,12 @@ describe('RegisterPage', () => {
   });
 
   it('should call authService.register with mapped payload', () => {
+    spyOn(Intl, 'DateTimeFormat').and.returnValue({
+      resolvedOptions: () => ({
+        timeZone: 'Europe/Brussels',
+      } as Intl.ResolvedDateTimeFormatOptions),
+    } as Intl.DateTimeFormat);
+
     authServiceSpy.register.and.returnValue(
       of({
         accessToken: 'access-token',
@@ -76,6 +82,7 @@ describe('RegisterPage', () => {
       email: 'john@example.com',
       password: 'password123',
       displayName: 'John Doe',
+      timezone: 'Europe/Brussels',
     });
   });
 

@@ -91,7 +91,6 @@ export function mapEffectiveAvailabilityToUpcomingItems(
                 window.endDateTime,
                 preferredTimeZone
             ),
-            channel: 'Available',
             startDateTime: window.startDateTime,
             endDateTime: window.endDateTime,
     }));

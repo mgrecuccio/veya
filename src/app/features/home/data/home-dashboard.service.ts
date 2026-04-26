@@ -29,7 +29,9 @@ export class HomeDashboardService {
 
   getDashboardState(now: Date = new Date()): Observable<HomeDashboardState> {
     const from = now.toISOString();
-    const to = addDays(now, 7).toISOString();
+    const tomorrowMidnight = addDays(now, 1);
+    tomorrowMidnight.setHours(0, 0, 0, 0);
+    const to = tomorrowMidnight.toISOString();
 
     return forkJoin({
       me: this.userService.getMe(),
@@ -44,7 +46,7 @@ export class HomeDashboardService {
         catchError(() =>
           of<AvailabilityPreviewResult>({
             windows: [],
-            warning: 'Upcoming availability could not be loaded right now.',
+            warning: 'Today’s availability could not be loaded right now.',
           }),
         ),
       ),
@@ -71,20 +73,17 @@ export class HomeDashboardService {
 
         const readinessLevel = this.computeReadinessLevel(
           hasContacts,
-          hasAvailabilityRules,
           hasPendingInvitations,
         );
 
         const readinessContent = this.getReadinessContent(readinessLevel);
         const nextBestAction = this.getNextBestAction(
           hasContacts,
-          hasAvailabilityRules,
           hasPendingInvitations,
         );
 
         const setupItems = this.getSetupItems(
           hasContacts,
-          hasAvailabilityRules,
           hasPendingInvitations,
         );
 
@@ -114,18 +113,13 @@ export class HomeDashboardService {
 
   private computeReadinessLevel(
     hasContacts: boolean,
-    hasAvailabilityRules: boolean,
     hasPendingInvitations: boolean,
   ): ReadinessLevel {
-    if (!hasContacts && !hasAvailabilityRules) {
+    if (!hasContacts) {
       return 'empty';
     }
 
-    if (hasContacts && hasAvailabilityRules && !hasPendingInvitations) {
-      return 'ready';
-    }
-
-    return 'almost-ready';
+    return hasPendingInvitations ? 'almost-ready' : 'ready';
   }
 
   private getReadinessContent(readinessLevel: ReadinessLevel): ReadinessContent {
@@ -134,7 +128,7 @@ export class HomeDashboardService {
         return {
           title: 'You’re ready for spontaneous reconnects.',
           subtitle:
-            'Your circle and availability are in place, so you can go visible whenever the moment feels right.',
+            'Your trusted circle is in place, so you can go visible whenever the moment feels right.',
         };
 
       case 'almost-ready':
@@ -156,7 +150,6 @@ export class HomeDashboardService {
 
   private getNextBestAction(
     hasContacts: boolean,
-    hasAvailabilityRules: boolean,
     hasPendingInvitations: boolean,
   ): NextBestActionVm {
     if (!hasContacts) {
@@ -170,20 +163,10 @@ export class HomeDashboardService {
       };
     }
 
-    if (!hasAvailabilityRules) {
-      return {
-        kind: 'availability',
-        kicker: 'Step 2',
-        title: 'Set your availability',
-        subtitle: 'Add a few recurring windows so reconnects can happen naturally.',
-        route: '/app/availability',
-      };
-    }
-
     if (hasPendingInvitations) {
       return {
         kind: 'invitations',
-        kicker: 'Step 3',
+        kicker: 'Step 2',
         title: 'Review invitations',
         subtitle:
           'Confirm pending connections so your trusted contacts list stays up to date.',
@@ -201,7 +184,6 @@ export class HomeDashboardService {
 
   private getSetupItems(
     hasContacts: boolean,
-    hasAvailabilityRules: boolean,
     hasPendingInvitations: boolean,
   ): SetupChecklistItem[] {
     return [
@@ -209,11 +191,6 @@ export class HomeDashboardService {
         key: 'contacts',
         label: 'Add at least 1 contact',
         complete: hasContacts,
-      },
-      {
-        key: 'availability',
-        label: 'Define availability',
-        complete: hasAvailabilityRules,
       },
       {
         key: 'invitations',

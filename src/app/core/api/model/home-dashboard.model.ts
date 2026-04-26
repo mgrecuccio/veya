@@ -4,7 +4,6 @@ export interface UpcomingAvailabilityItem {
     id: string;
     label: string;
     timeRange: string;
-    channel: 'Available';
     startDateTime?: string;
     endDateTime?: string;
 }
@@ -23,7 +22,7 @@ export interface ReadinessContent {
 }
 
 export interface NextBestActionVm {
-  kind: 'contacts' | 'availability' | 'invitations' | 'ready';
+  kind: 'contacts' | 'invitations' | 'ready';
   kicker: string;
   title: string;
   subtitle: string;
@@ -31,7 +30,7 @@ export interface NextBestActionVm {
 }
 
 export interface SetupChecklistItem {
-  key: 'contacts' | 'availability' | 'invitations';
+  key: 'contacts' | 'invitations';
   label: string;
   complete: boolean;
 }

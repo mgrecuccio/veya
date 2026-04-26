@@ -121,6 +121,7 @@ export class RegisterPage {
       email: this.form.controls.email.value?.trim() ?? '',
       password: this.form.controls.password.value ?? '',
       displayName: this.form.controls.name.value?.trim() ?? '',
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'UTC',
     };
 
     this.isSubmitting = true;

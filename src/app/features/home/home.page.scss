@@ -349,7 +349,17 @@
   gap: 12px;
 }
 
-.checklist-item,
+.checklist-item {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 14px 12px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(122, 99, 246, 0.08);
+}
+
 .availability-item {
   display: flex;
   align-items: center;
@@ -390,6 +400,10 @@
 .checklist-item__body,
 .availability-item__main {
   min-width: 0;
+}
+
+.checklist-item__body {
+  flex: 1;
 }
 
 .checklist-item__title,
