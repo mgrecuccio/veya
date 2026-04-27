@@ -7,7 +7,7 @@ import { environment } from "src/environments/environment";
 import { CreateAvailabilityRuleRequest } from "../request/create-availability-rule.request";
 import { CreateAvailabilityOverrideRequest } from "../request/create-availability-override.request";
 import { AvailabilityOverrideView } from "../model/availability-override-view-model";
-import { UpdateAvailabilityRuleRequest } from "../model/update-availability-rule.request";
+import { UpdateAvailabilityRuleRequest } from "../request/update-availability-rule.request";
 
 
 @Injectable({ providedIn: 'root' })

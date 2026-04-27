@@ -9,6 +9,8 @@ import {
   settings,
   settingsOutline,
   sparklesOutline,
+  star,
+  starOutline,
 } from 'ionicons/icons';
 
 @Component({
@@ -31,6 +33,8 @@ export class AppComponent {
       'settings-outline': settingsOutline,
       'ellipsis-horizontal': ellipsisHorizontal,
       'sparkles-outline': sparklesOutline,
+      star,
+      'star-outline': starOutline,
     });
   }
 }

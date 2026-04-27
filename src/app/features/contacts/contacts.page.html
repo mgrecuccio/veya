@@ -254,8 +254,6 @@
 
                         @if (contact.favorite) {
                           <span class="contact-chip">Favorite</span>
-                        } @else {
-                          <span class="contact-chip contact-chip--soft">Favorite soon</span>
                         }
                       </div>
 
@@ -271,6 +269,17 @@
                     </div>
 
                     <div class="contact-item__actions">
+                      <ion-button
+                        fill="clear"
+                        class="favorite-button"
+                        (click)="toggleFavorite(contact)"
+                        [disabled]="rowActionBusyId() === contact.id"
+                        [attr.aria-label]="contact.favorite ? 'Remove ' + contact.displayLabel + ' from favorites' : 'Mark ' + contact.displayLabel + ' as favorite'"
+                        [attr.aria-pressed]="contact.favorite"
+                      >
+                        <ion-icon [name]="contact.favorite ? 'star' : 'star-outline'"></ion-icon>
+                      </ion-button>
+
                       <ion-button
                         fill="clear"
                         class="contact-menu-button"
