@@ -1,4 +1,4 @@
-import { CreateAvailabilityRuleRequest } from "../request/create-availability-rule.request";
+import { CreateAvailabilityRuleRequest } from "./create-availability-rule.request";
 
 export interface UpdateAvailabilityRuleRequest extends CreateAvailabilityRuleRequest {
     enabled: boolean;

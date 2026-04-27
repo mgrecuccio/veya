@@ -142,6 +142,7 @@ describe('ContactService', () => {
 
         let mockEditContactRequest: EditContactRequest = {
             nickName: 'new nickName',
+            favorite: true,
         }
 
         let mockContact: ContactView = {

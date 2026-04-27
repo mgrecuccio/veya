@@ -367,6 +367,7 @@
   flex-shrink: 0;
   display: flex;
   align-items: center;
+  gap: 4px;
 }
 
 .light-action-button {
@@ -395,6 +396,30 @@
 .contact-menu-button span {
   font-size: 12px;
   letter-spacing: 0.02em;
+}
+
+.favorite-button {
+  --color: #d89c27;
+  --background: rgba(216, 156, 39, 0.12);
+  --border-radius: 999px;
+  --box-shadow: none;
+  --padding-start: 0;
+  --padding-end: 0;
+  width: 38px;
+  height: 38px;
+  min-height: 38px;
+}
+
+.favorite-button::part(native) {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+}
+
+.favorite-button ion-icon {
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
 }
 
 .empty-card,

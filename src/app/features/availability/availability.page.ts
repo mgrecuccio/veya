@@ -7,7 +7,7 @@ import { BehaviorSubject, catchError, finalize, map, Observable, of, shareReplay
 import { AvailabilityOverrideType, AvailabilityOverrideView } from "src/app/core/api/model/availability-override-view-model";
 import { AvailabilityChannelType, AvailabilityDayOfWeek, AvailabilityRuleView } from "src/app/core/api/model/availability-rule-view.model";
 import { EffectiveAvailabilityView } from "src/app/core/api/model/effective-availability-view.model";
-import { UpdateAvailabilityRuleRequest } from "src/app/core/api/model/update-availability-rule.request";
+import { UpdateAvailabilityRuleRequest } from "src/app/core/api/request/update-availability-rule.request";
 import { CreateAvailabilityOverrideRequest } from "src/app/core/api/request/create-availability-override.request";
 import { CreateAvailabilityRuleRequest } from "src/app/core/api/request/create-availability-rule.request";
 import { AvailabilityPageData, AvailabilityPageDataService } from "./data/availability-page-data.service";

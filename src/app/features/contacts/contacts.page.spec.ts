@@ -238,4 +238,34 @@ describe('ContactsPage', () => {
         expect(actionSheetController.create).toHaveBeenCalled();
         expect(present).toHaveBeenCalled();
     });
+
+    it('should toggle favorite for a contact', fakeAsync(() => {
+        dataService.editContact.and.returnValue(of({} as any));
+        spyOn(component, 'retry');
+
+        component.toggleFavorite({
+            id: 1,
+            displayLabel: 'Alex',
+            nickName: 'Alex',
+            initials: 'A',
+            favorite: false,
+            createdAt: null,
+            createdLabel: 'today',
+        });
+
+        expect(dataService.editContact).toHaveBeenCalledWith(1, {
+            nickName: 'Alex',
+            favorite: true,
+        });
+        expect(component.rowActionBusyId()).toBeNull();
+        expect(component.retry).toHaveBeenCalled();
+
+        flushMicrotasks();
+
+        expect(component.toastState()).toEqual({
+            isOpen: true,
+            message: 'Added to favorites.',
+            color: 'success',
+        });
+    }));
 });

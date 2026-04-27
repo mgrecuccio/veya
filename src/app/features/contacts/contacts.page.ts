@@ -190,6 +190,36 @@ export class ContactsPage {
       await sheet.present();
     }
 
+    toggleFavorite(contact: ContactCardVm): void {
+      if (this.rowActionBusyId() !== null) {
+        return;
+      }
+
+      const favorite = !contact.favorite;
+      this.rowActionBusyId.set(contact.id);
+
+      this.contactsDataService.editContact(contact.id, {
+        nickName: contact.nickName,
+        favorite,
+      }).subscribe({
+        next: () => {
+          this.rowActionBusyId.set(null);
+          this.retry();
+          this.showToast(
+            favorite ? 'Added to favorites.' : 'Removed from favorites.',
+            'success',
+          );
+        },
+        error: (error: any) => {
+          this.rowActionBusyId.set(null);
+          this.showToast(
+            error?.error?.detail || 'We couldn’t update that contact right now.',
+            'danger',
+          );
+        },
+      });
+    }
+
     private removeContact(contact: ContactCardVm): void {
       if (this.rowActionBusyId() !== null) {
         return;

@@ -1,3 +1,4 @@
 export interface EditContactRequest {
-    nickName: string,
+    nickName?: string | null;
+    favorite?: boolean;
 }
