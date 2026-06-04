@@ -192,7 +192,7 @@ describe('HomeDashboardService', () => {
 
     service.getDashboardState(new Date('2026-04-10T09:00:00.000Z')).subscribe((state) => {
       expect(state.nextBestAction.kind).toBe('invitations');
-      expect(state.nextBestAction.title).toBe('Review invitations');
+      expect(state.nextBestAction.title).toBe('Review received invitations');
       expect(state.readinessLevel).toBe('almost-ready');
       
       done();
