@@ -167,7 +167,7 @@ export class HomeDashboardService {
       return {
         kind: 'invitations',
         kicker: 'Step 2',
-        title: 'Review invitations',
+        title: 'Review received invitations',
         subtitle:
           'Confirm pending connections so your trusted contacts list stays up to date.',
         route: '/app/contacts',
@@ -194,7 +194,7 @@ export class HomeDashboardService {
       },
       {
         key: 'invitations',
-        label: 'Review invitations',
+        label: 'Review received invitations',
         complete: !hasPendingInvitations,
       },
     ];
