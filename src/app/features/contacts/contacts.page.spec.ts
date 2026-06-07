@@ -239,6 +239,42 @@ describe('ContactsPage', () => {
         expect(present).toHaveBeenCalled();
     });
 
+    it('should preserve favorite when editing a contact nickname', async () => {
+        const actionSheetPresent = jasmine.createSpy('actionSheetPresent').and.returnValue(Promise.resolve());
+        const alertPresent = jasmine.createSpy('alertPresent').and.returnValue(Promise.resolve());
+        actionSheetController.create.and.returnValue(
+            Promise.resolve({ present: actionSheetPresent } as any)
+        );
+        alertController.create.and.returnValue(
+            Promise.resolve({ present: alertPresent } as any)
+        );
+        dataService.editContact.and.returnValue(of({} as any));
+        spyOn(component, 'retry');
+
+        await component.openContactActions({
+            id: 1,
+            displayLabel: 'Alex',
+            nickName: 'Alex',
+            initials: 'A',
+            favorite: true,
+            createdAt: null,
+            createdLabel: 'today',
+        });
+
+        const actionSheetConfig = actionSheetController.create.calls.mostRecent().args[0] as any;
+        await actionSheetConfig.buttons[0].handler();
+
+        const alertConfig = alertController.create.calls.mostRecent().args[0] as any;
+        alertConfig.buttons[1].handler({ nickName: ' Lex ' });
+
+        expect(dataService.editContact).toHaveBeenCalledWith(1, {
+            nickName: 'Lex',
+            favorite: true,
+        });
+        expect(component.rowActionBusyId()).toBeNull();
+        expect(component.retry).toHaveBeenCalled();
+    });
+
     it('should toggle favorite for a contact', fakeAsync(() => {
         dataService.editContact.and.returnValue(of({} as any));
         spyOn(component, 'retry');
