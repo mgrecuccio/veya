@@ -299,7 +299,7 @@ export class ContactsPage {
               return;
             }
 
-            this.updateContactNickname(invitation.senderUserId!, nickName);
+            this.updateContactNickname(invitation.senderUserId!, nickName, false);
           },
         },
       ],
@@ -337,7 +337,7 @@ export class ContactsPage {
               return;
             }
 
-            this.updateContactNickname(contact.id, nickName);
+            this.updateContactNickname(contact.id, nickName, contact.favorite);
           },
         },
       ],
@@ -346,10 +346,10 @@ export class ContactsPage {
     await alert.present();
   }
 
-  private updateContactNickname(contactUserId: number, nickName: string): void {
+  private updateContactNickname(contactUserId: number, nickName: string, favorite: boolean): void {
     this.rowActionBusyId.set(contactUserId);
 
-    this.contactsDataService.editContact(contactUserId, { nickName }).subscribe({
+    this.contactsDataService.editContact(contactUserId, { nickName, favorite }).subscribe({
       next: () => {
         this.rowActionBusyId.set(null);
         this.retry();

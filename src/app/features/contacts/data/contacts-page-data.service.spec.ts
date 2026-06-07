@@ -180,8 +180,11 @@ describe('ContactPageDataService', () => {
 
         contactsService.editContact.and.returnValue(of(response));
 
-        service.editContact(7, { nickName: 'Updated name' }).subscribe((result) => {
-            expect(contactsService.editContact).toHaveBeenCalledWith(7, { nickName: 'Updated name' });
+        service.editContact(7, { nickName: 'Updated name', favorite: false }).subscribe((result) => {
+            expect(contactsService.editContact).toHaveBeenCalledWith(7, {
+                nickName: 'Updated name',
+                favorite: false,
+            });
             expect(result).toEqual(response);
             done();
         });
