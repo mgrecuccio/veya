@@ -13,3 +13,35 @@
 .auth-card {
   margin-top: 6px;
 }
+
+.phone-input-row {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.phone-country-item,
+.phone-number-item {
+  min-width: 0;
+}
+
+.phone-country-item {
+  --padding-start: 12px;
+  --inner-padding-end: 8px;
+}
+
+.phone-country-item ion-select {
+  width: 100%;
+  font-size: 15px;
+}
+
+.auth-label-optional {
+  color: var(--app-color-text-muted);
+  font-weight: 400;
+}
+
+@media (max-width: 380px) {
+  .phone-input-row {
+    grid-template-columns: 118px minmax(0, 1fr);
+  }
+}
