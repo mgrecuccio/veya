@@ -181,4 +181,71 @@ describe('RegisterPage', () => {
 
     expect(component.isInvalid('name')).toBeFalse();
   });
+
+  it('should normalize and submit a phone number in E.164 format', () => {
+    authServiceSpy.register.and.returnValue(
+      of({
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+        tokenType: 'Bearer',
+        expiresInSeconds: 3600
+      })
+    );
+
+    fillValidForm();
+
+    component.form.patchValue({
+      phoneCountry: 'BE',
+      phoneNational: '0470 12 34 56',
+    });
+
+    component.submit();
+
+    expect(authServiceSpy.register).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        phoneNumber: '+32470123456',
+      })
+    );
+
+  });
+
+  it('should not submit an invalid phone number', () => {
+    fillValidForm();
+
+    component.form.patchValue({
+      phoneCountry: 'BE',
+      phoneNational: '123',
+    });
+
+    component.submit();
+
+    expect(component.form.hasError('invalidPhoneNumber')).toBeTrue();
+    expect(authServiceSpy.register).not.toHaveBeenCalled();
+  });
+
+  it('should allow the phone number to be empty', () => {
+    authServiceSpy.register.and.returnValue(
+      of({
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+        tokenType: 'Bearer',
+        expiresInSeconds: 3600,
+      })
+    );
+
+    fillValidForm();
+
+    component.form.patchValue({
+      phoneCountry: 'BE',
+      phoneNational: '',
+    });
+
+    component.submit();
+
+    const payload =
+      authServiceSpy.register.calls.mostRecent().args[0];
+
+    expect(payload.phoneNumber).toBeUndefined();
+  });
+
 });

@@ -8,8 +8,14 @@ import {
   Validators
 } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { 
+  CountryCode,
+  getCountryCallingCode,
+  getCountries,
+  parsePhoneNumberFromString
+ } from 'libphonenumber-js';
 import { IonicModule } from '@ionic/angular';
-import { ChangeDetectionStrategy, Component, DestroyRef, inject } from '@angular/core';
+import { Component, DestroyRef, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -18,6 +24,63 @@ import { AuthService, AuthError } from 'src/app/core/auth/auth.service';
 import { RegisterRequest } from 'src/app/core/models/register-request.model';
 
 import { AppPrimaryButtonComponent } from '../../../shared/ui/app-primary-button/app-primary-button.component';
+
+interface PhoneCountry {
+  code: CountryCode;
+  name: string;
+  dialCode: string;
+  flag: string;
+}
+
+const E164_REGEX = /^\+[1-9]\d{1,14}$/;
+
+function countryCodeToFlag(countryCode: CountryCode): string {
+  return countryCode
+    .toUpperCase()
+    .split('')
+    .map(character => 
+      String.fromCodePoint(character.charCodeAt(0) + 127397)
+    )
+    .join('');
+}
+
+function optionalPhoneValidator(): ValidatorFn {
+  return (group: AbstractControl): ValidationErrors | null => {
+    const country = group.get('phoneCountry')?.value as
+      | CountryCode
+      | undefined;
+
+    const nationalNumber =
+      group.get('phoneNational')?.value?.trim() ?? '';
+
+    if (!nationalNumber) {
+      return null;
+    }
+
+    if (!country) {
+      return { invalidPhoneNumber: true };
+    }
+
+    try {
+      const parsedNumber = parsePhoneNumberFromString(
+        nationalNumber,
+        country
+      );
+
+      if (
+        !parsedNumber ||
+        !parsedNumber.isValid() ||
+        !E164_REGEX.test(parsedNumber.number)
+      ) {
+        return { invalidPhoneNumber: true };
+      }
+
+      return null;
+    } catch {
+      return { invalidPhoneNumber: true };
+    }
+  };
+}
 
 function matchFieldsValidator(
   field: string,
@@ -70,6 +133,8 @@ export class RegisterPage {
   private readonly authService = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
 
+  readonly countries: PhoneCountry[] = this.createCountries();
+
   isSubmitting = false;
   serverError: string | null = null;
 
@@ -77,11 +142,16 @@ export class RegisterPage {
     {
       name: ['', [Validators.required]],
       email: ['', [Validators.required, Validators.email]],
+      phoneCountry: [this.getDefaultPhoneCountry()],
+      phoneNational: [''],
       password: ['', [Validators.required, Validators.minLength(8)]],
       confirmPassword: ['', [Validators.required]]
     },
     {
-      validators: [matchFieldsValidator('password', 'confirmPassword')]
+      validators: [
+        matchFieldsValidator('password', 'confirmPassword'),
+        optionalPhoneValidator()
+      ]
     }
   );
 
@@ -93,6 +163,14 @@ export class RegisterPage {
     return this.form.controls.email;
   }
 
+  get phoneCountry() {
+    return this.form.controls.phoneCountry;
+  }
+
+  get phoneNational() {
+    return this.form.controls.phoneNational;
+  }
+
   get password() {
     return this.form.controls.password;
   }
@@ -100,6 +178,26 @@ export class RegisterPage {
   get confirmPassword() {
     return this.form.controls.confirmPassword;
   }
+
+  get selectedCountryText(): string {
+    const country = this.countries.find(
+      item => item.code === this.phoneCountry.value
+    );
+
+    return country
+      ? `${country.flag} ${country.dialCode}`
+      : '';
+  }
+
+  isPhoneInvalid(): boolean {
+    const hasInteraction =
+      this.phoneNational.touched || this.phoneNational.dirty;
+
+    return (
+      hasInteraction &&
+      this.form.hasError('invalidPhoneNumber')
+    );
+  } 
 
   isInvalid(
     controlName: 'name' | 'email' | 'password' | 'confirmPassword'
@@ -117,11 +215,15 @@ export class RegisterPage {
     this.serverError = null;
     this.clearEmailAlreadyExistsError();
 
+    const phoneNumber = this.getNormalizedPhoneNumber();
+
     const payload: RegisterRequest = {
-      email: this.form.controls.email.value?.trim() ?? '',
-      password: this.form.controls.password.value ?? '',
-      displayName: this.form.controls.name.value?.trim() ?? '',
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'UTC',
+      email: this.form.controls.email.value.trim(),
+      password: this.form.controls.password.value,
+      displayName: this.form.controls.name.value.trim(),
+      timezone:
+        Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'UTC',
+      ...(phoneNumber ? { phoneNumber } : {})
     };
 
     this.isSubmitting = true;
@@ -158,5 +260,63 @@ export class RegisterPage {
 
     const { emailAlreadyExists, ...rest } = errors;
     this.form.controls.email.setErrors(Object.keys(rest).length ? rest : null);
+  }
+
+  private getNormalizedPhoneNumber(): string | undefined {
+    const nationalNumber = this.phoneNational.value.trim();
+
+    if(!nationalNumber) {
+      return undefined;
+    }
+
+    const parsedNumber = parsePhoneNumberFromString(
+      nationalNumber,
+      this.phoneCountry.value
+    );
+
+    if(
+      !parsedNumber ||
+      !parsedNumber.isValid() ||
+      !E164_REGEX.test(parsedNumber.number)
+    ) {
+      return undefined;
+    }
+
+    return parsedNumber.number;
+  }
+
+  private createCountries(): PhoneCountry[] {
+    const displayNames = new Intl.DisplayNames(['en'], {
+      type: 'region'
+    });
+
+    return getCountries()
+      .map(code => ({
+        code,
+        name: displayNames.of(code) ?? code,
+        dialCode: `+${getCountryCallingCode(code)}`,
+        flag: countryCodeToFlag(code)
+      }))
+      .sort((first, second) =>
+        first.name.localeCompare(second.name)
+      );
+  }
+
+  private getDefaultPhoneCountry(): CountryCode {
+    const language = globalThis.navigator?.language ?? '';
+
+    try {
+      const region = new Intl.Locale(language).region;
+
+      if (
+        region &&
+        getCountries().includes(region as CountryCode)
+      ) {
+        return region as CountryCode;
+      }
+    } catch {
+    }
+
+    return 'BE';
   }
 }
