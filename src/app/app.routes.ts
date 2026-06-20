@@ -41,6 +41,11 @@ export const routes: Routes = [
           import('./features/contacts/contacts.page').then((m) => m.ContactsPage),
       },
       {
+        path: 'matches',
+        loadComponent: () =>
+          import('./features/matches/matches.page').then((m) => m.MatchesPage),
+      },
+      {
         path: 'availability',
         loadComponent: () =>
           import('./features/availability/availability.page').then((m) => m.AvailabilityPage),

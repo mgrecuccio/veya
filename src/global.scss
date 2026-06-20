@@ -122,6 +122,33 @@ ion-content::part(scroll)::-webkit-scrollbar {
   height: 40px;
 }
 
+.page-settings-button {
+  --background: transparent;
+  --background-hover: transparent;
+  --background-activated: transparent;
+  --box-shadow: none;
+  --color: #fff;
+  --padding-start: 0;
+  --padding-end: 0;
+  width: 42px;
+  height: 42px;
+  margin: 0;
+}
+
+.page-settings-button::part(native) {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.page-settings-button ion-icon {
+  width: 21px;
+  height: 21px;
+  font-size: 21px;
+}
+
 .app-content-shell {
   padding: 8px 16px 24px;
 }

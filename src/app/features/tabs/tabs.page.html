@@ -12,14 +12,14 @@
       <ion-label>Contacts</ion-label>
     </ion-tab-button>
 
+    <ion-tab-button tab="matches" [routerLink]="['/app/matches']" routerDirection="root">
+      <ion-icon name="heart"></ion-icon>
+      <ion-label>Matches</ion-label>
+    </ion-tab-button>
+
     <ion-tab-button tab="availability" [routerLink]="['/app/availability']" routerDirection="root">
       <ion-icon name="calendar"></ion-icon>
       <ion-label>Availability</ion-label>
-    </ion-tab-button>
-
-    <ion-tab-button tab="settings" routerDirection="root">
-      <ion-icon name="settings"></ion-icon>
-      <ion-label>Settings</ion-label>
     </ion-tab-button>
   </ion-tab-bar>
 </ion-tabs>

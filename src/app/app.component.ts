@@ -4,7 +4,9 @@ import { addIcons } from 'ionicons';
 import {
   calendar,
   ellipsisHorizontal,
+  heart,
   home,
+  logoWhatsapp,
   people,
   settings,
   settingsOutline,
@@ -28,8 +30,10 @@ export class AppComponent {
     addIcons({
       home,
       people,
+      heart,
       calendar,
       settings,
+      'logo-whatsapp': logoWhatsapp,
       'settings-outline': settingsOutline,
       'ellipsis-horizontal': ellipsisHorizontal,
       'sparkles-outline': sparklesOutline,
