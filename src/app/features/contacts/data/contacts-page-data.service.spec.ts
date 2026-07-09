@@ -36,7 +36,7 @@ describe('ContactPageDataService', () => {
             of([
                 {
                   id: 1,
-                  contactUserId: 'contact-1',
+                  contactUserId: 2,
                   nickName: 'Alex',
                   favorite: false,
                   createdAt: '2026-04-01T10:00:00.000Z',
@@ -60,9 +60,9 @@ describe('ContactPageDataService', () => {
 
         contactsService.sendInvitation.and.returnValue(
             of({
-                id: 'invitation-id-1',
-                senderUserId: 'sender-user-id-1',
-                recipientUserId: '1',
+                id: 1,
+                senderUserId: 2,
+                recipientUserId: 3,
                 nickName: 'nickName',
                 status: 'PENDING',
                 createdAt: '2026-04-19',
@@ -91,7 +91,7 @@ describe('ContactPageDataService', () => {
             expect(contactPageData.contacts[0]).toEqual(
                 jasmine.objectContaining({
                     id: 1,
-                    contactUserId: 'contact-1',
+                    contactUserId: 2,
                     nickName: 'Alex',
                     favorite: false,
                     createdAt: '2026-04-01T10:00:00.000Z',
@@ -125,9 +125,9 @@ describe('ContactPageDataService', () => {
         };
 
         const response = {
-            id: 'invitation-id-1',
-            senderUserId: 'sender-user-id-1',
-            recipientUserId: '1',
+            id: 1,
+            senderUserId: 2,
+            recipientUserId: 3,
             nickName: 'Nick',
             status: 'PENDING',
             createdAt: '2026-04-19',
@@ -172,7 +172,7 @@ describe('ContactPageDataService', () => {
     it('should delegate editContact to ContactsService', (done) => {
         const response = {
             id: 7,
-            contactUserId: '7',
+            contactUserId: 7,
             nickName: 'Updated name',
             favorite: false,
             createdAt: '2026-04-19',

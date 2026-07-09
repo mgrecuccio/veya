@@ -30,6 +30,7 @@ describe('home-availability-format.util', () => {
             {
                 startDateTime: '2026-04-10T18:00:00.000Z',
                 endDateTime: '2026-04-10T20:00:00.000Z',
+                channelType: 'CHAT',
             },
           ],
           'UTC',
@@ -52,10 +53,12 @@ describe('home-availability-format.util', () => {
             {
                 startDateTime: '2026-04-10T18:00:00.000Z',
                 endDateTime: '2026-04-10T20:00:00.000Z',
+                channelType: 'CHAT',
             },
             {
                 startDateTime: '2026-04-11T09:00:00.000Z',
                 endDateTime: '2026-04-11T10:00:00.000Z',
+                channelType: 'CHAT',
             },
           ],
           'UTC',

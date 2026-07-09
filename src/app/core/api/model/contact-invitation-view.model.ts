@@ -1,7 +1,7 @@
 export interface ContactInvitationView {
-  id: string;
-  senderUserId: string;
-  recipientUserId: string;
+  id: number;
+  senderUserId: number;
+  recipientUserId: number;
   nickName?: string | null;
   status: string;
   createdAt: string;

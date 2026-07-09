@@ -32,7 +32,7 @@ describe('ContactService', () => {
         let mockContacts: ContactView[] = [
             {
                 id: 1,
-                contactUserId: 'contact-user-id',
+                contactUserId: 2,
                 nickName: 'Nina',
                 favorite: true,
                 createdAt: '2026-04-10T09:00:00.000Z',
@@ -82,9 +82,9 @@ describe('ContactService', () => {
         }
 
         let mockContactInvitationView = {
-            id: '1',
-            senderUserId: '2',
-            recipientUserId: '3',
+            id: 1,
+            senderUserId: 2,
+            recipientUserId: 3,
             nickName: 'nickName',
             status: 'PENDING',
             createdAt: '2026-04-18',
@@ -147,7 +147,7 @@ describe('ContactService', () => {
 
         let mockContact: ContactView = {
                 id: 1,
-                contactUserId: 'contact-user-id',
+                contactUserId: 2,
                 nickName: 'new nickName',
                 favorite: true,
                 createdAt: '2026-04-10T09:00:00.000Z',

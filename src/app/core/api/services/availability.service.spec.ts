@@ -64,6 +64,7 @@ describe('AvailabilityService', () => {
             {
                 startDateTime: '2026-04-10T09:00:00.000Z',
                 endDateTime:'2026-04-10T10:00:00.000Z',
+                channelType: 'CHAT',
             },
         ];
 

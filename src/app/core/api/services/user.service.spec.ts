@@ -3,7 +3,7 @@ import { UserService } from "./user.service";
 import { TestBed } from "@angular/core/testing";
 import { provideHttpClient } from "@angular/common/http";
 import { environment } from "src/environments/environment";
-import { UserProfileView } from "../model/user-profile-view.model";
+import { UserPrivateProfileView } from "../model/user-private-profile-view.model";
 
 describe('UserService', () => {
     let service: UserService;
@@ -27,10 +27,13 @@ describe('UserService', () => {
     });
 
     it('should call getMe', () => {
-        const mockUser: UserProfileView = {
-            id: 'user-id',
+        const mockUser: UserPrivateProfileView = {
+            id: 1,
             displayName: 'Nina',
             timezone: 'UTC',
+            email: 'test@email.com',
+            status: 'ACTIVE',
+            phoneNumber: '0032009933',
         };
 
         service.getMe().subscribe(user => {

@@ -1,6 +1,6 @@
 export interface ContactView {
     id: number,
-    contactUserId: string;
+    contactUserId: number;
     nickName?: string | null;
     favorite: boolean;
     createdAt: string;

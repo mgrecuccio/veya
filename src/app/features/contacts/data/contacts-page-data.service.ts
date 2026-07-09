@@ -7,6 +7,7 @@ import { catchError, map } from "rxjs/operators";
 import { ContactInvitationView } from "src/app/core/api/model/contact-invitation-view.model";
 import { SendInvitationRequest } from "src/app/core/api/request/send-invitation.request";
 import { EditContactRequest } from "src/app/core/api/request/edit-contact.request";
+import { toUserFacingApiError } from "src/app/core/api/api-error.util";
 
 export interface ContactsPageData {
     contacts: ContactView[],
@@ -28,8 +29,11 @@ export class ContactsPageDataService {
             })),
             catchError((error) => {
                 console.error('[ContactsPageDataService] Failed to load contacts page', error);
-                return throwError(
-                    () => new Error('We couldn’t load your circle right now. Please try again.')
+                return throwError(() =>
+                    toUserFacingApiError(
+                        error,
+                        'We couldn’t load your circle right now. Please try again.',
+                    ),
                 );
             }),
         );
