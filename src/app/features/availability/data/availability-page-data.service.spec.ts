@@ -68,6 +68,7 @@ describe('AvailabilityPageDataService', () => {
                 {
                     startDateTime: '2026-04-25T09:00:00.000Z',
                     endDateTime: '2026-04-25T10:00:00.000Z',
+                    channelType: 'CHAT',
                 },
             ]),
         );

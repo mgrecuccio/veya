@@ -1,5 +1,5 @@
 export interface UserProfileView {
-    id: string;
+    id: number;
     displayName?: string | null;
     timezone?: string | null;
 }

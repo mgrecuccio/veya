@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { HttpErrorResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
 
 import { HomeDashboardService } from './home-dashboard.service';
@@ -48,9 +49,12 @@ describe('HomeDashboardService', () => {
   function mockBase(): void {
     userService.getMe.and.returnValue(
       of({
-        id: 'user-1',
+        id: 1,
         displayName: 'Maya',
         timezone: 'UTC',
+        email: 'test@email.com',
+        phoneNumber: '0032889944',
+        status: 'ACTIVE'
       }),
     );
 
@@ -58,7 +62,7 @@ describe('HomeDashboardService', () => {
       of([
         {
           id: 1,
-          contactUserId: 'contact-1',
+          contactUserId: 2,
           nickName: 'Alex',
           favorite: false,
           createdAt: '2026-04-01T10:00:00.000Z',
@@ -89,6 +93,7 @@ describe('HomeDashboardService', () => {
         {
           startDateTime: '2026-04-10T18:00:00.000Z',
           endDateTime: '2026-04-10T20:00:00.000Z',
+          channelType: 'CHAT',
         },
       ]),
     );
@@ -214,9 +219,12 @@ describe('HomeDashboardService', () => {
 
     userService.getMe.and.returnValue(
       of({
-        id: 'user-1,',
+        id: 1,
         displayName: null,
-        timezone: 'UTC'
+        timezone: 'UTC',
+        email: 'test@email.com',
+        phoneNumber: '0032889944',
+        status: 'ACTIVE'
       }),
     );
 
@@ -266,6 +274,29 @@ describe('HomeDashboardService', () => {
         next: () => fail('unexpected error'),
         error: (error: Error) => {
           expect(error.message).toBe('We couldn’t load your dashboard right now. Please try again.');
+          done();
+        },
+      });
+  });
+
+  it('preserves backend error code when a core request fails', (done) => {
+      mockBase();
+
+      userService.getMe.and.returnValue(
+        throwError(() => new HttpErrorResponse({
+          status: 422,
+          error: {
+            code: 'PHONE_NUMBER_REQUIRED',
+            message: 'Phone number is required.',
+          },
+        })),
+      );
+
+      service.getDashboardState(new Date('2026-04-10T09:00:00.000Z')).subscribe({
+        next: () => fail('unexpected error'),
+        error: (error: Error & { code?: string }) => {
+          expect(error.message).toBe('We couldn’t load your dashboard right now. Please try again.');
+          expect(error.code).toBe('PHONE_NUMBER_REQUIRED');
           done();
         },
       });

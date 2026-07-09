@@ -1,4 +1,3 @@
-export interface EditContactRequest {
-    nickName?: string | null;
-    favorite: boolean;
-}
+import { UpdateContactRequest } from './update-contact.request';
+
+export type EditContactRequest = UpdateContactRequest;

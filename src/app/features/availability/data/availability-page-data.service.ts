@@ -8,6 +8,7 @@ import { UpdateAvailabilityRuleRequest } from "src/app/core/api/request/update-a
 import { CreateAvailabilityOverrideRequest } from "src/app/core/api/request/create-availability-override.request";
 import { CreateAvailabilityRuleRequest } from "src/app/core/api/request/create-availability-rule.request";
 import { AvailabilityService } from "src/app/core/api/services/availability.service";
+import { toUserFacingApiError } from "src/app/core/api/api-error.util";
 
 export interface AvailabilityPageData {
     rules: AvailabilityRuleView[];
@@ -37,8 +38,11 @@ export class AvailabilityPageDataService {
             })),
             catchError((error) => {
                 console.error('[AvailabilityPageDataService] Failed to load availability page', error);
-                return throwError(
-                    () => new Error('We couldn’t load your availability right now. Please try again.'),
+                return throwError(() =>
+                    toUserFacingApiError(
+                        error,
+                        'We couldn’t load your availability right now. Please try again.',
+                    ),
                 );
             }),
         );
