@@ -1,5 +1,7 @@
 # Push Notifications Tasks
 
+Status: Planned
+
 - [ ] Add notification devices API service.
 - [ ] Add device registration request tests.
 - [ ] Integrate Capacitor/Ionic push permission flow.
@@ -12,4 +14,3 @@
 - [ ] Route suggestions notifications to suggestions.
 - [ ] Disable token on logout or notification opt-out where possible.
 - [ ] Add focused tests for intent routing.
-

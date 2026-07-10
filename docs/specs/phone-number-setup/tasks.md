@@ -1,5 +1,7 @@
 # Phone Number Setup Tasks
 
+Status: Planned
+
 - [ ] Define retry state shape.
 - [ ] Route missing proposal phone pre-checks to settings/profile setup.
 - [ ] Route missing acceptance phone pre-checks to settings/profile setup.
@@ -7,4 +9,3 @@
 - [ ] Save phone number via profile update.
 - [ ] Retry interrupted action after successful save.
 - [ ] Add tests for proposal and acceptance retry paths.
-

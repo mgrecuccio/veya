@@ -1,5 +1,7 @@
 # Matches API Tasks
 
+Status: Planned
+
 - [ ] Create `MatchesService`.
 - [ ] Add typed method for suggestions.
 - [ ] Add typed method for proposal creation.
@@ -8,4 +10,3 @@
 - [ ] Add typed method for accepted matches.
 - [ ] Add typed method for contact link creation.
 - [ ] Add service tests for all methods.
-

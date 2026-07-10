@@ -1,5 +1,7 @@
 # Settings Tasks
 
+Status: Planned
+
 ## 1. API Surface
 
 - [ ] Add `UserService.updateMe(payload: UpdateProfileRequest)`.
@@ -56,4 +58,3 @@
 - [ ] Test save failure keeps edited form values.
 - [ ] Test logout calls auth service and navigates away.
 - [ ] Run the relevant focused tests.
-
