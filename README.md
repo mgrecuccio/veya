@@ -210,6 +210,23 @@ Readiness is intentionally not based on recurring availability rules. A user can
 - Keep feature-specific mapping and formatting in feature-local `data` utilities when it is not shared.
 - Write focused tests for API services, auth behavior, and feature data mapping.
 
+## Spec-Driven Development
+
+Veya uses lightweight spec-driven development for feature work that changes user flows, backend contracts, navigation, or shared UI patterns.
+
+Project steering:
+
+- [Product steering](docs/steering/product.md)
+- [Technical steering](docs/steering/technical.md)
+
+Feature specs live under [docs/specs](docs/specs/README.md). Each feature/workstream spec should contain:
+
+- `requirements.md`: user outcomes, scope, endpoints, non-goals, and acceptance criteria
+- `design.md`: routing, components, services, state, validation, error handling, and tradeoffs
+- `tasks.md`: ordered implementation checklist with testing work
+
+When adding a new feature, create or update the relevant spec before implementation. Keep the spec and completed task checklist committed with the code changes.
+
 ## Testing Notes
 
 The test suite uses Angular's TestBed, Jasmine, Karma, and `HttpTestingController` for API services.
@@ -242,9 +259,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for project conventions.
 Recommended workflow:
 
 1. Create a feature or bugfix branch.
-2. Keep changes scoped and small.
-3. Run typecheck, lint, and relevant tests.
-4. Open a pull request with a clear summary and verification notes.
+2. Create or update the relevant spec under `docs/specs`.
+3. Keep changes scoped and small.
+4. Update the spec task checklist as work is completed.
+5. Run typecheck, lint, and relevant tests.
+6. Open a pull request with a clear summary and verification notes.
 
 ## License
 
