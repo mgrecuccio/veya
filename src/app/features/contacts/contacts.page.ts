@@ -161,6 +161,29 @@ export class ContactsPage {
       });
     }
 
+    rejectInvitation(invitation: PendingInvitationCardVm): void {
+      if (this.rowActionBusyId() !== null) {
+        return;
+      }
+
+      this.rowActionBusyId.set(invitation.id);
+
+      this.contactsDataService.rejectInvitation(invitation.id).subscribe({
+        next: () => {
+          this.rowActionBusyId.set(null);
+          this.retry();
+          this.showToast('Invitation rejected.', 'success');
+        },
+        error: (error: Error) => {
+          this.rowActionBusyId.set(null);
+          this.showToast(
+            error.message || 'We couldn’t reject that invitation right now.',
+            'danger',
+          );
+        },
+      });
+    }
+
     async openContactActions(contact: ContactCardVm): Promise<void> {
       const sheet = await this.actionSheetController.create({
         header: contact.displayLabel,

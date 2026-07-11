@@ -379,6 +379,17 @@
   font-weight: 700;
 }
 
+.reject-action-button {
+  --background: rgba(185, 92, 82, 0.12);
+  --background-hover: rgba(185, 92, 82, 0.16);
+  --background-activated: rgba(185, 92, 82, 0.2);
+  --color: #b95c52;
+  --border-radius: 999px;
+  --box-shadow: none;
+  min-height: 38px;
+  font-weight: 700;
+}
+
 .contact-menu-button {
   --color: var(--app-color-primary);
   --background: rgba(122, 99, 246, 0.1);

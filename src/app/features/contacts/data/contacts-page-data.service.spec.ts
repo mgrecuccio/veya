@@ -19,6 +19,8 @@ describe('ContactPageDataService', () => {
                         'getPendingInvitations',
                         'sendInvitation',
                         'acceptInvitation',
+                        'rejectInvitation',
+                        'cancelInvitation',
                         'removeContact',
                         'blockContact',
                         'editContact',
@@ -151,11 +153,20 @@ describe('ContactPageDataService', () => {
         });
     });
 
-    it('should delegate acceptInvitation to ContactsService', (done) => {
-        contactsService.acceptInvitation.and.returnValue(of(void 0));
+    it('should delegate rejectInvitation to ContactsService', (done) => {
+        contactsService.rejectInvitation.and.returnValue(of(void 0));
 
-        service.acceptInvitation(123).subscribe(() => {
-            expect(contactsService.acceptInvitation).toHaveBeenCalledWith(123);
+        service.rejectInvitation(123).subscribe(() => {
+            expect(contactsService.rejectInvitation).toHaveBeenCalledWith(123);
+            done();
+        });
+    });
+
+    it('should delegate cancelInvitation to ContactsService', (done) => {
+        contactsService.cancelInvitation.and.returnValue(of(void 0));
+
+        service.cancelInvitation(123).subscribe(() => {
+            expect(contactsService.cancelInvitation).toHaveBeenCalledWith(123);
             done();
         });
     });

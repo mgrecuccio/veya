@@ -1,8 +1,8 @@
 # Error Handling Tasks
 
-Status: Done
+Status: Implemented
 
-- [X] Add shared API error parsing helper or pattern.
+- [x] Add shared API error parsing helper or pattern.
 - [x] Preserve `ApiError.code`.
 - [x] Update auth error mapping where applicable.
 - [x] Handle phone-number-required codes.

@@ -219,6 +219,15 @@
                       >
                         {{ rowActionBusyId() === invitation.id ? 'Accepting…' : 'Accept' }}
                       </ion-button>
+
+                      <ion-button
+                        size="small"
+                        class="reject-action-button"
+                        (click)="rejectInvitation(invitation)"
+                        [disabled]="rowActionBusyId() === invitation.id"
+                      >
+                        Reject
+                      </ion-button>
                     </div>
                   </article>
                 }
