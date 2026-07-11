@@ -1,12 +1,12 @@
 # Error Handling Tasks
 
-Status: Planned
+Status: Done
 
-- [ ] Add shared API error parsing helper or pattern.
-- [ ] Preserve `ApiError.code`.
-- [ ] Update auth error mapping where applicable.
-- [ ] Handle phone-number-required codes.
-- [ ] Handle duplicate proposal code.
-- [ ] Handle stale proposal code.
-- [ ] Add tests for known code parsing.
-- [ ] Add tests for unknown generic fallback.
+- [X] Add shared API error parsing helper or pattern.
+- [x] Preserve `ApiError.code`.
+- [x] Update auth error mapping where applicable.
+- [x] Handle phone-number-required codes.
+- [x] Handle duplicate proposal code.
+- [x] Handle stale proposal code.
+- [x] Add tests for known code parsing.
+- [x] Add tests for unknown generic fallback.
