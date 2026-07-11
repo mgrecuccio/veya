@@ -47,6 +47,14 @@ export class ContactsPageDataService {
         return this.contactsService.acceptInvitation(invitationId);
     }
 
+    rejectInvitation(invitationId: number): Observable<void> {
+        return this.contactsService.rejectInvitation(invitationId);
+    }
+
+    cancelInvitation(invitationId: number): Observable<void> {
+        return this.contactsService.cancelInvitation(invitationId);
+    }
+
     removeContact(contactUserId: number): Observable<void> {
         return this.contactsService.removeContact(contactUserId);
     }

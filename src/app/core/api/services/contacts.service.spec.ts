@@ -113,6 +113,31 @@ describe('ContactService', () => {
         expect(req.request.method).toBe('POST');
     });
 
+    it('should reject an invitation', () => {
+        const mockInvitationId = 1;
+
+        service.rejectInvitation(mockInvitationId).subscribe();
+
+        const req = httpMock.expectOne(
+            `${environment.apiBaseUrl}/api/v1/contacts/invitations/${mockInvitationId}/reject`
+        );
+
+        expect(req.request.method).toBe('POST');
+        expect(req.request.body).toEqual({});
+    });
+
+    it('should cancel an invitation', () => {
+        const mockInvitationId = 1;
+
+        service.cancelInvitation(mockInvitationId).subscribe();
+
+        const req = httpMock.expectOne(
+            `${environment.apiBaseUrl}/api/v1/contacts/invitations/${mockInvitationId}`
+        );
+
+        expect(req.request.method).toBe('DELETE');
+    });
+
     it('should remove a contact', () => {
         const mockContactUserId = 1;
 

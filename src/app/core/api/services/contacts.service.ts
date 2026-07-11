@@ -36,6 +36,19 @@ export class ContactsService {
         );
     }
 
+    rejectInvitation(invitationId: number): Observable<void> {
+        return this.http.post<void>(
+            `${this.apiBaseUrl}/api/v1/contacts/invitations/${invitationId}/reject`,
+            {},
+        );
+    }
+
+    cancelInvitation(invitationId: number): Observable<void> {
+        return this.http.delete<void>(
+            `${this.apiBaseUrl}/api/v1/contacts/invitations/${invitationId}`,
+        );
+    }
+
     removeContact(contactUserId: number): Observable<void> {
         return this.http.delete<void>(
             `${this.apiBaseUrl}/api/v1/contacts/${contactUserId}`,

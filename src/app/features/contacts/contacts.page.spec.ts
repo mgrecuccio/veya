@@ -24,6 +24,8 @@ describe('ContactsPage', () => {
                             'getPageData',
                             'sendInvitation',
                             'acceptInvitation',
+                            'rejectInvitation',
+                            'cancelInvitation',
                             'removeContact',
                             'blockContact',
                             'editContact',
@@ -217,6 +219,49 @@ describe('ContactsPage', () => {
         });
 
         expect(dataService.acceptInvitation).not.toHaveBeenCalled();
+    });
+
+    it('should set busy id and refresh after rejecting invitation', fakeAsync(() => {
+        dataService.rejectInvitation.and.returnValue(of(void 0));
+        spyOn(component, 'retry');
+
+        component.rejectInvitation({
+            id: 10,
+            displayLabel: 'Alex',
+            nickName: 'Alex',
+            senderUserId: 42,
+            initials: 'A',
+            createdAt: null,
+            createdLabel: 'today',
+        });
+
+        expect(dataService.rejectInvitation).toHaveBeenCalledWith(10);
+        expect(component.rowActionBusyId()).toBeNull();
+        expect(component.retry).toHaveBeenCalled();
+
+        flushMicrotasks();
+
+        expect(component.toastState()).toEqual({
+            isOpen: true,
+            message: 'Invitation rejected.',
+            color: 'success',
+        });
+    }));
+
+    it('should ignore rejectInvitation when another row action is busy', () => {
+        component.rowActionBusyId.set(99);
+
+        component.rejectInvitation({
+            id: 10,
+            displayLabel: 'Alex',
+            nickName: 'Alex',
+            senderUserId: 42,
+            initials: 'A',
+            createdAt: null,
+            createdLabel: 'today',
+        });
+
+        expect(dataService.rejectInvitation).not.toHaveBeenCalled();
     });
 
     it('should create and present an action sheet for a managing a contact', async() => {

@@ -1,10 +1,9 @@
 # Contact Invitations Tasks
 
-Status: Planned
+Status: Implemented
 
-- [ ] Add `ContactsService.rejectInvitation`.
-- [ ] Add `ContactsService.cancelInvitation`.
-- [ ] Add service tests for reject and cancel.
-- [ ] Add reject action to incoming invitations UI.
-- [ ] Add cancel action to outgoing invitations UI if outgoing invites are shown.
-- [ ] Refresh contacts state after action.
+- [x] Add `ContactsService.rejectInvitation`.
+- [x] Add `ContactsService.cancelInvitation`.
+- [x] Add service tests for reject and cancel.
+- [x] Add reject action to incoming invitations UI.
+- [x] Refresh contacts state after action.
