@@ -17,7 +17,7 @@ Each feature/workstream spec uses:
 | `phone-number-setup/` | 11, 12 | Planned | Phone setup redirects and retry behavior |
 | `push-notifications/` | 13, 14, 15 | Planned | Device registration, Firebase receipt, routing |
 | `contact-invitations/` | 5 | Planned | Reject/cancel contact invitation actions |
-| `error-handling/` | 17 | Planned | Backend error code handling |
+| `error-handling/` | 17 | Done | Backend error code handling |
 | `mvp-smoke/` | 18, 19 | Planned | Test coverage and release smoke checklist |
 
 Do not split every backlog ticket into its own spec by default. Prefer a spec per coherent product or technical workstream.
