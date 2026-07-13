@@ -1,12 +1,12 @@
 # Matches API Tasks
 
-Status: Planned
+Status: Implemented
 
-- [ ] Create `MatchesService`.
-- [ ] Add typed method for suggestions.
-- [ ] Add typed method for proposal creation.
-- [ ] Add typed method for incoming invitations.
-- [ ] Add typed methods for accept and decline.
-- [ ] Add typed method for accepted matches.
-- [ ] Add typed method for contact link creation.
-- [ ] Add service tests for all methods.
+- [x] Create `MatchesService`.
+- [x] Add typed method for suggestions.
+- [x] Add typed method for proposal creation.
+- [x] Add typed method for incoming invitations.
+- [x] Add typed methods for accept and decline.
+- [x] Add typed method for accepted matches.
+- [x] Add typed method for contact link creation.
+- [x] Add service tests for all methods.
