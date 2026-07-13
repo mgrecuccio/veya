@@ -66,6 +66,6 @@ export class ContactsService {
         return this.http.put<ContactView>(
             `${this.apiBaseUrl}/api/v1/contacts/${contactUserId}`,
             payload
-        )
+        );
     }
 }

@@ -2,14 +2,13 @@ import { ChannelType } from './channel-type.model';
 
 export interface MatchInvitationView {
     id: number;
-    matchId: number;
     initiatorUserId: number;
-    initiatorDisplayName?: string | null;
-    initiatorNickName?: string | null;
+    initiatorDisplayName: string;
     channelType: ChannelType;
     status: string;
-    overlapStartDateTime: string;
-    overlapEndDateTime: string;
+    score: number;
+    overlapStart: string;
+    overlapEnd: string;
     createdAt: string;
-    expiresAt?: string | null;
+    respondedAt?: string | null;
 }
