@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { RouterModule } from '@angular/router';
 import { IonicModule } from '@ionic/angular';
 
 interface MatchPreview {
@@ -10,7 +11,7 @@ interface MatchPreview {
 @Component({
   selector: 'app-matches',
   standalone: true,
-  imports: [IonicModule],
+  imports: [IonicModule, RouterModule],
   templateUrl: './matches.page.html',
   styleUrls: ['./matches.page.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

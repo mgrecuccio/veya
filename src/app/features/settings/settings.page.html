@@ -1,0 +1,86 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar class="settings-toolbar">
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/app/home" text=""></ion-back-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="app-gradient-content settings-content" [fullscreen]="true">
+  <div class="app-page settings-page">
+    <div class="settings-shell">
+      <section class="app-surface settings-hero">
+        <div class="settings-hero__glow"></div>
+
+        <div class="settings-hero__content">
+          <p class="settings-hero__eyebrow">Account</p>
+          <h1 class="settings-hero__title">Your settings</h1>
+          <p class="settings-hero__subtitle">
+            Manage your profile and matching preferences.
+          </p>
+        </div>
+      </section>
+
+      <section class="app-surface settings-card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Profile</h2>
+            <p class="card-subtitle">Display name, timezone, and phone number.</p>
+          </div>
+        </div>
+
+        <div class="settings-row-list">
+          <div class="settings-row">
+            <span class="settings-row__label">Display name</span>
+            <span class="settings-row__value">Not loaded</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-row__label">Timezone</span>
+            <span class="settings-row__value">Not loaded</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-row__label">Phone number</span>
+            <span class="settings-row__value">Not loaded</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="app-surface settings-card">
+        <div class="card-header">
+          <div>
+            <h2 class="card-title">Preferences</h2>
+            <p class="card-subtitle">Matching channels and notifications.</p>
+          </div>
+        </div>
+
+        <div class="settings-row-list">
+          <div class="settings-row">
+            <span class="settings-row__label">Chat matching</span>
+            <span class="settings-row__value">Not loaded</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-row__label">Call matching</span>
+            <span class="settings-row__value">Not loaded</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-row__label">Notifications</span>
+            <span class="settings-row__value">Not loaded</span>
+          </div>
+        </div>
+      </section>
+
+      <footer class="settings-footer">
+        <ion-button
+          class="logout-button"
+          expand="block"
+          color="danger"
+          fill="outline"
+          type="button"
+          disabled
+        >
+          Logout
+        </ion-button>
+      </footer>
+    </div>
+  </div>
+</ion-content>

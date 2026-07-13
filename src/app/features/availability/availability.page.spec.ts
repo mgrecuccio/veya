@@ -1,4 +1,5 @@
 import { fakeAsync, flushMicrotasks, TestBed } from "@angular/core/testing";
+import { provideRouter } from "@angular/router";
 import { AvailabilityPage } from "./availability.page";
 import { AvailabilityPageDataService } from "./data/availability-page-data.service";
 import { of, Subject, throwError } from "rxjs";
@@ -13,6 +14,7 @@ describe('AbailabilityPage', () => {
         await TestBed.configureTestingModule({
             imports: [AvailabilityPage],
             providers: [
+                provideRouter([]),
                 {
                     provide: AvailabilityPageDataService,
                     useValue: jasmine.createSpyObj<AvailabilityPageDataService>(

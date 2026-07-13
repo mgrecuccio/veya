@@ -8,15 +8,19 @@ import { RegisterRequest } from '../models/register-request.model';
 import { TokenStorageService } from './token-storage.service';
 import { AuthTokens } from '../models/auth-tokens.model';
 import { environment } from "src/environments/environment";
+import { ApiError } from '../api/model/api-error.model';
+import { extractApiError } from '../api/api-error.util';
 
 export interface AuthError {
   code:
     | 'INVALID_CREDENTIALS'
     | 'EMAIL_ALREADY_EXISTS'
+    | 'PHONE_NUMBER_ALREADY_EXISTS'
     | 'UNAUTHORIZED'
     | 'NETWORK'
     | 'UNKNOWN';
   message: string;
+  apiError?: ApiError;
 }
 
 interface RefreshTokenRequest {
@@ -119,6 +123,9 @@ export class AuthService {
     error: HttpErrorResponse,
     operation: 'login' | 'register' | 'refresh'
   ): AuthError {
+    const apiError = extractApiError(error);
+    const authApiError = apiError ?? undefined;
+
     if (error.status === 0) {
       return {
         code: 'NETWORK',
@@ -126,34 +133,64 @@ export class AuthService {
       };
     }
 
-    if (operation === 'login' && error.status === 401) {
+    if (
+      operation === 'login' &&
+      (apiError?.code === 'BAD_CREDENTIALS' || error.status === 401)
+    ) {
       return {
         code: 'INVALID_CREDENTIALS',
         message: 'Invalid email or password.',
+        apiError: authApiError,
       };
     }
 
-    if (operation === 'register' && error.status === 409) {
+    if (
+      operation === 'register' &&
+      apiError?.code === 'PHONE_NUMBER_ALREADY_USED'
+    ) {
+      return {
+        code: 'PHONE_NUMBER_ALREADY_EXISTS',
+        message: 'An account with this phone number already exists.',
+        apiError: authApiError,
+      };
+    }
+
+    if (
+      operation === 'register' &&
+      (apiError?.code === 'EMAIL_ALREADY_USED' ||
+        apiError?.code === 'EMAIL_ALREADY_EXISTS' ||
+        (!apiError && error.status === 409))
+    ) {
       return {
         code: 'EMAIL_ALREADY_EXISTS',
         message: 'An account with this email already exists.',
+        apiError: authApiError,
       };
     }
 
-    if (operation === 'refresh' && error.status === 401) {
+    if (
+      operation === 'refresh' &&
+      (apiError?.code === 'INVALID_REFRESH_TOKEN' || apiError?.code === 'AUTHENTICATION_REQUIRED' || error.status === 401)
+    ) {
       return {
         code: 'UNAUTHORIZED',
         message: 'Your session has expired. Please log in again.',
+        apiError: authApiError,
       };
     }
 
     return {
       code: 'UNKNOWN',
-      message: this.extractBackendMessage(error) ?? 'Something went wrong. Please try again.',
+      message: this.extractBackendMessage(error, apiError) ?? 'Something went wrong. Please try again.',
+      apiError: authApiError,
     };
   }
 
-  private extractBackendMessage(error: HttpErrorResponse): string | null {
+  private extractBackendMessage(error: HttpErrorResponse, apiError: ApiError | null): string | null {
+    if (apiError?.message) {
+      return apiError.message;
+    }
+
     const payload = error.error;
 
     if (!payload) {

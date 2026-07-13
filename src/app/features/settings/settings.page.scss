@@ -1,0 +1,255 @@
+:host {
+  display: block;
+}
+
+.settings-toolbar {
+  --background: transparent;
+  --border-color: transparent;
+  --padding-top: calc(8px + env(safe-area-inset-top));
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --min-height: 56px;
+  backdrop-filter: blur(100px);
+  -webkit-backdrop-filter: blur(100px);
+}
+
+.settings-toolbar ion-back-button {
+  --color: #fff;
+  --icon-font-size: 24px;
+  --padding-start: 0;
+  --padding-end: 0;
+  --background: rgba(255, 255, 255, 0.18);
+  --border-radius: 999px;
+  width: 42px;
+  height: 42px;
+}
+
+.settings-content::part(scroll) {
+  padding-top: calc(56px + env(safe-area-inset-top) + 8px);
+  padding-bottom: calc(80px + env(safe-area-inset-bottom));
+}
+
+.settings-page {
+  padding-top: 0;
+  padding-bottom: calc(32px + env(safe-area-inset-bottom));
+}
+
+.settings-shell {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.settings-shell > * + * {
+  margin-top: 16px;
+}
+
+.settings-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 22px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 30px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.08)),
+    var(--app-gradient-hero);
+  box-shadow: var(--app-shadow-card);
+}
+
+.settings-hero__glow {
+  position: absolute;
+  top: -50px;
+  right: -30px;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(255, 255, 255, 0) 70%
+  );
+  pointer-events: none;
+}
+
+.settings-hero__content {
+  position: relative;
+  z-index: 1;
+}
+
+.settings-hero__eyebrow {
+  margin: 0 0 8px;
+  color: rgba(90, 70, 128, 0.72);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.settings-hero__title {
+  margin: 0;
+  color: var(--app-color-text);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.08;
+}
+
+.settings-hero__subtitle,
+.card-subtitle {
+  margin: 10px 0 0;
+  color: var(--app-color-text-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.settings-hero__subtitle {
+  max-width: 34ch;
+  color: rgba(90, 70, 128, 0.78);
+  line-height: 1.55;
+}
+
+.settings-card {
+  padding: 18px;
+  border-radius: 26px;
+  backdrop-filter: blur(10px);
+}
+
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.card-title {
+  margin: 0;
+  color: var(--app-color-text);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.card-subtitle {
+  margin-top: 6px;
+}
+
+.settings-row-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 54px;
+  padding: 12px 14px;
+  border: 1px solid rgba(122, 99, 246, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: 0 10px 22px rgba(122, 99, 246, 0.06);
+}
+
+.settings-row__label,
+.settings-row__value {
+  min-width: 0;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.settings-row__label {
+  color: var(--app-color-text);
+  font-weight: 700;
+}
+
+.settings-row__value {
+  overflow: hidden;
+  color: var(--app-color-text-muted);
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logout-button {
+  --border-radius: 999px;
+  --box-shadow: none;
+  min-height: 48px;
+  margin: 4px 0 0;
+  font-weight: 700;
+}
+
+.logout-button[disabled] {
+  opacity: 0.68;
+}
+
+.settings-footer {
+  display: grid;
+  gap: 12px;
+  padding: 4px 4px calc(24px + env(safe-area-inset-bottom));
+}
+
+.settings-footer__note {
+  max-width: 40ch;
+  margin: 0 auto;
+  color: rgba(90, 70, 128, 0.72);
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+@media (max-width: 380px) {
+  .settings-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .settings-row__value {
+    text-align: left;
+  }
+}
+
+@media (max-height: 700px) {
+  .settings-shell > * + * {
+    margin-top: 12px;
+  }
+
+  .settings-hero,
+  .settings-card {
+    padding: 16px;
+  }
+
+  .settings-hero__title {
+    font-size: 26px;
+  }
+
+  .settings-hero__subtitle,
+  .card-subtitle {
+    margin-top: 6px;
+  }
+
+  .settings-row {
+    min-height: 48px;
+    padding: 10px 12px;
+  }
+
+  .logout-button {
+    min-height: 46px;
+  }
+}
+
+@media (min-width: 768px) {
+  .settings-page {
+    padding-top: 8px;
+  }
+
+  .settings-hero,
+  .settings-card {
+    padding: 22px;
+  }
+
+  .settings-hero__title {
+    font-size: 34px;
+  }
+}

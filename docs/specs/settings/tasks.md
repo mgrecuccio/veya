@@ -11,13 +11,13 @@ Status: In Progress
 
 ## 2. Routing And Entry Points
 
-- [ ] Add guarded settings route.
-- [ ] Create settings page files.
-- [ ] Wire the home settings icon to the settings route or launcher.
-- [ ] Wire the availability settings icon to the settings route or launcher.
-- [ ] Wire the contacts settings icon to the settings route or launcher.
-- [ ] Wire the matches settings icon to the settings route or launcher.
-- [ ] Remove `Settings preview` title text once the action is real.
+- [x] Add guarded settings route.
+- [x] Create settings page files.
+- [x] Wire the home settings icon to the settings route or launcher.
+- [x] Wire the availability settings icon to the settings route or launcher.
+- [x] Wire the contacts settings icon to the settings route or launcher.
+- [x] Wire the matches settings icon to the settings route or launcher.
+- [x] Remove `Settings preview` title text once the action is real.
 
 ## 3. Settings Form
 

@@ -1,6 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { ChangeDetectionStrategy, Component, inject, signal } from "@angular/core";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
+import { RouterModule } from "@angular/router";
 import { IonicModule, ActionSheetController, AlertController } from '@ionic/angular';
 import { ContactsPageData, ContactsPageDataService } from "./data/contacts-page-data.service";
 import { catchError, map, Observable, of, shareReplay, startWith, Subject, switchMap } from "rxjs";
@@ -43,6 +44,7 @@ interface PendingInvitationCardVm {
         CommonModule,
         IonicModule,
         ReactiveFormsModule,
+        RouterModule,
     ],
     templateUrl: './contacts.page.html',
     styleUrls: ['./contacts.page.scss'],
