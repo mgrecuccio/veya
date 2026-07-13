@@ -23,7 +23,12 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/auth/register/register.page').then((m) => m.RegisterPage),
   },
-
+  {
+    path: 'settings',
+    loadComponent: () =>
+      import('./features/settings/settings.page').then((m) => m.SettingsPage),
+    canActivate: [authGuard],
+  },
   {
     path: 'app',
     loadComponent: () =>

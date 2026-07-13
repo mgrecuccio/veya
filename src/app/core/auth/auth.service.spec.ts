@@ -147,6 +147,31 @@ describe('AuthService', () => {
         req.flush({}, { status: 401, statusText: 'Unauthorized' });
     });
 
+    it('should map backend BAD_CREDENTIALS to INVALID_CREDENTIALS', () => {
+        const payload: LoginRequest = {
+            email: 'john@example.com',
+            password: 'wrong-password',
+        };
+
+        service.login(payload).subscribe({
+            next: () => fail('Expected error'),
+            error: (error: AuthError) => {
+                expect(error.code).toBe('INVALID_CREDENTIALS');
+                expect(error.message).toBe('Invalid email or password.');
+                expect(error.apiError?.code).toBe('BAD_CREDENTIALS');
+            },
+        });
+
+        const req = httpMock.expectOne('http://localhost:8080/api/v1/auth/login');
+        req.flush(
+            {
+                code: 'BAD_CREDENTIALS',
+                message: 'Bad credentials',
+            },
+            { status: 401, statusText: 'Unauthorized' },
+        );
+    });
+
     it('should map register 409 to EMAIL_ALREADY_EXISTS', () => {
         const payload: RegisterRequest = {
             email: 'john@example.com',
@@ -165,6 +190,61 @@ describe('AuthService', () => {
 
         const req = httpMock.expectOne('http://localhost:8080/api/v1/auth/register');
         req.flush({}, { status: 409, statusText: 'Conflict' });
+    });
+
+    it('should map backend EMAIL_ALREADY_USED to EMAIL_ALREADY_EXISTS', () => {
+        const payload: RegisterRequest = {
+            email: 'john@example.com',
+            password: 'password123',
+            displayName: 'John',
+            timezone: 'Europe/Brussels',
+        };
+
+        service.register(payload).subscribe({
+            next: () => fail('Expected error'),
+            error: (error: AuthError) => {
+                expect(error.code).toBe('EMAIL_ALREADY_EXISTS');
+                expect(error.message).toBe('An account with this email already exists.');
+                expect(error.apiError?.code).toBe('EMAIL_ALREADY_USED');
+            },
+        });
+
+        const req = httpMock.expectOne('http://localhost:8080/api/v1/auth/register');
+        req.flush(
+            {
+                code: 'EMAIL_ALREADY_USED',
+                message: 'Email already used',
+            },
+            { status: 409, statusText: 'Conflict' },
+        );
+    });
+
+    it('should map backend PHONE_NUMBER_ALREADY_USED to PHONE_NUMBER_ALREADY_EXISTS', () => {
+        const payload: RegisterRequest = {
+            email: 'john@example.com',
+            password: 'password123',
+            displayName: 'John',
+            phoneNumber: '+393331112222',
+            timezone: 'Europe/Brussels',
+        };
+
+        service.register(payload).subscribe({
+            next: () => fail('Expected error'),
+            error: (error: AuthError) => {
+                expect(error.code).toBe('PHONE_NUMBER_ALREADY_EXISTS');
+                expect(error.message).toBe('An account with this phone number already exists.');
+                expect(error.apiError?.code).toBe('PHONE_NUMBER_ALREADY_USED');
+            },
+        });
+
+        const req = httpMock.expectOne('http://localhost:8080/api/v1/auth/register');
+        req.flush(
+            {
+                code: 'PHONE_NUMBER_ALREADY_USED',
+                message: 'Phone number already used',
+            },
+            { status: 409, statusText: 'Conflict' },
+        );
     });
 
     it('should map network error to NETWORK', () => {
@@ -214,6 +294,29 @@ describe('AuthService', () => {
         });
 
         httpMock.expectNone('http://localhost:8080/api/v1/auth/refresh');
+    });
+
+    it('should map backend INVALID_REFRESH_TOKEN to UNAUTHORIZED and clear tokens', () => {
+        tokenStorage.setTokens(mockTokens);
+
+        service.refreshToken().subscribe({
+            next: () => fail('Expected error'),
+            error: (error: AuthError) => {
+                expect(error.code).toBe('UNAUTHORIZED');
+                expect(error.apiError?.code).toBe('INVALID_REFRESH_TOKEN');
+                expect(tokenStorage.getAccessToken()).toBeNull();
+                expect(tokenStorage.getRefreshToken()).toBeNull();
+            },
+        });
+
+        const req = httpMock.expectOne('http://localhost:8080/api/v1/auth/refresh');
+        req.flush(
+            {
+                code: 'INVALID_REFRESH_TOKEN',
+                message: 'Invalid refresh token',
+            },
+            { status: 400, statusText: 'Bad Request' },
+        );
     });
 
     it('should share a single refresh request for concurrent refresh calls', () => {

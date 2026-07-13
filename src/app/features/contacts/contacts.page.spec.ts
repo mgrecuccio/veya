@@ -1,4 +1,5 @@
 import { fakeAsync, flushMicrotasks, TestBed } from "@angular/core/testing";
+import { provideRouter } from "@angular/router";
 import { ContactsPage } from "./contacts.page";
 import { ContactsPageDataService } from "./data/contacts-page-data.service";
 import { ActionSheetController, AlertController } from '@ionic/angular';
@@ -16,6 +17,7 @@ describe('ContactsPage', () => {
         await TestBed.configureTestingModule({
             imports: [ContactsPage],
             providers: [
+                provideRouter([]),
                 {
                     provide: ContactsPageDataService,
                     useValue: jasmine.createSpyObj<ContactsPageDataService>(
