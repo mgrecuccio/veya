@@ -1,13 +1,13 @@
 # Settings Tasks
 
-Status: Planned
+Status: In Progress
 
 ## 1. API Surface
 
-- [ ] Add `UserService.updateMe(payload: UpdateProfileRequest)`.
-- [ ] Add preferences load/update service methods.
-- [ ] Add service tests for profile update URL, method, and payload.
-- [ ] Add service tests for preferences load/update URL, method, and payload.
+- [x] Add `UserService.updateMe(payload: UpdateProfileRequest)`.
+- [x] Add preferences load/update service methods.
+- [x] Add service tests for profile update URL, method, and payload.
+- [x] Add service tests for preferences load/update URL, method, and payload.
 
 ## 2. Routing And Entry Points
 
