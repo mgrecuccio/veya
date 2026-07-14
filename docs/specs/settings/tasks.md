@@ -1,6 +1,6 @@
 # Settings Tasks
 
-Status: In Progress
+Status: Implemented
 
 ## 1. API Surface
 
@@ -21,40 +21,40 @@ Status: In Progress
 
 ## 3. Settings Form
 
-- [ ] Add reactive form controls for profile fields.
-- [ ] Add reactive form controls for preference fields.
-- [ ] Load profile and preferences on page enter.
-- [ ] Populate loading, loaded, and error states.
-- [ ] Add display name input.
-- [ ] Add timezone selector/input.
-- [ ] Add phone number input.
-- [ ] Add chat and call toggles.
-- [ ] Add quiet hours inputs.
-- [ ] Add push and suggestion notification toggles.
+- [x] Add reactive form controls for profile fields.
+- [x] Add reactive form controls for preference fields.
+- [X] Load profile and preferences on page enter.
+- [X] Populate loading, loaded, and error states.
+- [x] Add display name input.
+- [x] Add timezone selector/input.
+- [x] Add phone number input.
+- [x] Add chat and call toggles.
+- [x] Add quiet hours inputs.
+- [x] Add push and suggestion notification toggles.
 
 ## 4. Save Behavior
 
-- [ ] Split form values into profile and preferences payloads.
-- [ ] Normalize blank optional values to `null`.
-- [ ] Normalize quiet hours to backend-compatible time strings.
-- [ ] Save profile changes through `PUT /api/v1/users/me`.
-- [ ] Save preference changes through `PUT /api/v1/users/preferences`.
-- [ ] Show saving state while requests are pending.
-- [ ] Keep unsaved form values after failed saves.
-- [ ] Show success state after successful saves.
+- [x] Split form values into profile and preferences payloads.
+- [x] Normalize blank optional values to `null`.
+- [x] Normalize quiet hours to backend-compatible time strings.
+- [x] Save profile changes through `PUT /api/v1/users/me`.
+- [x] Save preference changes through `PUT /api/v1/users/preferences`.
+- [x] Show saving state while requests are pending.
+- [x] Keep unsaved form values after failed saves.
+- [x] Show success state after successful saves.
 
 ## 5. Logout
 
-- [ ] Add logout button.
-- [ ] Call existing auth logout behavior.
-- [ ] Route away from protected tabs after logout.
-- [ ] Integrate backend logout when Ticket 4 is implemented.
-- [ ] Preserve local logout fallback if backend logout fails.
+- [x] Add logout button.
+- [x] Call existing auth logout behavior.
+- [x] Route away from protected tabs after logout.
+- [x] Integrate backend logout when Ticket 4 is implemented.
+- [x] Preserve local logout fallback if backend logout fails.
 
 ## 6. Tests
 
-- [ ] Test initial load patches profile and preference values.
-- [ ] Test save sends normalized profile and preference payloads.
-- [ ] Test save failure keeps edited form values.
-- [ ] Test logout calls auth service and navigates away.
-- [ ] Run the relevant focused tests.
+- [x] Test initial load patches profile and preference values.
+- [x] Test save sends normalized profile and preference payloads.
+- [x] Test save failure keeps edited form values.
+- [x] Test logout calls auth service and navigates away.
+- [x] Run the relevant focused tests.

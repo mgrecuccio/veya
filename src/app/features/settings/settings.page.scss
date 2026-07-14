@@ -132,6 +132,58 @@
   margin-top: 6px;
 }
 
+.primary-cta-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  padding: 16px;
+  border: 0;
+  border-radius: 22px;
+  background: linear-gradient(
+    135deg,
+    rgba(122, 99, 246, 0.14) 0%,
+    rgba(255, 127, 115, 0.1) 100%
+  );
+  box-shadow: 0 10px 24px rgba(122, 99, 246, 0.1);
+  color: var(--app-color-text);
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+}
+
+.primary-cta-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.primary-cta-card__kicker {
+  color: var(--app-color-primary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.primary-cta-card__title {
+  font-size: 19px;
+  line-height: 1.25;
+}
+
+.primary-cta-card__subtitle {
+  color: var(--app-color-text-muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.primary-cta-card__arrow {
+  color: var(--app-color-primary);
+  font-size: 22px;
+  line-height: 1;
+}
+
 .settings-row-list {
   display: flex;
   flex-direction: column;
@@ -149,6 +201,16 @@
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.62);
   box-shadow: 0 10px 22px rgba(122, 99, 246, 0.06);
+}
+
+.settings-row:focus-within {
+  border-color: rgba(var(--app-color-primary-rgb), 0.28);
+  box-shadow: 0 10px 24px rgba(var(--app-color-primary-rgb), 0.12);
+}
+
+.settings-row--invalid {
+  border-color: rgba(var(--app-color-accent-rgb), 0.55);
+  box-shadow: 0 10px 24px rgba(var(--app-color-accent-rgb), 0.12);
 }
 
 .settings-row__label,
@@ -171,12 +233,121 @@
   white-space: nowrap;
 }
 
+.settings-row__control {
+  --color: var(--app-color-text);
+  --highlight-color-focused: var(--app-color-primary);
+  --highlight-color-valid: var(--app-color-primary);
+  --highlight-color-invalid: var(--app-color-accent);
+  --placeholder-color: var(--app-color-text-muted);
+  --padding-bottom: 0;
+  --padding-top: 0;
+  flex: 1;
+  min-height: 24px;
+  min-width: 0;
+  color: var(--app-color-text);
+  font-size: 14px;
+  text-align: right;
+}
+
+.settings-row__control::part(native) {
+  caret-color: var(--app-color-primary);
+}
+
+.settings-row--phone {
+  align-items: flex-start;
+}
+
+.settings-phone-input-row {
+  display: grid;
+  grid-template-columns: minmax(82px, auto) minmax(0, 1fr);
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.settings-phone-country {
+  --highlight-color-focused: var(--app-color-primary);
+  --padding-bottom: 0;
+  --padding-top: 0;
+  min-height: 24px;
+  color: var(--app-color-text);
+  font-size: 14px;
+}
+
+.settings-phone-number {
+  width: 100%;
+}
+
+.settings-error {
+  margin: -4px 4px 2px;
+  color: var(--app-color-accent);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.settings-row__toggle {
+  --handle-background: #fff;
+  --handle-background-checked: #fff;
+  --handle-box-shadow: 0 3px 8px rgba(var(--app-color-primary-rgb), 0.22);
+  --track-background: rgba(var(--app-color-primary-rgb), 0.16);
+  --track-background-checked: linear-gradient(
+    135deg,
+    var(--app-color-accent) 0%,
+    var(--app-color-primary) 100%
+  );
+  flex: 0 0 auto;
+}
+
+.settings-form-actions {
+  padding-top: 4px;
+}
+
+.settings-save-button {
+  --background: linear-gradient(
+    135deg,
+    var(--app-color-accent) 0%,
+    var(--app-color-primary) 100%
+  );
+  --background-activated: var(--app-color-primary);
+  --background-focused: var(--app-color-primary);
+  --background-hover: var(--app-color-primary);
+  --border-radius: 999px;
+  --box-shadow: var(--app-shadow-button);
+  --color: var(--app-color-primary-contrast);
+  --padding-start: 18px;
+  --padding-end: 18px;
+  min-height: 44px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.settings-save-button ion-spinner {
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+}
+
+.settings-save-button[disabled] {
+  --background: rgba(var(--app-color-primary-rgb), 0.18);
+  --box-shadow: none;
+  --color: rgba(90, 70, 128, 0.56);
+  opacity: 1;
+}
+
 .logout-button {
   --border-radius: 999px;
   --box-shadow: none;
   min-height: 48px;
   margin: 4px 0 0;
   font-weight: 700;
+}
+
+.logout-button ion-spinner {
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
 }
 
 .logout-button[disabled] {
@@ -198,6 +369,34 @@
   text-align: center;
 }
 
+.settings-skeleton .skeleton-line,
+.settings-skeleton .skeleton-card {
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.skeleton-line {
+  height: 14px;
+}
+
+.skeleton-line--sm {
+  width: 28%;
+}
+
+.skeleton-line--md {
+  width: 52%;
+}
+
+.skeleton-line--lg {
+  width: 72%;
+  margin-top: 10px;
+}
+
+.skeleton-card {
+  height: 78px;
+  margin-top: 12px;
+}
+
 @media (max-width: 380px) {
   .settings-row {
     align-items: flex-start;
@@ -207,6 +406,15 @@
 
   .settings-row__value {
     text-align: left;
+  }
+
+  .settings-row__control {
+    width: 100%;
+    text-align: left;
+  }
+
+  .settings-phone-input-row {
+    width: 100%;
   }
 }
 

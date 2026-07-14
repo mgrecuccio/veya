@@ -285,6 +285,48 @@ describe('AuthService', () => {
         sub.unsubscribe();
     });
 
+    it('should revoke logout on the backend and clear tokens', () => {
+        tokenStorage.setTokens(mockTokens);
+
+        service.logoutAndRevoke().subscribe(() => {
+            expect(tokenStorage.getAccessToken()).toBeNull();
+            expect(tokenStorage.getRefreshToken()).toBeNull();
+        });
+
+        const req = httpMock.expectOne('http://localhost:8080/api/v1/auth/logout');
+        expect(req.request.method).toBe('POST');
+        expect(req.request.body).toEqual({});
+
+        req.flush(null, { status: 204, statusText: 'No Content' });
+    });
+
+    it('should clear tokens even when backend logout fails', () => {
+        tokenStorage.setTokens(mockTokens);
+
+        service.logoutAndRevoke().subscribe(() => {
+            expect(tokenStorage.getAccessToken()).toBeNull();
+            expect(tokenStorage.getRefreshToken()).toBeNull();
+        });
+
+        const req = httpMock.expectOne('http://localhost:8080/api/v1/auth/logout');
+        req.flush(
+            {
+                code: 'INTERNAL_SERVER_ERROR',
+                message: 'Logout failed',
+            },
+            { status: 500, statusText: 'Internal Server Error' },
+        );
+    });
+
+    it('should clear tokens without backend logout when no access token exists', () => {
+        service.logoutAndRevoke().subscribe(() => {
+            expect(tokenStorage.getAccessToken()).toBeNull();
+            expect(tokenStorage.getRefreshToken()).toBeNull();
+        });
+
+        httpMock.expectNone('http://localhost:8080/api/v1/auth/logout');
+    });
+
     it('should fail refresh when no refresh token exists', () => {
         service.refreshToken().subscribe({
         next: () => fail('Expected error'),
