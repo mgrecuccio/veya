@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { BehaviorSubject, Observable, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { catchError, finalize, map, shareReplay, tap } from 'rxjs/operators';
 
 import { LoginRequest } from '../models/login-request.model';
@@ -104,6 +104,18 @@ export class AuthService {
   logout(): void {
     this.tokenStorage.clearTokens();
     this.authStateSubject.next(null);
+  }
+
+  logoutAndRevoke(): Observable<void> {
+    if (!this.getAccessToken()) {
+      this.logout();
+      return of(void 0);
+    }
+
+    return this.http.post<void>(`${this.authApiUrl}/logout`, {}).pipe(
+      catchError(() => of(void 0)),
+      tap(() => this.logout())
+    );
   }
 
   getAccessToken(): string | null {

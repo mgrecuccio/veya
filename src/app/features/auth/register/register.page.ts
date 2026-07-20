@@ -8,12 +8,6 @@ import {
   Validators
 } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { 
-  CountryCode,
-  getCountryCallingCode,
-  getCountries,
-  parsePhoneNumberFromString
- } from 'libphonenumber-js';
 import { IonicModule } from '@ionic/angular';
 import { Component, DestroyRef, inject } from '@angular/core';
 import { Router } from '@angular/router';
@@ -24,63 +18,13 @@ import { AuthService, AuthError } from 'src/app/core/auth/auth.service';
 import { RegisterRequest } from 'src/app/core/models/register-request.model';
 
 import { AppPrimaryButtonComponent } from '../../../shared/ui/app-primary-button/app-primary-button.component';
-
-interface PhoneCountry {
-  code: CountryCode;
-  name: string;
-  dialCode: string;
-  flag: string;
-}
-
-const E164_REGEX = /^\+[1-9]\d{1,14}$/;
-
-function countryCodeToFlag(countryCode: CountryCode): string {
-  return countryCode
-    .toUpperCase()
-    .split('')
-    .map(character => 
-      String.fromCodePoint(character.charCodeAt(0) + 127397)
-    )
-    .join('');
-}
-
-function optionalPhoneValidator(): ValidatorFn {
-  return (group: AbstractControl): ValidationErrors | null => {
-    const country = group.get('phoneCountry')?.value as
-      | CountryCode
-      | undefined;
-
-    const nationalNumber =
-      group.get('phoneNational')?.value?.trim() ?? '';
-
-    if (!nationalNumber) {
-      return null;
-    }
-
-    if (!country) {
-      return { invalidPhoneNumber: true };
-    }
-
-    try {
-      const parsedNumber = parsePhoneNumberFromString(
-        nationalNumber,
-        country
-      );
-
-      if (
-        !parsedNumber ||
-        !parsedNumber.isValid() ||
-        !E164_REGEX.test(parsedNumber.number)
-      ) {
-        return { invalidPhoneNumber: true };
-      }
-
-      return null;
-    } catch {
-      return { invalidPhoneNumber: true };
-    }
-  };
-}
+import {
+  createPhoneCountries,
+  getDefaultPhoneCountry,
+  getNormalizedPhoneNumber,
+  optionalPhoneValidator,
+  PhoneCountry,
+} from 'src/app/shared/phone/phone-number.util';
 
 function matchFieldsValidator(
   field: string,
@@ -215,7 +159,10 @@ export class RegisterPage {
     this.serverError = null;
     this.clearEmailAlreadyExistsError();
 
-    const phoneNumber = this.getNormalizedPhoneNumber();
+    const phoneNumber = getNormalizedPhoneNumber(
+      this.phoneCountry.value,
+      this.phoneNational.value,
+    );
 
     const payload: RegisterRequest = {
       email: this.form.controls.email.value.trim(),
@@ -262,61 +209,11 @@ export class RegisterPage {
     this.form.controls.email.setErrors(Object.keys(rest).length ? rest : null);
   }
 
-  private getNormalizedPhoneNumber(): string | undefined {
-    const nationalNumber = this.phoneNational.value.trim();
-
-    if(!nationalNumber) {
-      return undefined;
-    }
-
-    const parsedNumber = parsePhoneNumberFromString(
-      nationalNumber,
-      this.phoneCountry.value
-    );
-
-    if(
-      !parsedNumber ||
-      !parsedNumber.isValid() ||
-      !E164_REGEX.test(parsedNumber.number)
-    ) {
-      return undefined;
-    }
-
-    return parsedNumber.number;
-  }
-
   private createCountries(): PhoneCountry[] {
-    const displayNames = new Intl.DisplayNames(['en'], {
-      type: 'region'
-    });
-
-    return getCountries()
-      .map(code => ({
-        code,
-        name: displayNames.of(code) ?? code,
-        dialCode: `+${getCountryCallingCode(code)}`,
-        flag: countryCodeToFlag(code)
-      }))
-      .sort((first, second) =>
-        first.name.localeCompare(second.name)
-      );
+    return createPhoneCountries();
   }
 
-  private getDefaultPhoneCountry(): CountryCode {
-    const language = globalThis.navigator?.language ?? '';
-
-    try {
-      const region = new Intl.Locale(language).region;
-
-      if (
-        region &&
-        getCountries().includes(region as CountryCode)
-      ) {
-        return region as CountryCode;
-      }
-    } catch {
-    }
-
-    return 'BE';
+  private getDefaultPhoneCountry() {
+    return getDefaultPhoneCountry();
   }
 }
