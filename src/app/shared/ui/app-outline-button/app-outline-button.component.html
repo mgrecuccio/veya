@@ -1,9 +1,9 @@
-<ion-button
-  fill="outline"
+<button
   class="app-outline-button"
-  [expand]="expand"
+  [class.app-outline-button--full]="expand === 'full'"
   [disabled]="disabled"
   [type]="type"
+  (click)="buttonClick.emit($event)"
 >
   <ng-content></ng-content>
-</ion-button>
+</button>

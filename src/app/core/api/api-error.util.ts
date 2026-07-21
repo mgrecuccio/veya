@@ -28,7 +28,13 @@ export function extractApiError(error: unknown): ApiError | null {
 
     return {
         code: maybeApiError.code,
-        message: typeof maybeApiError.message === 'string' ? maybeApiError.message : error.message,
+        message:
+            typeof maybeApiError.message === 'string'
+                ? maybeApiError.message
+                : typeof maybeApiError.detail === 'string'
+                    ? maybeApiError.detail
+                    : error.message,
+        detail: typeof maybeApiError.detail === 'string' ? maybeApiError.detail : undefined,
         details: maybeApiError.details,
         path: maybeApiError.path,
         status: typeof maybeApiError.status === 'number' ? maybeApiError.status : error.status,
@@ -41,7 +47,9 @@ export function toUserFacingApiError(
     fallbackMessage: string,
 ): UserFacingApiError {
     const apiError = extractApiError(error);
-    const userFacingError = new Error(fallbackMessage) as UserFacingApiError;
+    const userFacingError = new Error(
+        getBackendApiErrorMessage(error) ?? fallbackMessage,
+    ) as UserFacingApiError;
 
     if (apiError) {
         userFacingError.code = apiError.code;
@@ -49,4 +57,61 @@ export function toUserFacingApiError(
     }
 
     return userFacingError;
+}
+
+export function getApiErrorMessage(error: unknown, fallbackMessage: string): string {
+    const backendMessage = getBackendApiErrorMessage(error);
+
+    if (backendMessage) {
+        return backendMessage;
+    }
+
+    return fallbackMessage;
+}
+
+function getBackendApiErrorMessage(error: unknown): string | null {
+    if (error && typeof error === 'object') {
+        const userFacingError = error as Partial<UserFacingApiError>;
+
+        if (typeof userFacingError.apiError?.message === 'string') {
+            return userFacingError.apiError.message;
+        }
+    }
+
+    if (error instanceof HttpErrorResponse) {
+        const apiError = extractApiError(error);
+
+        if (apiError?.message) {
+            return apiError.message;
+        }
+    }
+
+    const payload =
+        error instanceof HttpErrorResponse
+            ? error.error
+            : error && typeof error === 'object' && 'error' in error
+                ? (error as { error: unknown }).error
+                : null;
+
+    if (typeof payload === 'string' && payload.trim()) {
+        return payload;
+    }
+
+    if (payload && typeof payload === 'object') {
+        const maybePayload = payload as Record<string, unknown>;
+
+        if (typeof maybePayload['message'] === 'string') {
+            return maybePayload['message'];
+        }
+
+        if (typeof maybePayload['detail'] === 'string') {
+            return maybePayload['detail'];
+        }
+
+        if (typeof maybePayload['error'] === 'string') {
+            return maybePayload['error'];
+        }
+    }
+
+    return null;
 }

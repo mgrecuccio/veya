@@ -2,6 +2,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { Router } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
 import { AuthService } from 'src/app/core/auth/auth.service';
+import { AppToastService } from 'src/app/shared/toast/app-toast.service';
 import { SettingsPageData, SettingsPageDataService } from './data/settings-page-data.service';
 import { SettingsPage } from './settings.page';
 
@@ -10,6 +11,7 @@ describe('SettingsPage', () => {
     let component: SettingsPage;
     let dataService: jasmine.SpyObj<SettingsPageDataService>;
     let authService: jasmine.SpyObj<AuthService>;
+    let appToastService: jasmine.SpyObj<AppToastService>;
     let router: jasmine.SpyObj<Router>;
 
     beforeEach(async () => {
@@ -38,6 +40,13 @@ describe('SettingsPage', () => {
                         { events: of() },
                     ),
                 },
+                {
+                    provide: AppToastService,
+                    useValue: jasmine.createSpyObj<AppToastService>(
+                        'AppToastService',
+                        ['show'],
+                    ),
+                },
             ],
         }).compileComponents();
 
@@ -45,9 +54,11 @@ describe('SettingsPage', () => {
         component = fixture.componentInstance;
         dataService = TestBed.inject(SettingsPageDataService) as jasmine.SpyObj<SettingsPageDataService>;
         authService = TestBed.inject(AuthService) as jasmine.SpyObj<AuthService>;
+        appToastService = TestBed.inject(AppToastService) as jasmine.SpyObj<AppToastService>;
         router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
 
         authService.logoutAndRevoke.and.returnValue(of(void 0));
+        appToastService.show.and.returnValue(Promise.resolve());
         router.navigateByUrl.and.returnValue(Promise.resolve(true));
     });
 
@@ -136,7 +147,7 @@ describe('SettingsPage', () => {
         fixture.detectChanges();
 
         const profileSaveButton = fixture.nativeElement.querySelector(
-            'ion-button.settings-save-button',
+            'button.settings-save-button',
         ) as { disabled: boolean };
 
         expect(component.profileForm.dirty).toBeTrue();
@@ -207,7 +218,7 @@ describe('SettingsPage', () => {
         fixture.detectChanges();
 
         const profileSaveButton = fixture.nativeElement.querySelector(
-            'ion-button.settings-save-button',
+            'button.settings-save-button',
         ) as HTMLElement & { disabled: boolean };
 
         expect(component.isSavingProfile()).toBeTrue();
@@ -366,7 +377,7 @@ describe('SettingsPage', () => {
         fixture.detectChanges();
 
         const preferenceSaveButton = fixture.nativeElement.querySelectorAll(
-            'ion-button.settings-save-button',
+            'button.settings-save-button',
         )[1] as HTMLElement & { disabled: boolean };
 
         expect(component.isSavingPreferences()).toBeTrue();

@@ -1,12 +1,16 @@
-<ion-header class="ion-no-border">
-  <ion-toolbar class="settings-toolbar">
-    <ion-buttons slot="start">
-      <ion-back-button defaultHref="/app/home" text=""></ion-back-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-header>
+<ion-content class="app-gradient-content settings-content" [fullscreen]="true" [scrollY]="true">
+  <header class="settings-topbar">
+    <div class="settings-brand">Veya</div>
+  <button
+    type="button"
+    class="settings-back-button"
+    aria-label="Go back"
+    (click)="goBack()"
+  >
+    <span class="settings-back-button__icon" aria-hidden="true">‹</span>
+  </button>
+  </header>
 
-<ion-content class="app-gradient-content settings-content" [fullscreen]="true">
   <div class="app-page settings-page">
     <div class="settings-shell">
       @if (vmState$ | async; as state) {
@@ -91,33 +95,32 @@
                 <label class="settings-row__label" for="settings-display-name">
                   Display name
                 </label>
-                <ion-input
+                <input
                   id="settings-display-name"
                   class="settings-row__control"
                   type="text"
                   autocomplete="name"
                   placeholder="Display name"
                   formControlName="displayName"
-                ></ion-input>
+                />
               </div>
               <div class="settings-row">
                 <label class="settings-row__label" for="settings-timezone">
                   Timezone
                 </label>
-                <ion-select
+                <select
                   id="settings-timezone"
                   class="settings-row__control"
                   aria-label="Timezone"
-                  interface="popover"
-                  placeholder="Timezone"
                   formControlName="timezone"
                 >
+                  <option value="" disabled>Timezone</option>
                   @for (timezone of timezoneOptions; track timezone.value) {
-                    <ion-select-option [value]="timezone.value">
+                    <option [value]="timezone.value">
                       {{ timezone.label }}
-                    </ion-select-option>
+                    </option>
                   }
-                </ion-select>
+                </select>
               </div>
               <div
                 class="settings-row settings-row--phone"
@@ -127,26 +130,19 @@
                   Phone number
                 </label>
                 <div class="settings-phone-input-row">
-                  <ion-select
+                  <select
                     class="settings-phone-country"
                     aria-label="Country calling code"
                     formControlName="phoneCountry"
-                    interface="modal"
-                    [selectedText]="selectedCountryText"
-                    [interfaceOptions]="{
-                      header: 'Select your country'
-                    }"
                   >
                     @for (country of countries; track country.code) {
-                      <ion-select-option [value]="country.code">
-                        {{ country.flag }}
-                        {{ country.name }}
-                        ({{ country.dialCode }})
-                      </ion-select-option>
+                      <option [value]="country.code">
+                        {{ getCompactCountryLabel(country) }}
+                      </option>
                     }
-                  </ion-select>
+                  </select>
 
-                  <ion-input
+                  <input
                     id="settings-phone-number"
                     class="settings-row__control settings-phone-number"
                     type="tel"
@@ -154,7 +150,7 @@
                     autocomplete="tel-national"
                     placeholder="470 12 34 56"
                     formControlName="phoneNational"
-                  ></ion-input>
+                  />
                 </div>
               </div>
               @if (isPhoneInvalid()) {
@@ -163,9 +159,8 @@
                 </div>
               }
               <div class="settings-form-actions">
-                <ion-button
+                <button
                   class="settings-save-button"
-                  expand="block"
                   type="submit"
                   [disabled]="profileForm.pristine || profileForm.invalid || isSavingProfile()"
                 >
@@ -175,7 +170,7 @@
                   } @else {
                     <span>Save profile</span>
                   }
-                </ion-button>
+                </button>
               </div>
             </form>
           </section>
@@ -197,68 +192,71 @@
                 <label class="settings-row__label" for="settings-allow-chat">
                   Chat matching
                 </label>
-                <ion-toggle
+                <input
                   id="settings-allow-chat"
                   class="settings-row__toggle"
+                  type="checkbox"
                   formControlName="allowChat"
-                ></ion-toggle>
+                />
               </div>
               <div class="settings-row">
                 <label class="settings-row__label" for="settings-allow-call">
                   Call matching
                 </label>
-                <ion-toggle
+                <input
                   id="settings-allow-call"
                   class="settings-row__toggle"
+                  type="checkbox"
                   formControlName="allowCall"
-                ></ion-toggle>
+                />
               </div>
               <div class="settings-row">
                 <label class="settings-row__label" for="settings-quiet-hours-start">
                   Quiet hours start
                 </label>
-                <ion-input
+                <input
                   id="settings-quiet-hours-start"
                   class="settings-row__control"
                   type="time"
                   formControlName="quietHoursStart"
-                ></ion-input>
+                />
               </div>
               <div class="settings-row">
                 <label class="settings-row__label" for="settings-quiet-hours-end">
                   Quiet hours end
                 </label>
-                <ion-input
+                <input
                   id="settings-quiet-hours-end"
                   class="settings-row__control"
                   type="time"
                   formControlName="quietHoursEnd"
-                ></ion-input>
+                />
               </div>
               <div class="settings-row">
                 <label class="settings-row__label" for="settings-push-notifications">
                   Push notifications
                 </label>
-                <ion-toggle
+                <input
                   id="settings-push-notifications"
                   class="settings-row__toggle"
+                  type="checkbox"
                   formControlName="pushNotificationsEnabled"
-                ></ion-toggle>
+                />
               </div>
               <div class="settings-row">
                 <label class="settings-row__label" for="settings-suggestion-notifications">
                   Suggestion notifications
                 </label>
-                <ion-toggle
+                <input
                   id="settings-suggestion-notifications"
                   class="settings-row__toggle"
+                  type="checkbox"
                   formControlName="suggestionNotificationsEnabled"
-                ></ion-toggle>
+                />
               </div>
               <div class="settings-form-actions">
-                <ion-button
+                <button
                   class="settings-save-button"
-                  expand="block"
                   type="submit"
                   [disabled]="preferencesForm.pristine || preferencesForm.invalid || isSavingPreferences()"
                 >
@@ -268,17 +266,14 @@
                   } @else {
                     <span>Save preferences</span>
                   }
-                </ion-button>
+                </button>
               </div>
             </form>
           </section>
 
           <footer class="settings-footer">
-            <ion-button
+            <button
               class="logout-button"
-              expand="block"
-              color="danger"
-              fill="outline"
               type="button"
               [disabled]="isLoggingOut()"
               (click)="logout()"
@@ -289,20 +284,11 @@
               } @else {
                 <span>Logout</span>
               }
-            </ion-button>
+            </button>
           </footer>
         }
       }
     </div>
   </div>
 
-  <ion-toast
-    [isOpen]="toastState().isOpen"
-    [message]="toastState().message"
-    [color]="toastState().color"
-    cssClass="settings-page-toast"
-    duration="2000"
-    position="top"
-    (didDismiss)="onToastDismiss()"
-  ></ion-toast>
 </ion-content>

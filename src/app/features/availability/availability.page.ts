@@ -12,6 +12,8 @@ import { UpdateAvailabilityRuleRequest } from "src/app/core/api/request/update-a
 import { CreateAvailabilityOverrideRequest } from "src/app/core/api/request/create-availability-override.request";
 import { CreateAvailabilityRuleRequest } from "src/app/core/api/request/create-availability-rule.request";
 import { AvailabilityPageData, AvailabilityPageDataService } from "./data/availability-page-data.service";
+import { getApiErrorMessage } from "src/app/core/api/api-error.util";
+import { AppToastColor, AppToastService } from "src/app/shared/toast/app-toast.service";
 
 type AvailabilityVmState =
   | { kind: 'loading' }
@@ -64,6 +66,7 @@ interface EffectiveAvailabilityItemVm {
 export class AvailabilityPage {
     private readonly fb = inject(FormBuilder);
     private readonly availabilityPageDataService = inject(AvailabilityPageDataService);
+    private readonly appToastService = inject(AppToastService);
     private readonly reload$ = new BehaviorSubject<void>(void 0);
 
     readonly ruleFormExpanded = signal(false);
@@ -76,7 +79,7 @@ export class AvailabilityPage {
     readonly toastState = signal<{
         isOpen: boolean;
         message: string;
-        color: 'success' | 'danger';
+        color: AppToastColor;
     }>({
         isOpen: false,
         message: '',
@@ -176,6 +179,7 @@ export class AvailabilityPage {
             dayOfWeek: rule.raw.dayOfWeek,
             startTime: this.normalizeTimeForInput(rule.raw.startTime),
             endTime: this.normalizeTimeForInput(rule.raw.endTime),
+            channelType: rule.raw.channelType,
             enabled: rule.raw.enabled,
         });
         this.ruleFormExpanded.set(true);
@@ -230,7 +234,7 @@ export class AvailabilityPage {
                 },
                 error: (error: any) => {
                     this.showToast(
-                        error?.error?.detail || 'We couldn’t save that rule right now.',
+                        getApiErrorMessage(error, 'We couldn’t save that rule right now.'),
                         'danger',
                 );
             },
@@ -254,7 +258,7 @@ export class AvailabilityPage {
                 },
             error: (error: any) => {
                 this.showToast(
-                    error?.error?.detail || 'We couldn’t delete that rule right now.',
+                    getApiErrorMessage(error, 'We couldn’t delete that rule right now.'),
                     'danger',
                 );
             },
@@ -324,7 +328,7 @@ export class AvailabilityPage {
                 },
                 error: (error: any) => {
                     this.showToast(
-                        error?.error?.detail || 'We couldn’t save that exception right now.',
+                        getApiErrorMessage(error, 'We couldn’t save that exception right now.'),
                         'danger',
                 );
             },
@@ -468,11 +472,13 @@ export class AvailabilityPage {
         return left.toDateString() === right.toDateString();
     }
 
-    private showToast(message: string, color: 'success' | 'danger'): void {
+    private showToast(message: string, color: AppToastColor): void {
         this.toastState.set({
             isOpen: true,
             message,
             color,
         });
+
+        void this.appToastService.show(message, color, 'app-toast availability-page-toast');
     }
 }

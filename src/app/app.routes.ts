@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard } from './core/auth/auth.guard';
+import { anonymousGuard, authGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
   {
@@ -12,16 +12,19 @@ export const routes: Routes = [
     path: 'auth/onboarding',
     loadComponent: () =>
       import('./features/auth/onboarding/onboarding.page').then((m) => m.OnboardingPage),
+    canActivate: [anonymousGuard],
   },
   {
     path: 'auth/login',
     loadComponent: () =>
       import('./features/auth/login/login.page').then((m) => m.LoginPage),
+    canActivate: [anonymousGuard],
   },
   {
     path: 'auth/register',
     loadComponent: () =>
       import('./features/auth/register/register.page').then((m) => m.RegisterPage),
+    canActivate: [anonymousGuard],
   },
   {
     path: 'settings',

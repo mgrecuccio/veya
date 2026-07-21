@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { IonicModule } from '@ionic/angular';
-import { Router } from '@angular/router';
+import { NavController } from '@ionic/angular';
 import { AppPrimaryButtonComponent } from '../../../shared/ui/app-primary-button/app-primary-button.component';
 import { AppOutlineButtonComponent } from '../../../shared/ui/app-outline-button/app-outline-button.component';
 import { AppCtaButtonComponent } from '../../../shared/ui/app-cta-button/app-cta-button.component';
@@ -21,14 +21,14 @@ import { AppFeatureCardComponent } from '../../../shared/ui/app-feature-card/app
 })
 export class OnboardingPage {
 
-  private readonly router = inject(Router);
+  private readonly navController = inject(NavController);
 
   goToLogin(): void {
-    this.router.navigate(['/auth/login']);
+    void this.navController.navigateForward('/auth/login');
   }
 
   goToRegister(): void {
-    void this.router.navigate(['/auth/register']);
+    void this.navController.navigateForward('/auth/register');
   }
 
 }

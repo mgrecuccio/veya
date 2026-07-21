@@ -103,6 +103,21 @@ describe('RegisterPage', () => {
     expect(router.navigateByUrl).toHaveBeenCalledWith('/app/home', { replaceUrl: true });
   });
 
+  it('should keep back navigation when navigating to login', () => {
+    component.goToLogin();
+
+    const [url, extras] = (router.navigateByUrl as jasmine.Spy).calls.mostRecent().args;
+    expect(url.toString()).toBe('/auth/login');
+    expect(extras).not.toEqual(jasmine.objectContaining({ replaceUrl: true }));
+  });
+
+  it('should navigate back to onboarding', () => {
+    component.goBack();
+
+    const [url] = (router.navigateByUrl as jasmine.Spy).calls.mostRecent().args;
+    expect(url.toString()).toBe('/auth/onboarding');
+  });
+
   it('should set emailAlreadyExists error on register conflict', () => {
     const error: AuthError = {
       code: 'EMAIL_ALREADY_EXISTS',

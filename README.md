@@ -71,7 +71,13 @@ export const environment = {
 };
 ```
 
-Production builds replace `environment.ts` with `environment.prod.ts` through Angular file replacements.
+Production builds replace `environment.ts` with `environment.prod.ts` through Angular file replacements. The production environment points at:
+
+```text
+https://api.sponti.uk
+```
+
+Use a production build before syncing/installing the Android app on a physical device when you want it to communicate with the Azure-hosted API.
 
 ## Getting Started
 
@@ -173,6 +179,13 @@ Build the web assets first:
 
 ```bash
 npm run build
+```
+
+Use the production API for device builds:
+
+```bash
+npm run build:prod
+npx cap sync android
 ```
 
 Then sync Capacitor platforms when native projects are added:

@@ -6,6 +6,8 @@ import { IonicModule } from '@ionic/angular';
 import { catchError, map, Observable, of, shareReplay, startWith, Subject, switchMap, tap } from 'rxjs';
 import { SettingsPageData, SettingsPageDataService } from './data/settings-page-data.service';
 import { AuthService } from 'src/app/core/auth/auth.service';
+import { getApiErrorMessage } from 'src/app/core/api/api-error.util';
+import { AppToastColor, AppToastService } from 'src/app/shared/toast/app-toast.service';
 import {
   createPhoneCountries,
   getDefaultPhoneCountry,
@@ -71,6 +73,7 @@ export class SettingsPage {
     private readonly settingsPageDataService = inject(SettingsPageDataService);
     private readonly authService = inject(AuthService);
     private readonly router = inject(Router);
+    private readonly appToastService = inject(AppToastService);
     private readonly reload$ = new Subject<void>();
 
     readonly countries: PhoneCountry[] = createPhoneCountries();
@@ -96,7 +99,7 @@ export class SettingsPage {
     readonly toastState = signal<{
       isOpen: boolean;
       message: string;
-      color: 'success' | 'danger';
+      color: AppToastColor;
     }>({
       isOpen: false,
       message: '',
@@ -157,6 +160,10 @@ export class SettingsPage {
         : '';
     }
 
+    getCompactCountryLabel(country: PhoneCountry): string {
+      return `${country.flag} ${country.dialCode}`;
+    }
+
     isPhoneInvalid(): boolean {
       const hasInteraction =
         this.phoneNational.touched || this.phoneNational.dirty;
@@ -193,7 +200,7 @@ export class SettingsPage {
         error: (error: any) => {
           this.isSavingProfile.set(false);
           this.showToast(
-            error?.error?.detail || 'We couldn’t save your profile right now.',
+            getApiErrorMessage(error, 'We couldn’t save your profile right now.'),
             'danger',
           );
         }
@@ -225,7 +232,7 @@ export class SettingsPage {
         error: (error: any) => {
           this.isSavingPreferences.set(false);
           this.showToast(
-            error?.error?.detail || 'We couldn’t save your preferences right now.',
+            getApiErrorMessage(error, 'We couldn’t save your preferences right now.'),
             'danger',
           );
         }
@@ -248,6 +255,10 @@ export class SettingsPage {
       });
     }
 
+    goBack(): void {
+      void this.router.navigateByUrl('/app/home');
+    }
+
     onToastDismiss(): void {
       this.toastState.update((state) => ({
         ...state,
@@ -255,20 +266,14 @@ export class SettingsPage {
       }));
     }
 
-    private showToast(message: string, color: 'success' | 'danger'): void {
+    private showToast(message: string, color: AppToastColor): void {
       this.toastState.set({
-        isOpen: false,
+        isOpen: true,
         message,
         color,
       });
 
-      queueMicrotask(() => {
-        this.toastState.set({
-          isOpen: true,
-          message,
-          color,
-        });
-      });
+      void this.appToastService.show(message, color, 'app-toast settings-page-toast');
     }
 
     private blankToNull(value: string | null | undefined): string | null {

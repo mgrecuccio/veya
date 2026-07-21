@@ -19,3 +19,19 @@ export const authGuard: CanActivateFn = () => {
     })
   );
 };
+
+export const anonymousGuard: CanActivateFn = () => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  return authService.isAuthenticated$.pipe(
+    take(1),
+    map((isAuthenticated) => {
+      if (!isAuthenticated) {
+        return true;
+      }
+
+      return router.createUrlTree(['/app/home']);
+    })
+  );
+};

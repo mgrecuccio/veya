@@ -1,7 +1,9 @@
-<ion-button
+<button
   class="app-cta-button"
-  [expand]="expand"
+  [class.app-cta-button--full]="expand === 'full'"
   [disabled]="disabled"
+  type="button"
+  (click)="buttonClick.emit($event)"
 >
   <ng-content></ng-content>
-</ion-button>
+</button>

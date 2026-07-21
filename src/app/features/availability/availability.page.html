@@ -1,21 +1,18 @@
-<ion-header class="ion-no-border">
-  <ion-toolbar class="availability-toolbar">
-    <ion-title class="availability-brand">Veya</ion-title>
-    <ion-buttons slot="end">
-      <ion-button
-        class="page-settings-button"
-        aria-label="Open settings" 
-        title="Settings preview"
-        routerLink="/settings"
-        routerDirection="forward"
-        >
-          <ion-icon slot="icon-only" name="settings-outline"></ion-icon>
-      </ion-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-header>
+<ion-content class="app-gradient-content availability-content" [fullscreen]="true" [scrollY]="true">
+  <header class="app-page-topbar">
+    <div class="app-page-brand">Veya</div>
 
-<ion-content class="app-gradient-content availability-content" [fullscreen]="true">
+    <ion-button
+      class="page-settings-button page-settings-button--topbar"
+      aria-label="Open settings"
+      title="Settings preview"
+      routerLink="/settings"
+      routerDirection="forward"
+    >
+      <ion-icon slot="icon-only" name="settings-outline"></ion-icon>
+    </ion-button>
+  </header>
+
   <div class="app-page availability-page">
     <div class="availability-shell">
       @if (vmState$ | async; as state) {
@@ -115,7 +112,7 @@
                 (click)="openCreateRule()"
                 aria-label="Add regular time"
               >
-                +
+                <ion-icon name="add" aria-hidden="true"></ion-icon>
               </button>
             </div>
 
@@ -133,68 +130,66 @@
             } @else {
               <form class="availability-form" [formGroup]="ruleForm" (ngSubmit)="submitRule()">
                 <label class="field-label" for="dayOfWeek">Day</label>
-                <ion-select
+                <select
                   id="dayOfWeek"
                   class="availability-input"
                   formControlName="dayOfWeek"
-                  interface="popover"
                 >
                   @for (day of days; track day) {
-                    <ion-select-option [value]="day">{{ formatDay(day) }}</ion-select-option>
+                    <option [value]="day">{{ formatDay(day) }}</option>
                   }
-                </ion-select>
+                </select>
 
                 <div class="form-grid">
                   <div>
                     <label class="field-label" for="startTime">From</label>
-                    <div class="availability-datetime-field">
-                      <ion-datetime-button datetime="startTime"></ion-datetime-button>
-                    </div>
+                    <input
+                      id="startTime"
+                      class="availability-input"
+                      type="time"
+                      formControlName="startTime"
+                    />
                   </div>
 
                   <div>
                     <label class="field-label" for="endTime">To</label>
-                    <div class="availability-datetime-field">
-                      <ion-datetime-button datetime="endTime"></ion-datetime-button>
-                    </div>
+                    <input
+                      id="endTime"
+                      class="availability-input"
+                      type="time"
+                      formControlName="endTime"
+                    />
                   </div>
                 </div>
 
-                <ion-modal [keepContentsMounted]="true">
-                  <ng-template>
-                    <ion-datetime
-                      id="startTime"
-                      class="availability-datetime"
-                      formControlName="startTime"
-                      presentation="time"
-                    ></ion-datetime>
-                  </ng-template>
-                </ion-modal>
-
-                <ion-modal [keepContentsMounted]="true">
-                  <ng-template>
-                    <ion-datetime
-                      id="endTime"
-                      class="availability-datetime"
-                      formControlName="endTime"
-                      presentation="time"
-                    ></ion-datetime>
-                  </ng-template>
-                </ion-modal>
-
                 <label class="field-label" for="channelType">How you prefer to connect</label>
-                <ion-segment
+                <div
                   id="channelType"
-                  formControlName="channelType"
                   class="availability-segment"
+                  role="radiogroup"
+                  aria-label="How you prefer to connect"
                 >
-                  <ion-segment-button value="CHAT">
-                    <ion-label>Chat</ion-label>
-                  </ion-segment-button>
-                  <ion-segment-button value="CALL">
-                    <ion-label>Call</ion-label>
-                  </ion-segment-button>
-                </ion-segment>
+                  <button
+                    type="button"
+                    class="availability-segment-button"
+                    role="radio"
+                    [class.availability-segment-button--checked]="ruleForm.controls.channelType.value === 'CHAT'"
+                    [attr.aria-checked]="ruleForm.controls.channelType.value === 'CHAT'"
+                    (click)="ruleForm.controls.channelType.setValue('CHAT')"
+                  >
+                    Chat
+                  </button>
+                  <button
+                    type="button"
+                    class="availability-segment-button"
+                    role="radio"
+                    [class.availability-segment-button--checked]="ruleForm.controls.channelType.value === 'CALL'"
+                    [attr.aria-checked]="ruleForm.controls.channelType.value === 'CALL'"
+                    (click)="ruleForm.controls.channelType.setValue('CALL')"
+                  >
+                    Call
+                  </button>
+                </div>
 
                 @if (editingRuleId() !== null) {
                   <ion-toggle formControlName="enabled" class="availability-toggle">
@@ -203,23 +198,22 @@
                 }
 
                 <div class="form-actions">
-                  <ion-button
+                  <button
                     type="submit"
                     class="form-submit"
                     [disabled]="ruleForm.invalid || submittingRule()"
                   >
                     {{ submittingRule() ? 'Saving…' : editingRuleId() === null ? 'Add time' : 'Save changes' }}
-                  </ion-button>
+                  </button>
 
-                  <ion-button
+                  <button
                     type="button"
-                    fill="clear"
                     class="form-cancel"
                     (click)="closeRuleForm()"
                     [disabled]="submittingRule()"
                   >
                     Cancel
-                  </ion-button>
+                  </button>
                 </div>
               </form>
             }
@@ -288,7 +282,7 @@
                 (click)="openCreateOverride()"
                 aria-label="Add temporary change"
               >
-                +
+                <ion-icon name="add" aria-hidden="true"></ion-icon>
               </button>
             </div>
 
@@ -306,73 +300,69 @@
             } @else {
               <form class="availability-form" [formGroup]="overrideForm" (ngSubmit)="submitOverride()">
                 <label class="field-label" for="overrideType">Temporary change</label>
-                <ion-segment
+                <div
                   id="overrideType"
-                  formControlName="type"
                   class="availability-segment"
+                  role="radiogroup"
+                  aria-label="Temporary change"
                 >
-                  <ion-segment-button value="AVAILABLE">
-                    <ion-label>Available</ion-label>
-                  </ion-segment-button>
-                  <ion-segment-button value="UNAVAILABLE">
-                    <ion-label>Unavailable</ion-label>
-                  </ion-segment-button>
-                </ion-segment>
+                  <button
+                    type="button"
+                    class="availability-segment-button"
+                    role="radio"
+                    [class.availability-segment-button--checked]="overrideForm.controls.type.value === 'AVAILABLE'"
+                    [attr.aria-checked]="overrideForm.controls.type.value === 'AVAILABLE'"
+                    (click)="overrideForm.controls.type.setValue('AVAILABLE')"
+                  >
+                    Available
+                  </button>
+                  <button
+                    type="button"
+                    class="availability-segment-button"
+                    role="radio"
+                    [class.availability-segment-button--checked]="overrideForm.controls.type.value === 'UNAVAILABLE'"
+                    [attr.aria-checked]="overrideForm.controls.type.value === 'UNAVAILABLE'"
+                    (click)="overrideForm.controls.type.setValue('UNAVAILABLE')"
+                  >
+                    Unavailable
+                  </button>
+                </div>
 
                 <label class="field-label" for="startDateTime">From</label>
-                <div class="availability-datetime-field">
-                  <ion-datetime-button datetime="startDateTime"></ion-datetime-button>
-                </div>
+                <input
+                  id="startDateTime"
+                  class="availability-input"
+                  type="datetime-local"
+                  formControlName="startDateTime"
+                  [min]="overrideMinDateTime()"
+                />
 
                 <label class="field-label" for="endDateTime">To</label>
-                <div class="availability-datetime-field">
-                  <ion-datetime-button datetime="endDateTime"></ion-datetime-button>
-                </div>
-
-                <ion-modal [keepContentsMounted]="true">
-                  <ng-template>
-                    <ion-datetime
-                      id="startDateTime"
-                      class="availability-datetime"
-                      formControlName="startDateTime"
-                      presentation="date-time"
-                      [firstDayOfWeek]="1"
-                      [min]="overrideMinDateTime()"
-                    ></ion-datetime>
-                  </ng-template>
-                </ion-modal>
-
-                <ion-modal [keepContentsMounted]="true">
-                  <ng-template>
-                    <ion-datetime
-                      id="endDateTime"
-                      class="availability-datetime"
-                      formControlName="endDateTime"
-                      presentation="date-time"
-                      [firstDayOfWeek]="1"
-                      [min]="overrideEndMinDateTime()"
-                    ></ion-datetime>
-                  </ng-template>
-                </ion-modal>
+                <input
+                  id="endDateTime"
+                  class="availability-input"
+                  type="datetime-local"
+                  formControlName="endDateTime"
+                  [min]="overrideEndMinDateTime()"
+                />
 
                 <div class="form-actions">
-                  <ion-button
+                  <button
                     type="submit"
                     class="form-submit"
                     [disabled]="overrideForm.invalid || submittingOverride()"
                   >
                     {{ submittingOverride() ? 'Saving…' : 'Save change' }}
-                  </ion-button>
+                  </button>
 
-                  <ion-button
+                  <button
                     type="button"
-                    fill="clear"
                     class="form-cancel"
                     (click)="closeOverrideForm()"
                     [disabled]="submittingOverride()"
                   >
                     Cancel
-                  </ion-button>
+                  </button>
                 </div>
               </form>
             }
@@ -430,13 +420,4 @@
     </div>
   </div>
 
-  <ion-toast
-    [isOpen]="toastState().isOpen"
-    [message]="toastState().message"
-    [color]="toastState().color"
-    cssClass="availability-page-toast"
-    duration="2200"
-    position="top"
-    (didDismiss)="onToastDismiss()"
-  ></ion-toast>
 </ion-content>

@@ -1,21 +1,21 @@
 :host {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .app-tab-bar {
   --background: rgba(255, 255, 255, 0.94);
   --border: transparent;
-  padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+  --color: var(--app-color-text-muted);
+  --color-selected: var(--app-color-accent);
   box-shadow: 0 -10px 24px rgba(122, 99, 246, 0.08);
   backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 ion-tab-button {
-  --color: var(--app-color-text-muted);
-  --color-selected: var(--app-color-accent);
-  min-height: 58px;
-  border-radius: 18px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 ion-icon {
@@ -23,13 +23,5 @@ ion-icon {
 }
 
 ion-label {
-  font-size: 12px;
-}
-
-ion-router-outlet {
-  pointer-events: none;
-}
-
-ion-router-outlet > * {
-  pointer-events: auto;
+  font-size: 14px;
 }

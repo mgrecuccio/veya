@@ -1,22 +1,28 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter, Router } from '@angular/router';
+import { NavController } from '@ionic/angular';
 
 import { OnboardingPage } from './onboarding.page';
 
 describe('OnboardingPage', () => {
   let component: OnboardingPage;
   let fixture: ComponentFixture<OnboardingPage>;
-  let router: Router;
+  let navController: jasmine.SpyObj<NavController>;
 
   beforeEach(async () => {
+    navController = jasmine.createSpyObj<NavController>('NavController', [
+      'navigateForward'
+    ]);
+    navController.navigateForward.and.resolveTo(true);
+
     await TestBed.configureTestingModule({
       imports: [OnboardingPage],
-      providers: [provideRouter([])]
+      providers: [
+        { provide: NavController, useValue: navController }
+      ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(OnboardingPage);
     component = fixture.componentInstance;
-    router = TestBed.inject(Router);
     fixture.detectChanges();
   });
 
@@ -43,19 +49,15 @@ describe('OnboardingPage', () => {
     );
   });
 
-  it('should navigate to /auth/login when goToLogin is called', async () => {
-    const navigateSpy = spyOn(router, 'navigate').and.resolveTo(true);
+  it('should navigate to /auth/login when goToLogin is called', () => {
+    component.goToLogin();
 
-    await component.goToLogin();
-
-    expect(navigateSpy).toHaveBeenCalledWith(['/auth/login']);
+    expect(navController.navigateForward).toHaveBeenCalledWith('/auth/login');
   });
 
-  it('should navigate to /auth/register when goToRegister is called', async () => {
-    const navigateSpy = spyOn(router, 'navigate').and.resolveTo(true);
+  it('should navigate to /auth/register when goToRegister is called', () => {
+    component.goToRegister();
 
-    await component.goToRegister();
-
-    expect(navigateSpy).toHaveBeenCalledWith(['/auth/register']);
+    expect(navController.navigateForward).toHaveBeenCalledWith('/auth/register');
   });
 });
