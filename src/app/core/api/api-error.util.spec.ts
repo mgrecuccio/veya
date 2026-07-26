@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
-import { extractApiError, toUserFacingApiError } from './api-error.util';
+import { extractApiError, getApiErrorMessage, toUserFacingApiError } from './api-error.util';
 
 describe('api-error.util', () => {
     it('extracts backend ApiError payloads from HttpErrorResponse', () => {
@@ -21,7 +21,7 @@ describe('api-error.util', () => {
         );
     });
 
-    it('preserves backend ApiError code on user-facing errors', () => {
+    it('preserves backend ApiError code and message on user-facing errors', () => {
         const error = new HttpErrorResponse({
             status: 422,
             error: {
@@ -32,7 +32,7 @@ describe('api-error.util', () => {
 
         const result = toUserFacingApiError(error, 'Please update your profile.');
 
-        expect(result.message).toBe('Please update your profile.');
+        expect(result.message).toBe('Phone number is required.');
         expect(result.code).toBe('PHONE_NUMBER_REQUIRED');
         expect(result.apiError?.message).toBe('Phone number is required.');
     });
@@ -46,5 +46,66 @@ describe('api-error.util', () => {
         expect(result.message).toBe('Something went wrong.');
         expect(result.code).toBeUndefined();
         expect(result.apiError).toBeUndefined();
+    });
+
+    it('gets a backend message from ApiError payloads', () => {
+        const result = getApiErrorMessage(
+            new HttpErrorResponse({
+                status: 404,
+                error: {
+                    code: 'CONTACT_INVITEE_NOT_FOUND',
+                    message: 'No account exists for that email address yet.',
+                },
+            }),
+            'Fallback.',
+        );
+
+        expect(result).toBe('No account exists for that email address yet.');
+    });
+
+    it('gets a backend detail from ProblemDetail ApiError payloads', () => {
+        const result = getApiErrorMessage(
+            new HttpErrorResponse({
+                status: 404,
+                error: {
+                    status: 404,
+                    code: 'USER_NOT_FOUND',
+                    title: 'Not Found',
+                    detail: 'No account exists for that email address yet. You can invite only existing users.',
+                    path: '/api/v1/contacts/invitations',
+                    type: 'about:blank',
+                },
+            }),
+            'Fallback.',
+        );
+
+        expect(result).toBe('No account exists for that email address yet. You can invite only existing users.');
+    });
+
+    it('gets a backend message from unstructured payloads', () => {
+        const result = getApiErrorMessage(
+            new HttpErrorResponse({
+                status: 404,
+                error: {
+                    message: 'You can invite only existing users.',
+                },
+            }),
+            'Fallback.',
+        );
+
+        expect(result).toBe('You can invite only existing users.');
+    });
+
+    it('gets a backend detail from plain error-shaped objects', () => {
+        const result = getApiErrorMessage(
+            {
+                error: {
+                    detail: 'Profile save failed.',
+                },
+            },
+            'Fallback.',
+        );
+
+        expect(result).toBe('Profile save failed.');
     });
 });

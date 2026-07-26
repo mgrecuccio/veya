@@ -1,41 +1,23 @@
 :host {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
-.contacts-toolbar {
-  --background: transparent;
-  --border-color: transparent;
-  --padding-top: calc(8px + env(safe-area-inset-top));
-  --padding-start: 16px;
-  --padding-end: 16px;
-  --min-height: 64px;
-  backdrop-filter: blur(100px);
-  -webkit-backdrop-filter: blur(100px);
-}
-
-.contacts-brand {
-  padding-left: 0;
-  font-size: 2rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: #fff;
-  text-align: left;
-}
-
-.contacts-content::part(scroll) {
-  padding-top: calc(64px + env(safe-area-inset-top) + 4px);
-  padding-bottom: calc(104px + env(safe-area-inset-bottom));
+.contacts-content {
+  --padding-top: 24px;
+  --padding-bottom: var(--app-tab-content-offset);
 }
 
 .contacts-page {
-  padding-top: 0;
-  padding-bottom: 0;
+  padding-top: 20px;
 }
 
 .contacts-shell {
   width: 100%;
   max-width: 720px;
   margin: 0 auto;
+  padding-bottom: calc(var(--app-tab-content-offset) + 46px);
 }
 
 .contacts-shell > * + * {
@@ -179,9 +161,17 @@
 }
 
 .invite-form {
+  position: relative;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.invite-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .field-label {
@@ -191,15 +181,27 @@
 }
 
 .invite-input {
-  --background: rgba(255, 255, 255, 0.72);
-  --border-color: rgba(122, 99, 246, 0.12);
-  --border-radius: 18px;
-  --highlight-color-focused: var(--app-color-primary);
-  --color: var(--app-color-text);
-  --placeholder-color: var(--app-color-text-muted);
-  --padding-start: 14px;
-  --padding-end: 14px;
-  --min-height: 52px;
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 14px;
+  border: 1px solid rgba(122, 99, 246, 0.12);
+  border-radius: 18px;
+  outline: 0;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--app-color-text);
+  font: inherit;
+  font-size: 14px;
+}
+
+.invite-input::placeholder {
+  color: var(--app-color-text-muted);
+}
+
+.invite-input:focus {
+  border-color: rgba(var(--app-color-primary-rgb), 0.42);
+  box-shadow: 0 0 0 3px rgba(var(--app-color-primary-rgb), 0.1);
 }
 
 .field-error {
@@ -211,27 +213,51 @@
 
 .invite-actions {
   display: flex;
-  align-items: center;
+  align-items: stretch;
+  flex-wrap: wrap;
   gap: 10px;
   margin-top: 6px;
 }
 
 .invite-submit {
-  --background: linear-gradient(
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(
     135deg,
     var(--app-color-accent) 0%,
     var(--app-color-primary) 100%
   );
-  --color: #fff;
-  --border-radius: 999px;
-  --box-shadow: var(--app-shadow-button);
-  min-height: 46px;
+  box-shadow: var(--app-shadow-button);
+  color: #fff;
+  cursor: pointer;
+  flex: 0 0 auto;
+  height: 42px;
+  min-height: 42px;
+  margin: 0;
+  padding: 0 24px;
   font-weight: 700;
 }
 
 .invite-cancel {
-  --color: var(--app-color-text-muted);
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--app-color-text-muted);
+  cursor: pointer;
+  flex: 0 0 auto;
+  height: 42px;
+  min-height: 42px;
+  margin: 0;
+  padding: 0 14px;
   font-weight: 600;
+}
+
+.invite-submit:disabled,
+.invite-cancel:disabled {
+  cursor: default;
+  opacity: 0.5;
 }
 
 .progress-badge {
@@ -515,11 +541,6 @@
 }
 
 @media (min-width: 768px) {
-  .contacts-toolbar {
-    --padding-start: 20px;
-    --padding-end: 20px;
-  }
-
   .contacts-hero,
   .contacts-card {
     padding: 22px;

@@ -1,20 +1,28 @@
 .app-primary-button {
-  --background: #f4766a; /* softer coral */
-  --background-activated: #e6675c;
-
-  --color: #ffffff;
-
-  --border-radius: 999px;
-  --padding-top: 16px;
-  --padding-bottom: 16px;
-
-  --box-shadow: 0 10px 20px rgba(244, 118, 106, 0.25);
-
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 56px;
+  margin: 0;
+  padding: 16px 22px;
+  border: 0;
+  border-radius: 999px;
+  background: #f4766a;
+  box-shadow: 0 10px 20px rgba(244, 118, 106, 0.25);
+  color: #ffffff;
+  cursor: pointer;
   font-weight: 600;
+  font: inherit;
+  line-height: 1.2;
   text-transform: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.app-primary-button::part(native) {
-  border-radius: 999px;
-  overflow: hidden;
+.app-primary-button[disabled] {
+  background: #f8aaa4;
+  box-shadow: none;
+  cursor: default;
+  opacity: 1;
 }

@@ -15,7 +15,10 @@ import {
 import { UserService } from 'src/app/core/api/services/user.service';
 import { ContactsService } from 'src/app/core/api/services/contacts.service';
 import { AvailabilityService } from 'src/app/core/api/services/availability.service';
-import { toUserFacingApiError } from 'src/app/core/api/api-error.util';
+import {
+  extractApiError,
+  UserFacingApiError,
+} from 'src/app/core/api/api-error.util';
 
 interface AvailabilityPreviewResult {
   windows: EffectiveAvailabilityView[];
@@ -102,7 +105,7 @@ export class HomeDashboardService {
         console.error('[HomeDashboardService] Failed to load dashboard', error);
 
         return throwError(() =>
-          toUserFacingApiError(
+          this.toDashboardLoadError(
             error,
             'We couldn’t load your dashboard right now. Please try again.',
           ),
@@ -203,4 +206,19 @@ export class HomeDashboardService {
       },
     ];
   }  
+
+  private toDashboardLoadError(
+    error: unknown,
+    message: string,
+  ): UserFacingApiError {
+    const apiError = extractApiError(error);
+    const dashboardError = new Error(message) as UserFacingApiError;
+
+    if (apiError) {
+      dashboardError.code = apiError.code;
+      dashboardError.apiError = apiError;
+    }
+
+    return dashboardError;
+  }
 }

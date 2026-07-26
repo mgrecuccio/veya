@@ -1,14 +1,17 @@
-<ion-header class="app-header ion-no-border">
-  <ion-toolbar>
-    <ion-buttons slot="start">
-      <ion-back-button defaultHref="/auth/onboarding"></ion-back-button>
-    </ion-buttons>
+<ion-content
+  class="app-gradient-content auth-content auth-content--register"
+  [fullscreen]="true"
+  [style.--auth-focus-offset.px]="authFocusOffset"
+  (focusin)="scrollFocusedControlIntoView($event)"
+  (focusout)="clearFocusedControlOffset()"
+>
+  <header class="auth-topbar">
+    <button type="button" class="auth-back-button" aria-label="Go back" (click)="goBack()">
+      <span class="auth-back-button__icon" aria-hidden="true">‹</span>
+    </button>
+    <div class="auth-topbar__brand">Veya</div>
+  </header>
 
-    <ion-title class="app-header__brand">Veya</ion-title>
-  </ion-toolbar>
-</ion-header>
-
-<ion-content class="app-gradient-content" [fullscreen]="true">
   <div class="app-content-shell app-content-shell--auth">
     <div class="auth-shell">
       <section class="app-surface auth-card">
@@ -22,20 +25,15 @@
         <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
           <div class="auth-field">
             <label class="auth-label" for="register-name">Name</label>
-            <ion-item
-              lines="none"
-              class="auth-input-item"
+            <input
+              id="register-name"
+              class="auth-input-item auth-input"
               [class.auth-input-item--invalid]="isInvalid('name')"
-            >
-              <ion-input
-                id="register-name"
-                class="auth-input"
-                type="text"
-                autocomplete="name"
-                placeholder="Your name"
-                formControlName="name"
-              ></ion-input>
-            </ion-item>
+              type="text"
+              autocomplete="name"
+              placeholder="Your name"
+              formControlName="name"
+            />
 
             @if (isInvalid('name')) {
               <div class="auth-error">
@@ -48,21 +46,16 @@
 
           <div class="auth-field">
             <label class="auth-label" for="register-email">Email</label>
-            <ion-item
-              lines="none"
-              class="auth-input-item"
+            <input
+              id="register-email"
+              class="auth-input-item auth-input"
               [class.auth-input-item--invalid]="isInvalid('email')"
-            >
-              <ion-input
-                id="register-email"
-                class="auth-input"
-                type="email"
-                inputmode="email"
-                autocomplete="email"
-                placeholder="you@example.com"
-                formControlName="email"
-              ></ion-input>
-            </ion-item>
+              type="email"
+              inputmode="email"
+              autocomplete="email"
+              placeholder="you@example.com"
+              formControlName="email"
+            />
 
             @if (isInvalid('email') || email.errors?.['emailAlreadyExists']) {
               <div class="auth-error">
@@ -84,44 +77,28 @@
             </label>
 
             <div class="phone-input-row">
-              <ion-item
-                lines="none"
-                class="auth-input-item phone-country-item"
+              <select
+                class="auth-input-item auth-select phone-country-item"
+                aria-label="Country calling code"
+                formControlName="phoneCountry"
               >
-                <ion-select
-                  aria-label="Country calling code"
-                  formControlName="phoneCountry"
-                  interface="modal"
-                  [selectedText]="selectedCountryText"
-                  [interfaceOptions]="{
-                    header: 'Select your country'
-                  }"
-                >
-                  @for (country of countries; track country.code) {
-                    <ion-select-option [value]="country.code">
-                      {{ country.flag }}
-                      {{ country.name }}
-                      ({{ country.dialCode }})
-                    </ion-select-option>
-                  }
-                </ion-select>
-              </ion-item>
+                @for (country of countries; track country.code) {
+                  <option [value]="country.code">
+                    {{ country.flag }} {{ country.dialCode }}
+                  </option>
+                }
+              </select>
 
-              <ion-item
-                lines="none"
-                class="auth-input-item phone-number-item"
+              <input
+                id="register-phone"
+                class="auth-input-item auth-input phone-number-item"
                 [class.auth-input-item--invalid]="isPhoneInvalid()"
-              >
-                <ion-input
-                  id="register-phone"
-                  class="auth-input"
-                  type="tel"
-                  inputmode="tel"
-                  autocomplete="tel-national"
-                  placeholder="470 12 34 56"
-                  formControlName="phoneNational"
-                ></ion-input>
-              </ion-item>
+                type="tel"
+                inputmode="tel"
+                autocomplete="tel-national"
+                placeholder="470 12 34 56"
+                formControlName="phoneNational"
+              />
             </div>
 
             @if (isPhoneInvalid()) {
@@ -133,20 +110,15 @@
           
           <div class="auth-field">
             <label class="auth-label" for="register-password">Password</label>
-            <ion-item
-              lines="none"
-              class="auth-input-item"
+            <input
+              id="register-password"
+              class="auth-input-item auth-input"
               [class.auth-input-item--invalid]="isInvalid('password')"
-            >
-              <ion-input
-                id="register-password"
-                class="auth-input"
-                type="password"
-                autocomplete="new-password"
-                placeholder="Create a password"
-                formControlName="password"
-              ></ion-input>
-            </ion-item>
+              type="password"
+              autocomplete="new-password"
+              placeholder="Create a password"
+              formControlName="password"
+            />
 
             @if (isInvalid('password')) {
               <div class="auth-error">
@@ -161,20 +133,15 @@
 
           <div class="auth-field">
             <label class="auth-label" for="register-confirm-password">Confirm password</label>
-            <ion-item
-              lines="none"
-              class="auth-input-item"
+            <input
+              id="register-confirm-password"
+              class="auth-input-item auth-input"
               [class.auth-input-item--invalid]="isInvalid('confirmPassword')"
-            >
-              <ion-input
-                id="register-confirm-password"
-                class="auth-input"
-                type="password"
-                autocomplete="new-password"
-                placeholder="Repeat your password"
-                formControlName="confirmPassword"
-              ></ion-input>
-            </ion-item>
+              type="password"
+              autocomplete="new-password"
+              placeholder="Repeat your password"
+              formControlName="confirmPassword"
+            />
 
             @if (isInvalid('confirmPassword') || form.errors?.['passwordMismatch']) {
               <div class="auth-error">
@@ -209,11 +176,17 @@
 
         <div class="auth-footer">
           Already have an account?
-          <a class="auth-footer-link" routerLink="/auth/login">
+          <button
+            type="button"
+            class="auth-footer-link"
+            (click)="goToLogin()"
+          >
             Log in
-          </a>
+          </button>
         </div>
       </section>
     </div>
   </div>
+
+  <div class="auth-keyboard-spacer" aria-hidden="true"></div>
 </ion-content>

@@ -28,6 +28,43 @@ body {
 
 ion-content.app-gradient-content {
   --background: var(--app-gradient-main);
+  --overflow: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+ion-content.app-gradient-content::part(scroll) {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
+ion-header.app-native-header {
+  padding-top: var(--app-safe-area-top);
+  position: relative;
+  z-index: 20;
+  pointer-events: auto;
+}
+
+ion-header.app-native-header ion-toolbar {
+  position: relative;
+  --padding-top: 0;
+}
+
+html.app-platform-android ion-content.home-content,
+html.app-platform-android ion-content.contacts-content,
+html.app-platform-android ion-content.matches-content,
+html.app-platform-android ion-content.availability-content {
+  --padding-top: var(--app-safe-area-top);
+}
+
+html.app-platform-android .home-page,
+html.app-platform-android .contacts-page,
+html.app-platform-android .matches-page,
+html.app-platform-android .availability-page {
+  padding-top: 0;
 }
 
 ion-button {
@@ -39,25 +76,39 @@ ion-button::part(native) {
 }
 
 .app-page {
+  height: 100%;
   min-height: 100%;
   padding: var(--app-space-6) var(--app-space-5) var(--app-space-7);
   display: flex;
   flex-direction: column;
-}
-
-/* Hide visual scrollbars while keeping scroll enabled for mobile-first feel */
-ion-content::part(scroll) {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* Legacy Edge/IE */
-}
-
-ion-content::part(scroll)::-webkit-scrollbar {
-  width: 0;
-  height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  touch-action: pan-y;
 }
 
 .app-page--centered {
   justify-content: center;
+}
+
+.app-page-topbar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--app-header-height);
+  padding: 0 16px 0 24px;
+  backdrop-filter: blur(100px);
+  -webkit-backdrop-filter: blur(100px);
+}
+
+.app-page-brand {
+  color: #fff;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  text-align: left;
 }
 
 .actions-grid {
@@ -87,7 +138,7 @@ ion-content::part(scroll)::-webkit-scrollbar {
 .app-header ion-toolbar {
   --background: transparent;
   --border-color: transparent;
-  --padding-top: calc(8px + env(safe-area-inset-top));
+  --padding-top: var(--app-safe-area-top);
   --padding-start: 16px;
   --padding-end: 16px;
   --min-height: 72px;
@@ -130,9 +181,19 @@ ion-content::part(scroll)::-webkit-scrollbar {
   --color: #fff;
   --padding-start: 0;
   --padding-end: 0;
+  position: absolute;
+  top: calc(var(--app-safe-area-top) + (var(--app-header-height) - 42px) / 2);
+  right: 16px;
+  z-index: 30;
   width: 42px;
   height: 42px;
   margin: 0;
+}
+
+.page-settings-button--topbar {
+  position: static;
+  flex: 0 0 auto;
+  transform: translateY(10px);
 }
 
 .page-settings-button::part(native) {
@@ -149,6 +210,75 @@ ion-content::part(scroll)::-webkit-scrollbar {
   font-size: 21px;
 }
 
+.availability-segment {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 4px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.availability-segment ion-segment-button {
+  --background: transparent;
+  --background-checked: #fff;
+  --border-radius: 14px;
+  --color: var(--app-color-text-muted);
+  --color-checked: var(--app-color-primary);
+  --indicator-color: transparent;
+  --indicator-box-shadow: none;
+  min-height: 38px;
+  font-size: 14px;
+  font-weight: 800;
+  text-transform: none;
+}
+
+.availability-segment ion-segment-button::part(native) {
+  padding: 0 12px;
+  border-radius: 14px;
+}
+
+.availability-segment ion-segment-button.segment-button-checked::part(native) {
+  background: #fff;
+  box-shadow: 0 8px 18px rgba(122, 99, 246, 0.12);
+}
+
+.form-submit,
+.form-cancel {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.form-submit {
+  padding: 0 18px;
+  background: linear-gradient(135deg, var(--app-color-accent), var(--app-color-primary));
+  box-shadow: var(--app-shadow-button);
+  color: var(--app-color-primary-contrast);
+}
+
+.form-cancel {
+  padding: 0 16px;
+  background: rgba(255, 255, 255, 0.58);
+  color: var(--app-color-text-muted);
+}
+
+.form-submit[disabled],
+.form-cancel[disabled] {
+  opacity: 0.5;
+}
+
+.form-submit[disabled] {
+  box-shadow: none;
+}
+
 .app-content-shell {
   padding: 8px 16px 24px;
 }
@@ -163,6 +293,29 @@ ion-content::part(scroll)::-webkit-scrollbar {
   padding-bottom: 28px;
 }
 
-ion-toast.contacts-page-toast {
-  --offset-y: calc(env(safe-area-inset-top) + 72px);
+.app-toast-overlay {
+  position: fixed;
+  top: calc(var(--app-safe-area-top) + 16px);
+  left: 16px;
+  right: 16px;
+  z-index: 10000;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 14px 16px;
+  border-radius: 18px;
+  box-shadow: 0 14px 34px rgba(64, 44, 96, 0.22);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+  pointer-events: auto;
+}
+
+.app-toast-overlay--success {
+  background: #4a9b6f;
+}
+
+.app-toast-overlay--danger {
+  background: #b95c68;
 }

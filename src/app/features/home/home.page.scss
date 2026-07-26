@@ -1,5 +1,7 @@
 :host {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .home-header,
@@ -9,16 +11,16 @@
 }
 
 .home-toolbar {
-  --padding-top: calc(8px + env(safe-area-inset-top));
-  --padding-start: 16px;
+  --padding-top: 0;
+  --padding-start: 24px;
   --padding-end: 16px;
-  --min-height: 64px;
+  --min-height: var(--app-header-height);
   backdrop-filter: blur(100px);
   -webkit-backdrop-filter: blur(100px);
 }
 
 .home-brand {
-  padding-left: 0;
+  padding-left: 24px;
   font-size: 2rem;
   font-weight: 700;
   letter-spacing: -0.03em;
@@ -36,13 +38,13 @@
   margin: 0;
 }
 
-.home-content::part(scroll) {
-  padding-top: calc(64px + env(safe-area-inset-top) + 4px);
-  padding-bottom: calc(104px + env(safe-area-inset-bottom));
+.home-content {
+  --padding-top: 24px;
+  --padding-bottom: var(--app-tab-content-offset);
 }
 
 .home-page {
-  padding-top: 0;
+  padding-top: 20px;
   padding-bottom: 0;
 }
 
@@ -54,6 +56,12 @@
 
 .home-shell > * + * {
   margin-top: 16px;
+}
+
+.home-shell::after {
+  content: "";
+  display: block;
+  height: calc(var(--app-tab-bar-height) + var(--app-safe-area-bottom) + 56px);
 }
 
 .home-hero {

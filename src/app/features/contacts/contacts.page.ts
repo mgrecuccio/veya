@@ -5,6 +5,8 @@ import { RouterModule } from "@angular/router";
 import { IonicModule, ActionSheetController, AlertController } from '@ionic/angular';
 import { ContactsPageData, ContactsPageDataService } from "./data/contacts-page-data.service";
 import { catchError, map, Observable, of, shareReplay, startWith, Subject, switchMap } from "rxjs";
+import { getApiErrorMessage } from "src/app/core/api/api-error.util";
+import { AppToastColor, AppToastService } from "src/app/shared/toast/app-toast.service";
 
 type ContactsPageVmState =
     | { kind: 'loading' }
@@ -56,6 +58,7 @@ export class ContactsPage {
     private readonly contactsDataService = inject(ContactsPageDataService);
     private readonly actionSheetController = inject(ActionSheetController);
     private readonly alertController = inject(AlertController);
+    private readonly appToastService = inject(AppToastService);
     private readonly reload$ = new Subject<void>();
 
     readonly inviteExpanded = signal(false);
@@ -64,7 +67,7 @@ export class ContactsPage {
     readonly toastState = signal<{
       isOpen: boolean;
       message: string;
-      color: 'success' | 'danger';
+      color: AppToastColor;
     }>({
       isOpen: false,
       message: '',
@@ -132,7 +135,7 @@ export class ContactsPage {
         error: (error: any) => {
           this.inviteSubmitting.set(false);
           this.showToast(
-            error?.error?.detail || 'We couldn’t send that invitation right now.',
+            getApiErrorMessage(error, 'We couldn’t send that invitation right now.'),
             'danger',
           );
         }
@@ -238,7 +241,7 @@ export class ContactsPage {
         error: (error: any) => {
           this.rowActionBusyId.set(null);
           this.showToast(
-            error?.error?.detail || 'We couldn’t update that contact right now.',
+            getApiErrorMessage(error, 'We couldn’t update that contact right now.'),
             'danger',
           );
         },
@@ -383,7 +386,7 @@ export class ContactsPage {
       error: (error: any) => {
         this.rowActionBusyId.set(null);
         this.showToast(
-          error?.error?.detail || 'We couldn’t update that contact right now.',
+          getApiErrorMessage(error, 'We couldn’t update that contact right now.'),
           'danger',
         );
       },
@@ -401,20 +404,14 @@ export class ContactsPage {
       }));
     }
 
-    private showToast(message: string, color: 'success' | 'danger'): void {
+    private showToast(message: string, color: AppToastColor): void {
       this.toastState.set({
-        isOpen: false,
+        isOpen: true,
         message,
         color,
       });
 
-      queueMicrotask(() => {
-        this.toastState.set({
-          isOpen: true,
-          message,
-          color,
-        });
-      });
+      void this.appToastService.show(message, color, 'app-toast contacts-page-toast');
     }
 
     private mapToVm(data: ContactsPageData): ContactsPageVm {

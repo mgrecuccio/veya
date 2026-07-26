@@ -1,21 +1,18 @@
-<ion-header class="ion-no-border">
-  <ion-toolbar class="contacts-toolbar">
-    <ion-title class="contacts-brand">Veya</ion-title>
-    <ion-buttons slot="end">
-      <ion-button
-        class="page-settings-button"
-        aria-label="Open settings" 
-        title="Settings preview"
-        routerLink="/settings"
-        routerDirection="forward"
-        >
-          <ion-icon slot="icon-only" name="settings-outline"></ion-icon>
-      </ion-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-header>
+<ion-content class="app-gradient-content contacts-content" [fullscreen]="true" [scrollY]="true">
+  <header class="app-page-topbar">
+    <div class="app-page-brand">Veya</div>
 
-<ion-content class="app-gradient-content contacts-content" [fullscreen]="true">
+    <ion-button
+      class="page-settings-button page-settings-button--topbar"
+      aria-label="Open settings"
+      title="Settings preview"
+      routerLink="/settings"
+      routerDirection="forward"
+    >
+      <ion-icon slot="icon-only" name="settings-outline"></ion-icon>
+    </ion-button>
+  </header>
+
   <div class="app-page contacts-page">
     <div class="contacts-shell">
       @if (vmState$ | async; as state) {
@@ -126,52 +123,54 @@
                 [formGroup]="inviteForm"
                 (ngSubmit)="submitInvite()"
               >
-                <label class="field-label" for="email">Email</label>
-                <ion-input
-                  id="email"
-                  class="invite-input"
-                  type="email"
-                  formControlName="email"
-                  fill="outline"
-                  inputmode="email"
-                  autocomplete="email"
-                  placeholder="friend@example.com"
-                ></ion-input>
+                <div class="invite-row">
+                  <label class="field-label" for="email">Email</label>
+                  <input
+                    id="email"
+                    class="invite-input"
+                    type="email"
+                    formControlName="email"
+                    inputmode="email"
+                    autocomplete="email"
+                    placeholder="friend@example.com"
+                  />
+                </div>
 
                 @if (inviteForm.controls.email.touched && inviteForm.controls.email.invalid) {
                   <p class="field-error">Please enter a valid email address.</p>
                 }
 
-                <label class="field-label" for="nickName">Nickname <span class="app-text-muted">(optional)</span></label>
-                <ion-input
-                  id="nickName"
-                  class="invite-input"
-                  type="text"
-                  formControlName="nickName"
-                  fill="outline"
-                  maxlength="100"
-                  autocomplete="nickname"
-                  placeholder="How you know them"
-                ></ion-input>
+                <div class="invite-row">
+                  <label class="field-label" for="nickName">Nickname <span class="app-text-muted">(optional)</span></label>
+                  <input
+                    id="nickName"
+                    class="invite-input"
+                    type="text"
+                    formControlName="nickName"
+                    maxlength="100"
+                    autocomplete="nickname"
+                    placeholder="How you know them"
+                  />
+                </div>
 
                 <div class="invite-actions">
-                  <ion-button
-                    type="submit"
+                  <button
+                    type="button"
                     class="invite-submit"
-                    [disabled]="inviteForm.invalid || inviteSubmitting()"
+                    (click)="submitInvite()"
+                    [disabled]="inviteSubmitting()"
                   >
                     {{ inviteSubmitting() ? 'Sending…' : 'Send invitation' }}
-                  </ion-button>
+                  </button>
 
-                  <ion-button
+                  <button
                     type="button"
-                    fill="clear"
                     class="invite-cancel"
                     (click)="closeInvite()"
                     [disabled]="inviteSubmitting()"
                   >
                     Cancel
-                  </ion-button>
+                  </button>
                 </div>
               </form>
             }
@@ -346,13 +345,4 @@
     </div>
   </div>
 
-  <ion-toast
-    [isOpen]="toastState().isOpen"
-    [message]="toastState().message"
-    [color]="toastState().color"
-    cssClass="contacts-page-toast"
-    duration="2000"
-    position="top"
-    (didDismiss)="onToastDismiss()"
-  ></ion-toast>
 </ion-content>

@@ -8,7 +8,10 @@ import { authInterceptor } from './core/interceptors/auth.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideIonicAngular(),
+    provideIonicAngular({
+      mode: 'md',
+      animated: false,
+    }),
     provideRouter(routes),
     provideHttpClient(
       withInterceptors([authInterceptor])

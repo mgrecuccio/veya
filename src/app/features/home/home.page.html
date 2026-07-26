@@ -1,21 +1,18 @@
-<ion-header class="ion-no-border">
-  <ion-toolbar class="home-toolbar">
-    <ion-title class="home-brand">Veya</ion-title>
-    <ion-buttons slot="end">
-      <ion-button
-        class="page-settings-button"
-        aria-label="Open settings" 
-        title="Settings preview"
-        routerLink="/settings"
-        routerDirection="forward"
-        >
-          <ion-icon slot="icon-only" name="settings-outline"></ion-icon>
-      </ion-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-header>
+<ion-content class="app-gradient-content home-content" [fullscreen]="true" [scrollY]="true">
+  <header class="app-page-topbar">
+    <div class="app-page-brand">Veya</div>
 
-<ion-content class="app-gradient-content home-content" [fullscreen]="true">
+    <ion-button
+      class="page-settings-button page-settings-button--topbar"
+      aria-label="Open settings"
+      title="Settings preview"
+      routerLink="/settings"
+      routerDirection="forward"
+    >
+      <ion-icon slot="icon-only" name="settings-outline"></ion-icon>
+    </ion-button>
+  </header>
+
   <div class="app-page home-page">
     <div class="home-shell">
       @if (vmState$ | async; as state) {

@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { IonicModule } from '@ionic/angular';
+import { AppToastService } from 'src/app/shared/toast/app-toast.service';
 
 interface MatchPreview {
   id: number;
@@ -17,6 +18,8 @@ interface MatchPreview {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MatchesPage {
+  private readonly appToastService = inject(AppToastService);
+
   readonly matches: MatchPreview[] = [
     { id: 1, name: 'Alex Morgan', initials: 'AM' },
     { id: 2, name: 'Sam Rivera', initials: 'SR' },
@@ -27,6 +30,11 @@ export class MatchesPage {
 
   previewChat(): void {
     this.toastOpen.set(true);
+    void this.appToastService.show(
+      'WhatsApp chat links will be connected when match contact data is available.',
+      'success',
+      'app-toast matches-page-toast',
+    );
   }
 
   closeToast(): void {

@@ -1,7 +1,9 @@
-<ion-button
-    class="app-primary-button"
-    [expand]="expand"
-    [disabled]="disabled"
-    [type]="type">
-    <ng-content></ng-content>
-</ion-button>
+<button
+  class="app-primary-button"
+  [class.app-primary-button--full]="expand === 'full'"
+  [disabled]="disabled"
+  [type]="type"
+  (click)="buttonClick.emit($event)"
+>
+  <ng-content></ng-content>
+</button>

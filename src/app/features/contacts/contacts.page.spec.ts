@@ -1,9 +1,11 @@
+import { HttpErrorResponse } from "@angular/common/http";
 import { fakeAsync, flushMicrotasks, TestBed } from "@angular/core/testing";
 import { provideRouter } from "@angular/router";
 import { ContactsPage } from "./contacts.page";
 import { ContactsPageDataService } from "./data/contacts-page-data.service";
 import { ActionSheetController, AlertController } from '@ionic/angular';
 import { of, Subject, throwError } from "rxjs";
+import { AppToastService } from "src/app/shared/toast/app-toast.service";
 
 
 describe('ContactsPage', () => {
@@ -12,6 +14,7 @@ describe('ContactsPage', () => {
     let dataService: jasmine.SpyObj<ContactsPageDataService>;
     let actionSheetController: jasmine.SpyObj<ActionSheetController>;
     let alertController: jasmine.SpyObj<AlertController>;
+    let appToastService: jasmine.SpyObj<AppToastService>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -52,6 +55,13 @@ describe('ContactsPage', () => {
                         ],
                     ),
                 },
+                {
+                    provide: AppToastService,
+                    useValue: jasmine.createSpyObj<AppToastService>(
+                        'AppToastService',
+                        ['show'],
+                    ),
+                },
             ],
         }).compileComponents();
 
@@ -60,6 +70,8 @@ describe('ContactsPage', () => {
         dataService = TestBed.inject(ContactsPageDataService) as jasmine.SpyObj<ContactsPageDataService>;
         actionSheetController = TestBed.inject(ActionSheetController) as jasmine.SpyObj<ActionSheetController>;
         alertController = TestBed.inject(AlertController) as jasmine.SpyObj<AlertController>;
+        appToastService = TestBed.inject(AppToastService) as jasmine.SpyObj<AppToastService>;
+        appToastService.show.and.returnValue(Promise.resolve());
     });
 
     it('should emit loading then success', (done) => {
@@ -174,6 +186,32 @@ describe('ContactsPage', () => {
             isOpen: true,
             message: 'Invitation sent.',
             color: 'success',
+        });
+    }));
+
+    it('should show backend invite errors', fakeAsync(() => {
+        dataService.sendInvitation.and.returnValue(
+            throwError(() => new HttpErrorResponse({
+                status: 404,
+                error: {
+                    message: 'No account exists for that email address yet. You can invite only existing users.',
+                },
+            })),
+        );
+
+        component.inviteForm.setValue({
+            email: 'missing@email.com',
+            nickName: '',
+        });
+
+        component.submitInvite();
+        flushMicrotasks();
+
+        expect(component.inviteSubmitting()).toBeFalse();
+        expect(component.toastState()).toEqual({
+            isOpen: true,
+            message: 'No account exists for that email address yet. You can invite only existing users.',
+            color: 'danger',
         });
     }));
 

@@ -90,6 +90,21 @@ describe('LoginPage', () => {
         expect(router.navigateByUrl).toHaveBeenCalledWith('/app/home', { replaceUrl: true });
     });
 
+    it('should keep back navigation when navigating to register', () => {
+        component.goToRegister();
+
+        const [url, extras] = (router.navigateByUrl as jasmine.Spy).calls.mostRecent().args;
+        expect(url.toString()).toBe('/auth/register');
+        expect(extras).not.toEqual(jasmine.objectContaining({ replaceUrl: true }));
+    });
+
+    it('should navigate back to onboarding', () => {
+        component.goBack();
+
+        const [url] = (router.navigateByUrl as jasmine.Spy).calls.mostRecent().args;
+        expect(url.toString()).toBe('/auth/onboarding');
+    });
+
     it('should set invalidCredentials form error on login failure', () => {
     const error: AuthError = {
         code: 'INVALID_CREDENTIALS',

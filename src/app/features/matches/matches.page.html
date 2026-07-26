@@ -1,21 +1,18 @@
-<ion-header class="ion-no-border">
-  <ion-toolbar class="matches-toolbar">
-    <ion-title class="matches-brand">Veya</ion-title>
-    <ion-buttons slot="end">
-      <ion-button
-        class="page-settings-button"
-        aria-label="Open settings" 
-        title="Settings preview"
-        routerLink="/settings"
-        routerDirection="forward"
-        >
-          <ion-icon slot="icon-only" name="settings-outline"></ion-icon>
-      </ion-button>
-    </ion-buttons>
-  </ion-toolbar>
-</ion-header>
+<ion-content class="app-gradient-content matches-content" [fullscreen]="true" [scrollY]="true">
+  <header class="app-page-topbar">
+    <div class="app-page-brand">Veya</div>
 
-<ion-content class="app-gradient-content matches-content" [fullscreen]="true">
+    <ion-button
+      class="page-settings-button page-settings-button--topbar"
+      aria-label="Open settings"
+      title="Settings preview"
+      routerLink="/settings"
+      routerDirection="forward"
+    >
+      <ion-icon slot="icon-only" name="settings-outline"></ion-icon>
+    </ion-button>
+  </header>
+
   <div class="app-page matches-page">
     <div class="matches-shell">
       <section class="app-surface matches-hero">
@@ -68,11 +65,4 @@
     </div>
   </div>
 
-  <ion-toast
-    [isOpen]="toastOpen()"
-    message="WhatsApp chat links will be connected when match contact data is available."
-    duration="2400"
-    position="top"
-    (didDismiss)="closeToast()"
-  ></ion-toast>
 </ion-content>

@@ -1,14 +1,17 @@
-<ion-header class="app-header ion-no-border">
-  <ion-toolbar>
-    <ion-buttons slot="start">
-      <ion-back-button defaultHref="/auth/onboarding"></ion-back-button>
-    </ion-buttons>
+<ion-content
+  class="app-gradient-content auth-content"
+  [fullscreen]="true"
+  [style.--auth-focus-offset.px]="authFocusOffset"
+  (focusin)="scrollFocusedControlIntoView($event)"
+  (focusout)="clearFocusedControlOffset()"
+>
+  <header class="auth-topbar">
+    <button type="button" class="auth-back-button" aria-label="Go back" (click)="goBack()">
+      <span class="auth-back-button__icon" aria-hidden="true">‹</span>
+    </button>
+    <div class="auth-topbar__brand">Veya</div>
+  </header>
 
-    <ion-title class="app-header__brand">Veya</ion-title>
-  </ion-toolbar>
-</ion-header>
-
-<ion-content class="app-gradient-content" [fullscreen]="true">
   <div class="app-content-shell app-content-shell--auth">
     <div class="auth-shell">
       <section class="app-surface auth-card">
@@ -22,21 +25,16 @@
         <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
           <div class="auth-field">
             <label class="auth-label" for="login-email">Email</label>
-            <ion-item
-              lines="none"
-              class="auth-input-item"
+            <input
+              id="login-email"
+              class="auth-input-item auth-input"
               [class.auth-input-item--invalid]="isInvalid('email')"
-            >
-              <ion-input
-                id="login-email"
-                class="auth-input"
-                type="email"
-                inputmode="email"
-                autocomplete="email"
-                placeholder="you@example.com"
-                formControlName="email"
-              ></ion-input>
-            </ion-item>
+              type="email"
+              inputmode="email"
+              autocomplete="email"
+              placeholder="you@example.com"
+              formControlName="email"
+            />
 
             @if (isInvalid('email')) {
               <div class="auth-error">
@@ -51,20 +49,15 @@
 
           <div class="auth-field">
             <label class="auth-label" for="login-password">Password</label>
-            <ion-item
-              lines="none"
-              class="auth-input-item"
+            <input
+              id="login-password"
+              class="auth-input-item auth-input"
               [class.auth-input-item--invalid]="isInvalid('password')"
-            >
-              <ion-input
-                id="login-password"
-                class="auth-input"
-                type="password"
-                autocomplete="current-password"
-                placeholder="Enter your password"
-                formControlName="password"
-              ></ion-input>
-            </ion-item>
+              type="password"
+              autocomplete="current-password"
+              placeholder="Enter your password"
+              formControlName="password"
+            />
 
             @if (isInvalid('password')) {
               <div class="auth-error">
@@ -116,11 +109,17 @@
 
         <div class="auth-footer">
           Don’t have an account?
-          <a class="auth-footer-link" routerLink="/auth/register">
+          <button
+            type="button"
+            class="auth-footer-link"
+            (click)="goToRegister()"
+          >
             Sign up
-          </a>
+          </button>
         </div>
       </section>
     </div>
   </div>
+
+  <div class="auth-keyboard-spacer" aria-hidden="true"></div>
 </ion-content>

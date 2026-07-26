@@ -4,11 +4,13 @@ import { AvailabilityPage } from "./availability.page";
 import { AvailabilityPageDataService } from "./data/availability-page-data.service";
 import { of, Subject, throwError } from "rxjs";
 import { AvailabilityRuleView } from "src/app/core/api/model/availability-rule-view.model";
+import { AppToastService } from "src/app/shared/toast/app-toast.service";
 
 describe('AbailabilityPage', () => {
     let fixture: any;
     let component: AvailabilityPage;
     let dataService: jasmine.SpyObj<AvailabilityPageDataService>;
+    let appToastService: jasmine.SpyObj<AppToastService>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -28,12 +30,21 @@ describe('AbailabilityPage', () => {
                         ],
                     ),
                 },
+                {
+                    provide: AppToastService,
+                    useValue: jasmine.createSpyObj<AppToastService>(
+                        'AppToastService',
+                        ['show'],
+                    ),
+                },
             ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(AvailabilityPage);
         component = fixture.componentInstance;
         dataService = TestBed.inject(AvailabilityPageDataService) as jasmine.SpyObj<AvailabilityPageDataService>;
+        appToastService = TestBed.inject(AppToastService) as jasmine.SpyObj<AppToastService>;
+        appToastService.show.and.returnValue(Promise.resolve());
     });
 
     it('should emit loading then success', (done) => {
