@@ -319,3 +319,120 @@ ion-button::part(native) {
 .app-toast-overlay--danger {
   background: #b95c68;
 }
+
+.contact-actions-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px 16px calc(16px + var(--app-safe-area-bottom));
+  background: rgba(47, 35, 67, 0.28);
+  backdrop-filter: blur(2px);
+}
+
+.contact-actions-sheet {
+  width: 100%;
+  max-width: 560px;
+  border-radius: 22px;
+  padding: 8px 10px 10px;
+  background: #fff;
+  box-shadow: 0 18px 44px rgba(64, 44, 96, 0.22);
+}
+
+.contact-actions-sheet__handle {
+  width: 42px;
+  height: 4px;
+  margin: 4px auto 10px;
+  border-radius: 999px;
+  background: rgba(122, 99, 246, 0.16);
+}
+
+.contact-actions-sheet__header,
+.contact-actions-sheet__button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--app-color-text);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.contact-actions-sheet__header {
+  padding: 6px 16px 14px;
+  color: var(--app-color-text-muted);
+}
+
+.contact-actions-sheet__button {
+  min-height: 54px;
+  padding: 14px 16px;
+  cursor: pointer;
+  border-top: 1px solid rgba(122, 99, 246, 0.08);
+}
+
+.contact-actions-sheet__button--cancel {
+  margin-top: 6px;
+  border-top: 0;
+  border-radius: 16px;
+  background: rgba(122, 99, 246, 0.08);
+  color: var(--app-color-primary);
+}
+
+.contact-actions-sheet__button--danger {
+  color: #b95c52;
+}
+
+.contact-actions-editor {
+  padding: 0 4px 4px;
+}
+
+.contact-actions-editor__label {
+  display: block;
+  margin: 0 0 8px;
+  color: var(--app-color-text);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.contact-actions-editor__input {
+  width: 100%;
+  min-height: 52px;
+  padding: 0 14px;
+  border: 1px solid rgba(122, 99, 246, 0.16);
+  border-radius: 16px;
+  outline: 0;
+  background: rgba(122, 99, 246, 0.04);
+  color: var(--app-color-text);
+  font: inherit;
+  font-size: 16px;
+}
+
+.contact-actions-editor__input:focus {
+  border-color: rgba(122, 99, 246, 0.42);
+  box-shadow: 0 0 0 3px rgba(122, 99, 246, 0.1);
+}
+
+.contact-actions-editor__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.contact-actions-editor__button {
+  min-height: 48px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(122, 99, 246, 0.08);
+  color: var(--app-color-primary);
+  font: inherit;
+  font-weight: 700;
+}
+
+.contact-actions-editor__button--primary {
+  background: linear-gradient(135deg, var(--app-color-accent), var(--app-color-primary));
+  color: #fff;
+}
