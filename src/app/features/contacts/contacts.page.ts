@@ -60,6 +60,7 @@ export class ContactsPage {
     private readonly alertController = inject(AlertController);
     private readonly appToastService = inject(AppToastService);
     private readonly reload$ = new Subject<void>();
+    private hasEntered = false;
 
     readonly inviteExpanded = signal(false);
     readonly inviteSubmitting = signal(false);
@@ -104,6 +105,15 @@ export class ContactsPage {
       ),
       shareReplay({ bufferSize: 1, refCount: true }),
     );
+
+    ionViewWillEnter(): void {
+      if (!this.hasEntered) {
+        this.hasEntered = true;
+        return;
+      }
+
+      this.retry();
+    }
 
     openInvite(): void {
       this.inviteExpanded.set(true);

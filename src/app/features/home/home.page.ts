@@ -28,6 +28,7 @@ type HomePageVmState =
 export class HomePage {
   private readonly homeDashboardService = inject(HomeDashboardService);
   private readonly reload$ = new Subject<void>();
+  private hasEntered = false;
 
   readonly freeNowState: FreeNowState = {
     active: false,
@@ -51,6 +52,15 @@ export class HomePage {
     ),
     shareReplay({ bufferSize: 1, refCount: true }),
   );
+
+  ionViewWillEnter(): void {
+    if (!this.hasEntered) {
+      this.hasEntered = true;
+      return;
+    }
+
+    this.retry();
+  }
 
   toggleFreeNow(): void {
     this.freeNowState.active = !this.freeNowState.active;

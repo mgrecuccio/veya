@@ -118,6 +118,23 @@ describe('ContactsPage', () => {
         sub.unsubscribe();
     });
 
+    it('should refresh when returning to the tab after first entry', () => {
+        dataService.getPageData.and.returnValue(
+            of({ contacts: [], blockedContacts: [], pendingInvitations: [] })
+        );
+
+        const sub = component.vmState$.subscribe();
+        expect(dataService.getPageData).toHaveBeenCalledTimes(1);
+
+        component.ionViewWillEnter();
+        expect(dataService.getPageData).toHaveBeenCalledTimes(1);
+
+        component.ionViewWillEnter();
+        expect(dataService.getPageData).toHaveBeenCalledTimes(2);
+
+        sub.unsubscribe();
+    });
+
     it('should open the invite panel', () => {
         component.openInvite();
         expect(component.inviteExpanded()).toBeTrue();
