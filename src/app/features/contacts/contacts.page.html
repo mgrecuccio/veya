@@ -307,8 +307,6 @@
                       <button
                         type="button"
                         class="contact-menu-button"
-                        (touchstart)="openContactActions(contact)"
-                        (pointerdown)="openContactActions(contact)"
                         (click)="openContactActions(contact)"
                         [disabled]="rowActionBusyId() === contact.id"
                         aria-label="Open contact controls"

@@ -68,6 +68,7 @@ export class AvailabilityPage {
     private readonly availabilityPageDataService = inject(AvailabilityPageDataService);
     private readonly appToastService = inject(AppToastService);
     private readonly reload$ = new BehaviorSubject<void>(void 0);
+    private hasEntered = false;
 
     readonly ruleFormExpanded = signal(false);
     readonly overrideFormExpanded = signal(false);
@@ -156,6 +157,15 @@ export class AvailabilityPage {
         ),
         shareReplay({ bufferSize: 1, refCount: true }),
     );
+
+    ionViewWillEnter(): void {
+        if (!this.hasEntered) {
+            this.hasEntered = true;
+            return;
+        }
+
+        this.retry();
+    }
 
     retry(): void {
         this.reload$.next();
