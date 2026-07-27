@@ -273,7 +273,7 @@
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   margin-top: 18px;
 }
@@ -321,6 +321,11 @@
     rgba(255, 246, 250, 0.88) 100%
   );
   border-color: rgba(255, 127, 115, 0.14);
+}
+
+.contact-item--blocked {
+  background: rgba(255, 255, 255, 0.54);
+  border-color: rgba(105, 93, 116, 0.14);
 }
 
 .contact-avatar {
@@ -382,6 +387,11 @@
 .contact-chip--pending {
   background: rgba(255, 127, 115, 0.14);
   color: #c86559;
+}
+
+.contact-chip--blocked {
+  background: rgba(105, 93, 116, 0.12);
+  color: #695d74;
 }
 
 .contact-item__actions {

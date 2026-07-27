@@ -15,6 +15,7 @@ type ContactsPageVmState =
 
 interface ContactsPageVm {
   contacts: ContactCardVm[];
+  blockedContacts: ContactCardVm[];
   pendingInvitations: PendingInvitationCardVm[];
   showFullyEmptyState: boolean;
 }
@@ -235,6 +236,29 @@ export class ContactsPage {
       this.blockContact(contact);
     }
 
+    unblockContact(contact: ContactCardVm): void {
+      if (this.rowActionBusyId() !== null) {
+        return;
+      }
+
+      this.rowActionBusyId.set(contact.id);
+
+      this.contactsDataService.unblockContact(contact.id).subscribe({
+        next: () => {
+          this.rowActionBusyId.set(null);
+          this.retry();
+          this.showToast('Contact unblocked.', 'success');
+        },
+        error: (error: Error) => {
+          this.rowActionBusyId.set(null);
+          this.showToast(
+            error.message || 'We couldn’t unblock that contact right now.',
+            'danger',
+          );
+        },
+      });
+    }
+
     toggleFavorite(contact: ContactCardVm): void {
       if (this.rowActionBusyId() !== null) {
         return;
@@ -446,6 +470,20 @@ export class ContactsPage {
           } satisfies ContactCardVm;
       });
 
+      const blockedContacts = data.blockedContacts.map((contact) => {
+          const displayLabel = this.cleanText(contact.nickName) || 'Blocked contact';
+
+          return {
+              id: Number(contact.contactUserId),
+              displayLabel,
+              nickName: this.cleanText(contact.nickName),
+              initials: this.toInitials(displayLabel),
+              favorite: !!contact.favorite,
+              createdAt: contact.createdAt ?? null,
+              createdLabel: this.formatRelativeDate(contact.createdAt),
+          } satisfies ContactCardVm;
+      });
+
       const pendingInvitations = data.pendingInvitations.map((invitation) => {
           const displayLabel =
               this.cleanText(invitation.senderDisplayName) ||
@@ -465,8 +503,12 @@ export class ContactsPage {
 
       return {
           contacts,
+          blockedContacts,
           pendingInvitations,
-          showFullyEmptyState: contacts.length === 0 && pendingInvitations.length === 0
+          showFullyEmptyState:
+            contacts.length === 0 &&
+            blockedContacts.length === 0 &&
+            pendingInvitations.length === 0
       };
     }
 

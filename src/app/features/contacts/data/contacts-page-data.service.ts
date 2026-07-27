@@ -11,6 +11,7 @@ import { toUserFacingApiError } from "src/app/core/api/api-error.util";
 
 export interface ContactsPageData {
     contacts: ContactView[],
+    blockedContacts: ContactView[],
     pendingInvitations: PendingContactInvitationView[],
 }
 
@@ -21,10 +22,12 @@ export class ContactsPageDataService {
     getPageData(): Observable<ContactsPageData> {
         return forkJoin({
             contacts: this.contactsService.getContacts(),
+            blockedContacts: this.contactsService.getBlockedContacts(),
             pendingInvitations: this.contactsService.getPendingInvitations(),
         }).pipe(
-            map(({ contacts, pendingInvitations }) => ({
+            map(({ contacts, blockedContacts, pendingInvitations }) => ({
                 contacts,
+                blockedContacts,
                 pendingInvitations,
             })),
             catchError((error) => {
@@ -61,6 +64,10 @@ export class ContactsPageDataService {
 
     blockContact(contactUserId: number): Observable<void> {
         return this.contactsService.blockContact(contactUserId);
+    }
+
+    unblockContact(contactUserId: number): Observable<void> {
+        return this.contactsService.unblockContact(contactUserId);
     }
 
     editContact(contactUserId: number, input: EditContactRequest): Observable<ContactView> {
