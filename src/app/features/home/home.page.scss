@@ -4,40 +4,6 @@
   height: 100%;
 }
 
-.home-header,
-.home-toolbar {
-  --background: transparent;
-  --border-color: transparent;
-}
-
-.home-toolbar {
-  --padding-top: 0;
-  --padding-start: 24px;
-  --padding-end: 16px;
-  --min-height: var(--app-header-height);
-  backdrop-filter: blur(100px);
-  -webkit-backdrop-filter: blur(100px);
-}
-
-.home-brand {
-  padding-left: 24px;
-  font-size: 2rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: #fff;
-  text-align: left;
-}
-
-.home-header-action {
-  --background: #f8a99a;
-  --color: var(--app-color-text);
-  --border-radius: 999px;
-  --box-shadow: 0 8px 18px rgba(122, 99, 246, 0.12);
-  width: 40px;
-  height: 40px;
-  margin: 0;
-}
-
 .home-content {
   --padding-top: 24px;
   --padding-bottom: var(--app-tab-content-offset);
@@ -221,10 +187,6 @@
   backdrop-filter: blur(10px);
 }
 
-.dashboard-card--soft {
-  background: rgba(255, 255, 255, 0.72);
-}
-
 .card-header {
   display: flex;
   align-items: flex-start;
@@ -245,17 +207,6 @@
   margin: 6px 0 0;
   font-size: 14px;
   line-height: 1.5;
-}
-
-.progress-badge {
-  min-width: 48px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba(122, 99, 246, 0.1);
-  color: var(--app-color-primary);
-  font-size: 13px;
-  font-weight: 700;
-  text-align: center;
 }
 
 .primary-cta-card {
@@ -311,29 +262,13 @@
   color: var(--app-color-primary);
 }
 
-.ready-state-card,
-.empty-card {
+.ready-state-card {
   padding: 16px;
   border-radius: 20px;
   background: rgba(122, 99, 246, 0.06);
-}
-
-.ready-state-card {
   display: flex;
   flex-direction: column;
   gap: 10px;
-}
-
-.ready-state-card__badge {
-  align-self: flex-start;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: rgba(122, 99, 246, 0.12);
-  color: var(--app-color-primary);
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
 }
 
 .ready-state-card__title {
@@ -342,16 +277,13 @@
   color: var(--app-color-text);
 }
 
-.ready-state-card__text,
-.empty-card p,
-.coming-soon-text {
+.ready-state-card__text {
   margin: 0;
   font-size: 14px;
   line-height: 1.55;
 }
 
-.checklist,
-.availability-list {
+.checklist {
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -368,21 +300,6 @@
   border: 1px solid rgba(122, 99, 246, 0.08);
 }
 
-.availability-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 12px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.62);
-  border: 1px solid rgba(122, 99, 246, 0.08);
-}
-
-.checklist-item--done {
-  background: rgba(122, 99, 246, 0.08);
-}
-
 .checklist-item__icon {
   width: 28px;
   height: 28px;
@@ -396,48 +313,21 @@
   flex-shrink: 0;
 }
 
-.checklist-item--done .checklist-item__icon {
-  background: linear-gradient(
-    135deg,
-    var(--app-color-accent) 0%,
-    var(--app-color-primary) 100%
-  );
-  color: #fff;
-}
-
-.checklist-item__body,
-.availability-item__main {
-  min-width: 0;
-}
-
 .checklist-item__body {
+  min-width: 0;
   flex: 1;
 }
 
-.checklist-item__title,
-.availability-item__day {
+.checklist-item__title {
   font-size: 15px;
   font-weight: 700;
   color: var(--app-color-text);
 }
 
-.checklist-item__status,
-.availability-item__time {
+.checklist-item__status {
   margin-top: 2px;
   font-size: 13px;
   color: var(--app-color-text-muted);
-}
-
-.availability-item__channel {
-  flex-shrink: 0;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba(255, 127, 115, 0.14);
-  color: #cc6258;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 
 .stats-grid {
@@ -485,11 +375,6 @@
 }
 
 @media (min-width: 768px) {
-  .home-toolbar {
-    --padding-start: 20px;
-    --padding-end: 20px;
-  }
-
   .home-hero,
   .dashboard-card {
     padding: 22px;

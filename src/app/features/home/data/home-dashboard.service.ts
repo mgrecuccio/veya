@@ -7,10 +7,8 @@ import { mapEffectiveAvailabilityToUpcomingItems, addDays } from './home-availab
 import {
   HomeDashboardState,
   HomeDashboardVm,
-  NextBestActionVm,
   ReadinessContent,
   ReadinessLevel,
-  SetupChecklistItem,
 } from 'src/app/core/api/model/home-dashboard.model';
 import { UserService } from 'src/app/core/api/services/user.service';
 import { ContactsService } from 'src/app/core/api/services/contacts.service';
@@ -59,8 +57,6 @@ export class HomeDashboardService {
         const enabledRules = this.getEnabledRules(rules);
         const hasContacts = contacts.length > 0;
         const hasPendingInvitations = pendingInvitations.length > 0;
-        const hasAvailabilityRules = enabledRules.length > 0;
-
         const upcomingAvailability = mapEffectiveAvailabilityToUpcomingItems(
           availabilityPreview.windows,
           me.timezone,
@@ -71,7 +67,7 @@ export class HomeDashboardService {
           displayName: me.displayName?.trim() || 'there',
           contactsCount: contacts.length,
           pendingInvitationsCount: pendingInvitations.length,
-          hasAvailabilityRules,
+          hasAvailabilityRules: enabledRules.length > 0,
           upcomingAvailability,
         };
 
@@ -81,23 +77,11 @@ export class HomeDashboardService {
         );
 
         const readinessContent = this.getReadinessContent(readinessLevel);
-        const nextBestAction = this.getNextBestAction(
-          hasContacts,
-          hasPendingInvitations,
-        );
-
-        const setupItems = this.getSetupItems(
-          hasContacts,
-          hasPendingInvitations,
-        );
 
         return {
           dashboard,
           readinessLevel,
           readinessContent,
-          nextBestAction,
-          setupItems,
-          completedSetupItems: setupItems.filter((item) => item.complete).length,
           availabilityErrorMessage: availabilityPreview.warning,
         };
       }),
@@ -154,58 +138,6 @@ export class HomeDashboardService {
         };
     }
   }
-
-  private getNextBestAction(
-    hasContacts: boolean,
-    hasPendingInvitations: boolean,
-  ): NextBestActionVm {
-    if (!hasContacts) {
-      return {
-        kind: 'contacts',
-        kicker: 'Step 1',
-        title: 'Add your first contact',
-        subtitle:
-          'Start your trusted circle so Veya has someone to match with your future availability.',
-        route: '/app/contacts',
-      };
-    }
-
-    if (hasPendingInvitations) {
-      return {
-        kind: 'invitations',
-        kicker: 'Step 2',
-        title: 'Review received invitations',
-        subtitle:
-          'Confirm pending connections so your trusted contacts list stays up to date.',
-        route: '/app/contacts',
-      };
-    }
-
-    return {
-      kind: 'ready',
-      kicker: 'Ready',
-      title: 'You’re all set',
-      subtitle: 'Free now stays your main action from here.',
-    };
-  }
-
-  private getSetupItems(
-    hasContacts: boolean,
-    hasPendingInvitations: boolean,
-  ): SetupChecklistItem[] {
-    return [
-      {
-        key: 'contacts',
-        label: 'Add at least 1 contact',
-        complete: hasContacts,
-      },
-      {
-        key: 'invitations',
-        label: 'Review received invitations',
-        complete: !hasPendingInvitations,
-      },
-    ];
-  }  
 
   private toDashboardLoadError(
     error: unknown,
