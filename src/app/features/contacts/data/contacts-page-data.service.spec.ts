@@ -16,6 +16,7 @@ describe('ContactPageDataService', () => {
                     provide: ContactsService,
                     useValue: jasmine.createSpyObj<ContactsService>('ContactsService', [
                         'getContacts',
+                        'getBlockedContacts',
                         'getPendingInvitations',
                         'sendInvitation',
                         'acceptInvitation',
@@ -23,6 +24,7 @@ describe('ContactPageDataService', () => {
                         'cancelInvitation',
                         'removeContact',
                         'blockContact',
+                        'unblockContact',
                         'editContact',
                     ]),
                 }
@@ -60,6 +62,18 @@ describe('ContactPageDataService', () => {
             ])
         );
 
+        contactsService.getBlockedContacts.and.returnValue(
+            of([
+                {
+                  id: 2,
+                  contactUserId: 3,
+                  nickName: 'Blocked Alex',
+                  favorite: false,
+                  createdAt: '2026-04-02T10:00:00.000Z',
+                },
+            ]),
+        );
+
         contactsService.sendInvitation.and.returnValue(
             of({
                 id: 1,
@@ -77,6 +91,7 @@ describe('ContactPageDataService', () => {
 
         service.getPageData().subscribe((contactPageData) => {
             expect(contactPageData.contacts.length).toBe(1);
+            expect(contactPageData.blockedContacts.length).toBe(1);
             expect(contactPageData.pendingInvitations.length).toBe(1);
             expect(contactPageData.pendingInvitations[0]).toEqual(
                 jasmine.objectContaining({
@@ -97,6 +112,16 @@ describe('ContactPageDataService', () => {
                     nickName: 'Alex',
                     favorite: false,
                     createdAt: '2026-04-01T10:00:00.000Z',
+                }),
+            );
+
+            expect(contactPageData.blockedContacts[0]).toEqual(
+                jasmine.objectContaining({
+                    id: 2,
+                    contactUserId: 3,
+                    nickName: 'Blocked Alex',
+                    favorite: false,
+                    createdAt: '2026-04-02T10:00:00.000Z',
                 }),
             );
 
@@ -176,6 +201,15 @@ describe('ContactPageDataService', () => {
 
         service.blockContact(77).subscribe(() => {
             expect(contactsService.blockContact).toHaveBeenCalledWith(77);
+            done();
+        });
+    });
+
+    it('should delegate unblockContact to ContactsService', (done) => {
+        contactsService.unblockContact.and.returnValue(of(void 0));
+
+        service.unblockContact(77).subscribe(() => {
+            expect(contactsService.unblockContact).toHaveBeenCalledWith(77);
             done();
         });
     });

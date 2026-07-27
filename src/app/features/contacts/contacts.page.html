@@ -87,6 +87,11 @@
                   <div class="stat-tile__value">{{ state.data.pendingInvitations.length }}</div>
                   <div class="stat-tile__label app-text-muted">Pending</div>
                 </div>
+
+                <div class="stat-tile">
+                  <div class="stat-tile__value">{{ state.data.blockedContacts.length }}</div>
+                  <div class="stat-tile__label app-text-muted">Blocked</div>
+                </div>
               </div>
             </div>
           </section>
@@ -322,6 +327,57 @@
                 <p class="app-text-muted">
                   You’ve got invitations in motion. Once accepted, your trusted people will appear here.
                 </p>
+              </div>
+            </section>
+          }
+
+          @if (state.data.blockedContacts.length > 0) {
+            <section class="app-surface contacts-card app-section">
+              <div class="card-header">
+                <div>
+                  <h2 class="card-title">Blocked contacts</h2>
+                  <p class="card-subtitle app-text-muted">
+                    People you have paused contact with.
+                  </p>
+                </div>
+              </div>
+
+              <div class="contact-list">
+                @for (contact of state.data.blockedContacts; track contact.id) {
+                  <article class="contact-item contact-item--blocked">
+                    <div class="contact-avatar">
+                      {{ contact.initials }}
+                    </div>
+
+                    <div class="contact-item__body">
+                      <div class="contact-item__topline">
+                        <strong class="contact-name">{{ contact.displayLabel }}</strong>
+                        <span class="contact-chip contact-chip--blocked">Blocked</span>
+                      </div>
+
+                      @if (contact.nickName && contact.nickName !== contact.displayLabel) {
+                        <div class="contact-meta">
+                          Nickname: {{ contact.nickName }}
+                        </div>
+                      }
+
+                      <div class="contact-meta">
+                        Added {{ contact.createdLabel }}
+                      </div>
+                    </div>
+
+                    <div class="contact-item__actions">
+                      <button
+                        type="button"
+                        class="light-action-button"
+                        (click)="unblockContact(contact)"
+                        [disabled]="rowActionBusyId() === contact.id"
+                      >
+                        {{ rowActionBusyId() === contact.id ? 'Unblocking…' : 'Unblock' }}
+                      </button>
+                    </div>
+                  </article>
+                }
               </div>
             </section>
           }

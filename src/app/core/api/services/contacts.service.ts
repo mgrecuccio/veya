@@ -18,6 +18,10 @@ export class ContactsService {
         return this.http.get<ContactView[]>(`${this.apiBaseUrl}/api/v1/contacts`);
     }
 
+    getBlockedContacts(): Observable<ContactView[]> {
+        return this.http.get<ContactView[]>(`${this.apiBaseUrl}/api/v1/contacts/blocked`);
+    }
+
     getPendingInvitations(): Observable<PendingContactInvitationView[]> {
         return this.http.get<PendingContactInvitationView[]>(`${this.apiBaseUrl}/api/v1/contacts/invitations/pending`);
     }
@@ -58,6 +62,13 @@ export class ContactsService {
     blockContact(contactUserId: number): Observable<void> {
         return this.http.post<void>(
             `${this.apiBaseUrl}/api/v1/contacts/${contactUserId}/block`,
+            {},
+        );
+    }
+
+    unblockContact(contactUserId: number): Observable<void> {
+        return this.http.post<void>(
+            `${this.apiBaseUrl}/api/v1/contacts/${contactUserId}/unblock`,
             {},
         );
     }

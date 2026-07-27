@@ -32,6 +32,7 @@ describe('ContactsPage', () => {
                             'cancelInvitation',
                             'removeContact',
                             'blockContact',
+                            'unblockContact',
                             'editContact',
                         ],
                     ),
@@ -67,6 +68,7 @@ describe('ContactsPage', () => {
         dataService.getPageData.and.returnValue(
             of({
                 contacts: [],
+                blockedContacts: [],
                 pendingInvitations: [],
             })
         );
@@ -104,7 +106,7 @@ describe('ContactsPage', () => {
 
     it('should reload when retry is called', () => {
         dataService.getPageData.and.returnValue(
-            of({ contacts: [], pendingInvitations: [] })
+            of({ contacts: [], blockedContacts: [], pendingInvitations: [] })
         );
 
         const sub = component.vmState$.subscribe();
@@ -152,7 +154,7 @@ describe('ContactsPage', () => {
     it('should handle invite submit success', fakeAsync(() => {
         dataService.sendInvitation.and.returnValue(of({} as any));
         dataService.getPageData.and.returnValue(
-            of({ contacts: [], pendingInvitations: [] })
+            of({ contacts: [], blockedContacts: [], pendingInvitations: [] })
         );
 
         spyOn(component, 'retry');
@@ -363,6 +365,33 @@ describe('ContactsPage', () => {
         expect(component.toastState()).toEqual({
             isOpen: true,
             message: 'Added to favorites.',
+            color: 'success',
+        });
+    }));
+
+    it('should unblock a blocked contact', fakeAsync(() => {
+        dataService.unblockContact.and.returnValue(of(void 0));
+        spyOn(component, 'retry');
+
+        component.unblockContact({
+            id: 1,
+            displayLabel: 'Alex',
+            nickName: 'Alex',
+            initials: 'A',
+            favorite: false,
+            createdAt: null,
+            createdLabel: 'today',
+        });
+
+        expect(dataService.unblockContact).toHaveBeenCalledWith(1);
+        expect(component.rowActionBusyId()).toBeNull();
+        expect(component.retry).toHaveBeenCalled();
+
+        flushMicrotasks();
+
+        expect(component.toastState()).toEqual({
+            isOpen: true,
+            message: 'Contact unblocked.',
             color: 'success',
         });
     }));

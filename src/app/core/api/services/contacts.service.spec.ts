@@ -48,6 +48,26 @@ describe('ContactService', () => {
         req.flush(mockContacts);
     });
 
+    it('should get blocked contacts', () => {
+        const mockContacts: ContactView[] = [
+            {
+                id: 1,
+                contactUserId: 2,
+                nickName: 'Nina',
+                favorite: false,
+                createdAt: '2026-04-10T09:00:00.000Z',
+            }
+        ];
+
+        service.getBlockedContacts().subscribe(contacts => {
+            expect(contacts).toEqual(mockContacts)
+        });
+
+        const req = httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/contacts/blocked`);
+        expect(req.request.method).toBe('GET');
+        req.flush(mockContacts);
+    });
+
     it('should call pending invitations', () => {
         let mockInvitations: PendingContactInvitationView[] = [
             {
@@ -157,6 +177,18 @@ describe('ContactService', () => {
 
         const req = httpMock.expectOne(
             `${environment.apiBaseUrl}/api/v1/contacts/${mockContactUserId}/block`
+        );
+
+        expect(req.request.method).toBe('POST');
+    });
+
+    it('should unblock a contact', () => {
+        const mockContactUserId = 1;
+
+        service.unblockContact(mockContactUserId).subscribe();
+
+        const req = httpMock.expectOne(
+            `${environment.apiBaseUrl}/api/v1/contacts/${mockContactUserId}/unblock`
         );
 
         expect(req.request.method).toBe('POST');
