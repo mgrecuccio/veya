@@ -2,7 +2,7 @@ import { CommonModule } from "@angular/common";
 import { ChangeDetectionStrategy, Component, inject, signal } from "@angular/core";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { RouterModule } from "@angular/router";
-import { IonicModule, ActionSheetController, AlertController } from '@ionic/angular';
+import { IonicModule, AlertController } from '@ionic/angular';
 import { ContactsPageData, ContactsPageDataService } from "./data/contacts-page-data.service";
 import { catchError, map, Observable, of, shareReplay, startWith, Subject, switchMap } from "rxjs";
 import { getApiErrorMessage } from "src/app/core/api/api-error.util";
@@ -56,7 +56,6 @@ export class ContactsPage {
   
     private readonly fb = inject(FormBuilder);
     private readonly contactsDataService = inject(ContactsPageDataService);
-    private readonly actionSheetController = inject(ActionSheetController);
     private readonly alertController = inject(AlertController);
     private readonly appToastService = inject(AppToastService);
     private readonly reload$ = new Subject<void>();
@@ -64,6 +63,10 @@ export class ContactsPage {
     readonly inviteExpanded = signal(false);
     readonly inviteSubmitting = signal(false);
     readonly rowActionBusyId = signal<number | null>(null);
+    readonly contactActionsOpen = signal(false);
+    readonly contactActionsContact = signal<ContactCardVm | null>(null);
+    readonly contactNicknameEditorOpen = signal(false);
+    readonly contactNicknameDraft = signal('');
     readonly toastState = signal<{
       isOpen: boolean;
       message: string;
@@ -189,33 +192,47 @@ export class ContactsPage {
       });
     }
 
-    async openContactActions(contact: ContactCardVm): Promise<void> {
-      const sheet = await this.actionSheetController.create({
-        header: contact.displayLabel,
-        cssClass: 'veya-action-sheet',
-        buttons: [
-          {
-            text: 'Edit nickname',
-            handler: () => this.openEditContactNickname(contact),
-          },
-          {
-            text: 'Remove contact',
-            role: 'destructive',
-            handler: () => this.removeContact(contact),
-          },
-          {
-            text: 'Block contact',
-            role: 'destructive',
-            handler: () => this.blockContact(contact),
-          },
-          {
-            text: 'Cancel',
-            role: 'cancel',
-          },
-        ]
-      });
+    openContactActions(contact: ContactCardVm): void {
+      if (this.rowActionBusyId() !== null || this.contactActionsOpen()) {
+        return;
+      }
 
-      await sheet.present();
+      this.contactActionsContact.set(contact);
+      this.contactNicknameEditorOpen.set(false);
+      this.contactNicknameDraft.set('');
+      this.contactActionsOpen.set(true);
+    }
+
+    closeContactActions(): void {
+      this.contactActionsOpen.set(false);
+      this.contactNicknameEditorOpen.set(false);
+      this.contactNicknameDraft.set('');
+    }
+
+    editManagedContact(contact: ContactCardVm): void {
+      this.contactNicknameDraft.set(contact.nickName ?? '');
+      this.contactNicknameEditorOpen.set(true);
+    }
+
+    saveManagedContactNickname(contact: ContactCardVm): void {
+      const nickName = this.contactNicknameDraft().trim();
+
+      if (!nickName || nickName === contact.nickName) {
+        return;
+      }
+
+      this.closeContactActions();
+      this.updateContactNickname(contact.id, nickName, contact.favorite);
+    }
+
+    removeManagedContact(contact: ContactCardVm): void {
+      this.closeContactActions();
+      this.removeContact(contact);
+    }
+
+    blockManagedContact(contact: ContactCardVm): void {
+      this.closeContactActions();
+      this.blockContact(contact);
     }
 
     toggleFavorite(contact: ContactCardVm): void {

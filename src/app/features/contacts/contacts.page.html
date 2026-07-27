@@ -216,23 +216,23 @@
                     </div>
 
                     <div class="contact-item__actions">
-                      <ion-button
-                        size="small"
+                      <button
+                        type="button"
                         class="light-action-button"
                         (click)="acceptInvitation(invitation)"
                         [disabled]="rowActionBusyId() === invitation.id"
                       >
                         {{ rowActionBusyId() === invitation.id ? 'Accepting…' : 'Accept' }}
-                      </ion-button>
+                      </button>
 
-                      <ion-button
-                        size="small"
+                      <button
+                        type="button"
                         class="reject-action-button"
                         (click)="rejectInvitation(invitation)"
                         [disabled]="rowActionBusyId() === invitation.id"
                       >
                         Reject
-                      </ion-button>
+                      </button>
                     </div>
                   </article>
                 }
@@ -288,27 +288,28 @@
                     </div>
 
                     <div class="contact-item__actions">
-                      <ion-button
-                        fill="clear"
+                      <button
+                        type="button"
                         class="favorite-button"
                         (click)="toggleFavorite(contact)"
                         [disabled]="rowActionBusyId() === contact.id"
                         [attr.aria-label]="contact.favorite ? 'Remove ' + contact.displayLabel + ' from favorites' : 'Mark ' + contact.displayLabel + ' as favorite'"
                         [attr.aria-pressed]="contact.favorite"
                       >
-                        <ion-icon [name]="contact.favorite ? 'star' : 'star-outline'"></ion-icon>
-                      </ion-button>
+                        <ion-icon [name]="contact.favorite ? 'star' : 'star-outline'" aria-hidden="true"></ion-icon>
+                      </button>
 
-                      <ion-button
-                        fill="clear"
+                      <button
+                        type="button"
                         class="contact-menu-button"
+                        (touchstart)="openContactActions(contact)"
+                        (pointerdown)="openContactActions(contact)"
                         (click)="openContactActions(contact)"
                         [disabled]="rowActionBusyId() === contact.id"
                         aria-label="Open contact controls"
                       >
-                        <ion-icon name="settings-outline"></ion-icon>
-                        <span>Manage</span>
-                      </ion-button>
+                        <ion-icon name="settings-outline" aria-hidden="true"></ion-icon>
+                      </button>
                     </div>
                   </article>
                 }
@@ -346,3 +347,59 @@
   </div>
 
 </ion-content>
+
+@if (contactActionsOpen()) {
+  @if (contactActionsContact(); as contact) {
+    <div class="contact-actions-overlay" (click)="closeContactActions()">
+      <section
+        class="contact-actions-sheet"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="'Manage ' + contact.displayLabel"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="contact-actions-sheet__handle"></div>
+        <div class="contact-actions-sheet__header">{{ contact.displayLabel }}</div>
+
+        @if (contactNicknameEditorOpen()) {
+          <div class="contact-actions-editor">
+            <label class="contact-actions-editor__label" for="contactNicknameDraft">
+              Nickname
+            </label>
+            <input
+              id="contactNicknameDraft"
+              class="contact-actions-editor__input"
+              type="text"
+              maxlength="100"
+              autocomplete="off"
+              placeholder="Add a nickname"
+              [value]="contactNicknameDraft()"
+              (input)="contactNicknameDraft.set($any($event.target).value)"
+            />
+            <div class="contact-actions-editor__actions">
+              <button type="button" class="contact-actions-editor__button" (click)="contactNicknameEditorOpen.set(false)">
+                Cancel
+              </button>
+              <button type="button" class="contact-actions-editor__button contact-actions-editor__button--primary" (click)="saveManagedContactNickname(contact)">
+                Save
+              </button>
+            </div>
+          </div>
+        } @else {
+          <button type="button" class="contact-actions-sheet__button" (click)="editManagedContact(contact)">
+            Edit nickname
+          </button>
+          <button type="button" class="contact-actions-sheet__button contact-actions-sheet__button--danger" (click)="removeManagedContact(contact)">
+            Remove contact
+          </button>
+          <button type="button" class="contact-actions-sheet__button contact-actions-sheet__button--danger" (click)="blockManagedContact(contact)">
+            Block contact
+          </button>
+          <button type="button" class="contact-actions-sheet__button contact-actions-sheet__button--cancel" (click)="closeContactActions()">
+            Cancel
+          </button>
+        }
+      </section>
+    </div>
+  }
+}

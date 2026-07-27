@@ -3,7 +3,7 @@ import { fakeAsync, flushMicrotasks, TestBed } from "@angular/core/testing";
 import { provideRouter } from "@angular/router";
 import { ContactsPage } from "./contacts.page";
 import { ContactsPageDataService } from "./data/contacts-page-data.service";
-import { ActionSheetController, AlertController } from '@ionic/angular';
+import { AlertController } from '@ionic/angular';
 import { of, Subject, throwError } from "rxjs";
 import { AppToastService } from "src/app/shared/toast/app-toast.service";
 
@@ -12,7 +12,6 @@ describe('ContactsPage', () => {
     let fixture: any;
     let component: ContactsPage;
     let dataService: jasmine.SpyObj<ContactsPageDataService>;
-    let actionSheetController: jasmine.SpyObj<ActionSheetController>;
     let alertController: jasmine.SpyObj<AlertController>;
     let appToastService: jasmine.SpyObj<AppToastService>;
 
@@ -38,15 +37,6 @@ describe('ContactsPage', () => {
                     ),
                 },
                 {
-                    provide: ActionSheetController,
-                    useValue: jasmine.createSpyObj<ActionSheetController>(
-                        'ActionSheetController',
-                        [
-                            'create',
-                        ],
-                    ),
-                },
-                {
                     provide: AlertController,
                     useValue: jasmine.createSpyObj<AlertController>(
                         'AlertController',
@@ -68,7 +58,6 @@ describe('ContactsPage', () => {
         fixture = TestBed.createComponent(ContactsPage);
         component = fixture.componentInstance;
         dataService = TestBed.inject(ContactsPageDataService) as jasmine.SpyObj<ContactsPageDataService>;
-        actionSheetController = TestBed.inject(ActionSheetController) as jasmine.SpyObj<ActionSheetController>;
         alertController = TestBed.inject(AlertController) as jasmine.SpyObj<AlertController>;
         appToastService = TestBed.inject(AppToastService) as jasmine.SpyObj<AppToastService>;
         appToastService.show.and.returnValue(Promise.resolve());
@@ -304,13 +293,8 @@ describe('ContactsPage', () => {
         expect(dataService.rejectInvitation).not.toHaveBeenCalled();
     });
 
-    it('should create and present an action sheet for a managing a contact', async() => {
-        const present = jasmine.createSpy('present').and.returnValue(Promise.resolve());
-        actionSheetController.create.and.returnValue(
-            Promise.resolve({ present } as any)
-        );
-
-        await component.openContactActions({
+    it('should open an action sheet for managing a contact', () => {
+        const contact = {
             id: 1,
             displayLabel: 'Alex',
             nickName: 'Alex',
@@ -318,25 +302,19 @@ describe('ContactsPage', () => {
             favorite: false,
             createdAt: null,
             createdLabel: 'today',
-        });
+        };
 
-        expect(actionSheetController.create).toHaveBeenCalled();
-        expect(present).toHaveBeenCalled();
+        component.openContactActions(contact);
+
+        expect(component.contactActionsContact()).toBe(contact);
+        expect(component.contactActionsOpen()).toBeTrue();
     });
 
     it('should preserve favorite when editing a contact nickname', async () => {
-        const actionSheetPresent = jasmine.createSpy('actionSheetPresent').and.returnValue(Promise.resolve());
-        const alertPresent = jasmine.createSpy('alertPresent').and.returnValue(Promise.resolve());
-        actionSheetController.create.and.returnValue(
-            Promise.resolve({ present: actionSheetPresent } as any)
-        );
-        alertController.create.and.returnValue(
-            Promise.resolve({ present: alertPresent } as any)
-        );
         dataService.editContact.and.returnValue(of({} as any));
         spyOn(component, 'retry');
 
-        await component.openContactActions({
+        component.openContactActions({
             id: 1,
             displayLabel: 'Alex',
             nickName: 'Alex',
@@ -346,16 +324,15 @@ describe('ContactsPage', () => {
             createdLabel: 'today',
         });
 
-        const actionSheetConfig = actionSheetController.create.calls.mostRecent().args[0] as any;
-        await actionSheetConfig.buttons[0].handler();
-
-        const alertConfig = alertController.create.calls.mostRecent().args[0] as any;
-        alertConfig.buttons[1].handler({ nickName: ' Lex ' });
+        component.editManagedContact(component.contactActionsContact()!);
+        component.contactNicknameDraft.set(' Lex ');
+        component.saveManagedContactNickname(component.contactActionsContact()!);
 
         expect(dataService.editContact).toHaveBeenCalledWith(1, {
             nickName: 'Lex',
             favorite: true,
         });
+        expect(component.contactActionsOpen()).toBeFalse();
         expect(component.rowActionBusyId()).toBeNull();
         expect(component.retry).toHaveBeenCalled();
     });
