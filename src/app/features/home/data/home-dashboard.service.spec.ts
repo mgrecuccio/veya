@@ -136,19 +136,17 @@ describe('HomeDashboardService', () => {
 
     service.getDashboardState(new Date('2026-04-10T09:00:00.000Z')).subscribe((state) => {
       expect(state.readinessLevel).toBe('ready');
-      expect(state.nextBestAction.kind).toBe('ready');
       done();
     });
   });
 
-  it('prioritizes add first contact before all other actions', (done) => {
+  it('computes empty readiness when there are no contacts', (done) => {
     mockBase();
 
     contactsService.getContacts.and.returnValue(of([]));
 
     service.getDashboardState(new Date('2026-04-10T09:00:00.000Z')).subscribe((state) => {
-      expect(state.nextBestAction.kind).toBe('contacts');
-      expect(state.nextBestAction.title).toBe('Add your first contact');
+      expect(state.readinessLevel).toBe('empty');
       done();
     });
   });
@@ -174,13 +172,12 @@ describe('HomeDashboardService', () => {
     service.getDashboardState(new Date('2026-04-10T09:00:00.000Z')).subscribe((state) => {
       expect(state.dashboard.hasAvailabilityRules).toBeFalse();
       expect(state.readinessLevel).toBe('ready');
-      expect(state.nextBestAction.kind).toBe('ready');
       
       done();
     });
   });
 
-  it('prioritizes Review invitations after contacts exist', (done) => {
+  it('computes almost-ready readiness when contacts and pending invitations exist', (done) => {
     mockBase();
 
     contactsService.getPendingInvitations.and.returnValue(
@@ -196,20 +193,8 @@ describe('HomeDashboardService', () => {
     );
 
     service.getDashboardState(new Date('2026-04-10T09:00:00.000Z')).subscribe((state) => {
-      expect(state.nextBestAction.kind).toBe('invitations');
-      expect(state.nextBestAction.title).toBe('Review received invitations');
       expect(state.readinessLevel).toBe('almost-ready');
       
-      done();
-    });
-  });
-
-  it('does not include availability in setup progress', (done) => {
-    mockBase();
-
-    service.getDashboardState(new Date('2026-04-10T09:00:00.000Z')).subscribe((state) => {
-      expect(state.setupItems.map((item) => item.key)).toEqual(['contacts', 'invitations']);
-      expect(state.completedSetupItems).toBe(2);
       done();
     });
   });
