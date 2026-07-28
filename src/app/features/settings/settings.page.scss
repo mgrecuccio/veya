@@ -235,8 +235,7 @@
   box-shadow: 0 10px 24px rgba(var(--app-color-accent-rgb), 0.12);
 }
 
-.settings-row__label,
-.settings-row__value {
+.settings-row__label {
   min-width: 0;
   font-size: 14px;
   line-height: 1.35;
@@ -245,14 +244,6 @@
 .settings-row__label {
   color: var(--app-color-text);
   font-weight: 700;
-}
-
-.settings-row__value {
-  overflow: hidden;
-  color: var(--app-color-text-muted);
-  text-align: right;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .settings-row__control {
@@ -431,15 +422,6 @@
   padding: 4px 4px calc(24px + var(--app-safe-area-bottom));
 }
 
-.settings-footer__note {
-  max-width: 40ch;
-  margin: 0 auto;
-  color: rgba(90, 70, 128, 0.72);
-  font-size: 13px;
-  line-height: 1.45;
-  text-align: center;
-}
-
 .settings-skeleton .skeleton-line,
 .settings-skeleton .skeleton-card {
   border-radius: 16px;
@@ -473,10 +455,6 @@
     align-items: flex-start;
     flex-direction: column;
     gap: 4px;
-  }
-
-  .settings-row__value {
-    text-align: left;
   }
 
   .settings-row__control {

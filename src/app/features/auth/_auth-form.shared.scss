@@ -72,13 +72,6 @@ html.keyboard-is-open .auth-keyboard-spacer {
   height: calc(var(--app-keyboard-height, 0px) + 64px);
 }
 
-.auth-page {
-  min-height: 100%;
-  justify-content: center;
-  padding-top: 32px;
-  padding-bottom: 32px;
-}
-
 .app-content-shell--auth {
   transition: transform 220ms ease;
 }
@@ -94,14 +87,6 @@ html.keyboard-is-open .auth-keyboard-spacer {
   display: flex;
   flex-direction: column;
   gap: 20px;
-}
-
-.auth-brand {
-  text-align: center;
-  color: white;
-  font-size: 34px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
 }
 
 .auth-card {

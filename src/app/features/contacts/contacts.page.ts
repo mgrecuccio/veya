@@ -387,44 +387,6 @@ export class ContactsPage {
     await alert.present();
   }
 
-  private async openEditContactNickname(contact: ContactCardVm): Promise<void> {
-    const alert = await this.alertController.create({
-      header: 'Edit nickname',
-      message: `Update how ${contact.displayLabel} appears in your circle.`,
-      inputs: [
-        {
-          name: 'nickName',
-          type: 'text',
-          placeholder: 'Add a nickname',
-          value: contact.nickName ?? '',
-          attributes: {
-            maxlength: 100,
-          },
-        },
-      ],
-      buttons: [
-        {
-          text: 'Cancel',
-          role: 'cancel',
-        },
-        {
-          text: 'Save',
-          handler: (data) => {
-            const nickName = data?.nickName?.trim();
-
-            if (!nickName || nickName === contact.nickName) {
-              return;
-            }
-
-            this.updateContactNickname(contact.id, nickName, contact.favorite);
-          },
-        },
-      ],
-    });
-
-    await alert.present();
-  }
-
   private updateContactNickname(contactUserId: number, nickName: string, favorite: boolean): void {
     this.rowActionBusyId.set(contactUserId);
 
