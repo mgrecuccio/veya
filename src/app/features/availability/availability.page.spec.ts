@@ -225,6 +225,45 @@ describe('AbailabilityPage', () => {
         });
     });
 
+    it('should trigger delete from the rendered rule remove button', () => {
+        dataService.getPageData.and.returnValue(
+            of({
+                rules: [
+                    {
+                        id: 1,
+                        userId: 2,
+                        dayOfWeek: 'MONDAY',
+                        startTime: '12:00',
+                        endTime: '17:00',
+                        channelType: 'CHAT',
+                        enabled: true,
+                        createdAt: '2026-04-26',
+                        updatedAt: '2026-04-26',
+                    },
+                ],
+                overrides: [],
+                effective: [],
+                overrideEndsAfter: '',
+            }),
+        );
+        dataService.deleteRule.and.returnValue(of(void 0));
+
+        fixture.detectChanges();
+
+        const actionButtons = Array.from(
+            (fixture.nativeElement as HTMLElement).querySelectorAll('.item-action-button'),
+        ) as HTMLButtonElement[];
+
+        expect(actionButtons.map((button) => button.textContent?.trim())).toEqual([
+            'Change',
+            'Remove',
+        ]);
+
+        actionButtons[1].click();
+
+        expect(dataService.deleteRule).toHaveBeenCalledWith(1);
+    });
+
     it('should ignore the delete rule if another row action is busy', () => {
         component.rowActionBusyId.set(2);
         spyOn(component, 'retry');

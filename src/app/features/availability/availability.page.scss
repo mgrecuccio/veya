@@ -139,8 +139,7 @@
   font-size: 24px;
 }
 
-.primary-cta-card,
-.secondary-cta-card {
+.primary-cta-card {
   width: 100%;
   border: 0;
   cursor: pointer;
@@ -162,11 +161,6 @@
     rgba(255, 127, 115, 0.1) 100%
   );
   box-shadow: 0 10px 24px rgba(122, 99, 246, 0.1);
-}
-
-.secondary-cta-card {
-  background: rgba(255, 255, 255, 0.48);
-  border: 1px solid rgba(255, 255, 255, 0.42);
 }
 
 .primary-cta-card__content {
@@ -373,15 +367,41 @@
 .availability-item__actions {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
 .item-action-button {
-  --padding-start: 6px;
-  --padding-end: 6px;
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: var(--app-color-text);
+  cursor: pointer;
+  font: inherit;
   font-size: 13px;
   font-weight: 700;
+  line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.item-action-button--danger {
+  color: #b95c68;
+}
+
+.item-action-button[disabled] {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.item-action-button:focus-visible {
+  outline: 3px solid rgba(var(--app-color-primary-rgb), 0.22);
+  outline-offset: 2px;
 }
 
 .availability-show-more {
