@@ -236,23 +236,22 @@
                     </div>
 
                     <div class="availability-item__actions">
-                      <ion-button
-                        fill="clear"
+                      <button
+                        type="button"
                         class="item-action-button"
                         (click)="openEditRule(rule)"
                       >
                         Change
-                      </ion-button>
+                      </button>
 
-                      <ion-button
-                        fill="clear"
-                        color="danger"
-                        class="item-action-button"
+                      <button
+                        type="button"
+                        class="item-action-button item-action-button--danger"
                         (click)="deleteRule(rule)"
                         [disabled]="rowActionBusyId() === rule.id"
                       >
                         Remove
-                      </ion-button>
+                      </button>
                     </div>
                   </article>
                 }
@@ -287,7 +286,7 @@
             </div>
 
             @if (!overrideFormExpanded()) {
-              <button type="button" class="secondary-cta-card" (click)="openCreateOverride()">
+              <button type="button" class="primary-cta-card" (click)="openCreateOverride()">
                 <div class="primary-cta-card__content">
                   <span class="primary-cta-card__kicker">Temporary change</span>
                   <strong class="primary-cta-card__title">Adjust a moment</strong>
