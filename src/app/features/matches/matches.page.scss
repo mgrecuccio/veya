@@ -165,17 +165,59 @@
   font-size: 13px;
 }
 
-.chat-button {
-  --background: rgba(37, 211, 102, 0.13);
+.match-meta {
+  color: rgba(45, 39, 58, 0.62);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.matches-state {
+  display: grid;
+  min-height: 156px;
+  place-items: center;
+  padding: 24px 16px;
+  border: 1px dashed rgba(122, 99, 246, 0.22);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.46);
+  color: var(--app-color-text-muted);
+  text-align: center;
+}
+
+.matches-state ion-icon {
+  color: var(--app-color-primary);
+  font-size: 28px;
+}
+
+.matches-state ion-spinner {
+  --color: var(--app-color-primary);
+}
+
+.matches-state p {
+  max-width: 360px;
+  margin: 10px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.matches-state--error {
+  border-color: rgba(219, 64, 86, 0.24);
+}
+
+.matches-state--error ion-icon {
+  color: var(--ion-color-danger, #db4056);
+}
+
+.retry-button {
+  --background: rgba(122, 99, 246, 0.12);
   --border-radius: 999px;
   --box-shadow: none;
-  --color: #178f48;
-  flex-shrink: 0;
-  min-height: 38px;
+  --color: var(--app-color-primary);
+  margin-top: 12px;
+  min-height: 36px;
   font-weight: 700;
 }
 
-.chat-button ion-icon {
+.retry-button ion-icon {
   font-size: 17px;
 }
 
@@ -190,7 +232,7 @@
     height: 40px;
   }
 
-  .chat-button {
+  .retry-button {
     --padding-start: 10px;
     --padding-end: 10px;
   }
