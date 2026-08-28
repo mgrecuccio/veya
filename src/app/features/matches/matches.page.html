@@ -28,39 +28,63 @@
       </section>
 
       <section class="app-surface matches-card">
-        <div class="card-header">
-          <div>
-            <h2 class="card-title">Accepted matches</h2>
-            <p class="card-subtitle">
-              Preview data for the future matching experience.
-            </p>
+        @if (vmState$ | async; as state) {
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Accepted matches</h2>
+              <p class="card-subtitle">
+                Matches appear here after both people agree to reconnect.
+              </p>
+            </div>
+
+            <div class="match-count">
+              @if (state.kind === 'success') {
+                {{ state.data.matches.length }}
+              } @else {
+                -
+              }
+            </div>
           </div>
 
-          <div class="match-count">{{ matches.length }}</div>
-        </div>
-
-        <div class="match-list">
-          @for (match of matches; track match.id) {
-            <article class="match-item">
-              <div class="match-avatar">{{ match.initials }}</div>
-
-              <div class="match-copy">
-                <strong class="match-name">{{ match.name }}</strong>
-                <span class="match-status">Match accepted</span>
-              </div>
-
-              <ion-button
-                size="small"
-                class="chat-button"
-                (click)="previewChat()"
-                [attr.aria-label]="'Chat with ' + match.name + ' on WhatsApp'"
-              >
-                <ion-icon slot="start" name="logo-whatsapp"></ion-icon>
-                Chat
+          @if (state.kind === 'loading') {
+            <div class="matches-state" aria-live="polite">
+              <ion-spinner name="crescent"></ion-spinner>
+              <p>Loading accepted matches...</p>
+            </div>
+          } @else if (state.kind === 'error') {
+            <div class="matches-state matches-state--error" role="alert">
+              <ion-icon name="alert-circle-outline" aria-hidden="true"></ion-icon>
+              <p>{{ state.message }}</p>
+              <ion-button size="small" class="retry-button" (click)="retry()">
+                <ion-icon slot="start" name="refresh-outline"></ion-icon>
+                Retry
               </ion-button>
-            </article>
+            </div>
+          } @else if (state.data.matches.length === 0) {
+            <div class="matches-state">
+              <ion-icon name="sparkles-outline" aria-hidden="true"></ion-icon>
+              <p>Accepted matches will appear here after both required consents exist.</p>
+            </div>
+          } @else {
+            <div class="match-list">
+              @for (match of state.data.matches; track match.id) {
+                <article class="match-item">
+                  <div class="match-avatar">{{ match.initials }}</div>
+
+                  <div class="match-copy">
+                    <strong class="match-name">{{ match.displayName }}</strong>
+                    <span class="match-status">{{ match.statusLabel }} - {{ match.channelLabel }}</span>
+                    <span class="match-meta">{{ match.overlapLabel }}</span>
+                    <span class="match-meta">Created {{ match.createdLabel }}</span>
+                    @if (match.respondedLabel) {
+                      <span class="match-meta">Accepted {{ match.respondedLabel }}</span>
+                    }
+                  </div>
+                </article>
+              }
+            </div>
           }
-        </div>
+        }
       </section>
     </div>
   </div>
