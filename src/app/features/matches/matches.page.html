@@ -68,7 +68,7 @@
           } @else {
             <div class="match-list">
               @for (match of state.data.matches; track match.id) {
-                <article class="match-item">
+                <button class="match-item" type="button" (click)="openMatchDetail(match)">
                   <div class="match-avatar">{{ match.initials }}</div>
 
                   <div class="match-copy">
@@ -80,7 +80,13 @@
                       <span class="match-meta">Accepted {{ match.respondedLabel }}</span>
                     }
                   </div>
-                </article>
+
+                  <ion-icon
+                    class="match-detail-icon"
+                    name="chevron-forward-outline"
+                    aria-hidden="true"
+                  ></ion-icon>
+                </button>
               }
             </div>
           }
@@ -89,4 +95,66 @@
     </div>
   </div>
 
+  <ion-modal
+    [isOpen]="selectedMatch() !== null"
+    [backdropDismiss]="contactLinkBusyId() === null"
+    (didDismiss)="closeMatchDetail()"
+  >
+    <ng-template>
+      @if (selectedMatch(); as match) {
+        <ion-content class="match-detail-content">
+          <div class="match-detail">
+            <header class="match-detail__header">
+              <button
+                class="match-detail__close"
+                type="button"
+                aria-label="Close match detail"
+                [disabled]="contactLinkBusyId() !== null"
+                (click)="closeMatchDetail()"
+              >
+                <ion-icon name="close-outline" aria-hidden="true"></ion-icon>
+              </button>
+
+              <div class="match-detail__avatar">{{ match.initials }}</div>
+              <p class="match-detail__eyebrow">{{ match.statusLabel }} match</p>
+              <h2>{{ match.displayName }}</h2>
+              <p>{{ match.channelLabel }} during {{ match.overlapLabel }}</p>
+            </header>
+
+            <section class="match-detail__summary" aria-label="Match details">
+              <div>
+                <span>State</span>
+                <strong>{{ match.statusLabel }}</strong>
+              </div>
+              <div>
+                <span>Created</span>
+                <strong>{{ match.createdLabel }}</strong>
+              </div>
+              @if (match.respondedLabel) {
+                <div>
+                  <span>Accepted</span>
+                  <strong>{{ match.respondedLabel }}</strong>
+                </div>
+              }
+            </section>
+
+            <ion-button
+              class="whatsapp-button"
+              expand="block"
+              [disabled]="contactLinkBusyId() !== null"
+              (click)="openWhatsApp(match)"
+            >
+              @if (contactLinkBusyId() === match.id) {
+                <ion-spinner slot="start" name="crescent"></ion-spinner>
+                Opening...
+              } @else {
+                <ion-icon slot="start" name="logo-whatsapp"></ion-icon>
+                Open WhatsApp
+              }
+            </ion-button>
+          </div>
+        </ion-content>
+      }
+    </ng-template>
+  </ion-modal>
 </ion-content>

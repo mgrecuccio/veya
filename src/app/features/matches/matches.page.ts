@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { IonicModule } from '@ionic/angular';
 import { catchError, map, Observable, of, shareReplay, startWith, Subject, switchMap } from 'rxjs';
@@ -7,6 +7,7 @@ import { getApiErrorMessage } from 'src/app/core/api/api-error.util';
 import { ChannelType } from 'src/app/core/api/model/channel-type.model';
 import { MatchInvitationView } from 'src/app/core/api/model/match-invitation-view.model';
 import { MatchesService } from 'src/app/core/api/services/matches.service';
+import { AppToastService } from 'src/app/shared/toast/app-toast.service';
 
 type MatchesPageVmState =
   | { kind: 'loading' }
@@ -38,8 +39,12 @@ interface AcceptedMatchVm {
 })
 export class MatchesPage {
   private readonly matchesService = inject(MatchesService);
+  private readonly appToastService = inject(AppToastService);
   private readonly reload$ = new Subject<void>();
   private hasEntered = false;
+
+  readonly selectedMatch = signal<AcceptedMatchVm | null>(null);
+  readonly contactLinkBusyId = signal<number | null>(null);
 
   readonly vmState$: Observable<MatchesPageVmState> = this.reload$.pipe(
     startWith(void 0),
@@ -77,6 +82,53 @@ export class MatchesPage {
 
   retry(): void {
     this.reload$.next();
+  }
+
+  openMatchDetail(match: AcceptedMatchVm): void {
+    this.selectedMatch.set(match);
+  }
+
+  closeMatchDetail(): void {
+    if (this.contactLinkBusyId() !== null) {
+      return;
+    }
+
+    this.selectedMatch.set(null);
+  }
+
+  openWhatsApp(match: AcceptedMatchVm): void {
+    if (this.contactLinkBusyId() !== null) {
+      return;
+    }
+
+    this.contactLinkBusyId.set(match.id);
+
+    this.matchesService.createContactLink(match.id).subscribe({
+      next: (contactLink) => {
+        this.contactLinkBusyId.set(null);
+        const url = contactLink.url.trim();
+
+        if (!url) {
+          this.showToast('WhatsApp is not available for this match right now.');
+          return;
+        }
+
+        const openedWindow = window.open(url, '_blank');
+
+        if (!openedWindow) {
+          this.showToast('We could not open WhatsApp. Make sure it is installed and try again.');
+          return;
+        }
+
+        openedWindow.opener = null;
+      },
+      error: (error: unknown) => {
+        this.contactLinkBusyId.set(null);
+        this.showToast(
+          getApiErrorMessage(error, 'We could not open WhatsApp for this match right now.'),
+        );
+      },
+    });
   }
 
   private mapAcceptedMatch(match: MatchInvitationView): AcceptedMatchVm {
@@ -173,5 +225,9 @@ export class MatchesPage {
     }
 
     return words.map((word) => word.charAt(0).toUpperCase()).join('');
+  }
+
+  private showToast(message: string): void {
+    void this.appToastService.show(message, 'danger', 'app-toast matches-page-toast');
   }
 }

@@ -17,6 +17,8 @@ import { filter } from 'rxjs/operators';
 import {
   add,
   calendar,
+  chevronForwardOutline,
+  closeOutline,
   ellipsisHorizontal,
   heart,
   home,
@@ -67,6 +69,8 @@ export class AppComponent implements OnDestroy {
   constructor() {
     addIcons({
       add,
+      'chevron-forward-outline': chevronForwardOutline,
+      'close-outline': closeOutline,
       home,
       people,
       heart,

@@ -1,10 +1,10 @@
 # Match Detail And WhatsApp Handoff Tasks
 
-Status: Planned
+Status: Done
 
-- [ ] Add accepted match detail route or modal.
-- [ ] Add "Open WhatsApp" action.
-- [ ] Request contact link from backend.
-- [ ] Open returned URL with platform link handling.
-- [ ] Handle URL open failure.
-- [ ] Add tests for accepted detail and contact-link action.
+- [x] Add accepted match detail route or modal.
+- [x] Add "Open WhatsApp" action.
+- [x] Request contact link from backend.
+- [x] Open returned URL with platform link handling.
+- [x] Handle URL open failure.
+- [x] Add tests for accepted detail and contact-link action.
