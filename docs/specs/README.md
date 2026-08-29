@@ -14,7 +14,7 @@ Each feature/workstream spec uses:
 | `accepted-matches-list/` | 7 | Done | Backend-loaded accepted matches list |
 | `match-suggestions/` | 8 | Planned | Suggestions UI and proposal creation |
 | `incoming-match-invitations/` | 9, 16 | Planned | Incoming proposals, accept/decline, expiration UX |
-| `match-detail-whatsapp-handoff/` | 10 | Planned | Accepted match detail and backend contact link |
+| `match-detail-whatsapp-handoff/` | 10 | Done | Accepted match detail and backend contact link |
 | `phone-number-setup/` | 11, 12 | Planned | Phone setup redirects and retry behavior |
 | `push-notifications/` | 13, 14, 15 | Planned | Device registration, Firebase receipt, routing |
 | `contact-invitations/` | 5 | Planned | Reject/cancel contact invitation actions |
