@@ -7,8 +7,6 @@ export interface MatchInvitationView {
     channelType: ChannelType;
     status: string;
     score: number;
-    overlapStart: string;
-    overlapEnd: string;
     createdAt: string;
     respondedAt?: string | null;
 }

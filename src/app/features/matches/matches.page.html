@@ -27,6 +27,76 @@
         </div>
       </section>
 
+      <section class="app-surface matches-card suggestions-card">
+        @if (suggestionsState$ | async; as suggestionsState) {
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Suggested matches</h2>
+              <p class="card-subtitle">
+                Suggested people are based on backend-computed availability overlap.
+              </p>
+            </div>
+
+            <div class="match-count">
+              @if (suggestionsState.kind === 'success') {
+                {{ suggestionsState.data.suggestions.length }}
+              } @else {
+                -
+              }
+            </div>
+          </div>
+
+          @if (suggestionsState.kind === 'loading') {
+            <div class="matches-state" aria-live="polite">
+              <ion-spinner name="crescent"></ion-spinner>
+              <p>Loading match suggestions...</p>
+            </div>
+          } @else if (suggestionsState.kind === 'error') {
+            <div class="matches-state matches-state--error" role="alert">
+              <ion-icon name="alert-circle-outline" aria-hidden="true"></ion-icon>
+              <p>{{ suggestionsState.message }}</p>
+              <ion-button size="small" class="retry-button" (click)="retrySuggestions()">
+                <ion-icon slot="start" name="refresh-outline"></ion-icon>
+                Retry
+              </ion-button>
+            </div>
+          } @else if (suggestionsState.data.suggestions.length === 0) {
+            <div class="matches-state">
+              <ion-icon name="sparkles-outline" aria-hidden="true"></ion-icon>
+              <p>No suggestions are available right now.</p>
+            </div>
+          } @else {
+            <div class="suggestion-list">
+              @for (suggestion of suggestionsState.data.suggestions; track suggestion.candidateUserId) {
+                <article class="suggestion-item">
+                  <div class="match-avatar">{{ suggestion.initials }}</div>
+
+                  <div class="match-copy">
+                    <strong class="match-name">{{ suggestion.displayName }}</strong>
+                    <span class="match-status">{{ suggestion.channelLabel }}</span>
+                  </div>
+
+                  <ion-button
+                    size="small"
+                    class="propose-button"
+                    [disabled]="proposalBusyId() !== null"
+                    (click)="proposeMatch(suggestion)"
+                  >
+                    @if (proposalBusyId() === suggestion.candidateUserId) {
+                      <ion-spinner slot="start" name="crescent"></ion-spinner>
+                      Sending
+                    } @else {
+                      <ion-icon slot="start" name="send-outline"></ion-icon>
+                      Propose
+                    }
+                  </ion-button>
+                </article>
+              }
+            </div>
+          }
+        }
+      </section>
+
       <section class="app-surface matches-card">
         @if (vmState$ | async; as state) {
           <div class="card-header">
@@ -73,12 +143,7 @@
 
                   <div class="match-copy">
                     <strong class="match-name">{{ match.displayName }}</strong>
-                    <span class="match-status">{{ match.statusLabel }} - {{ match.channelLabel }}</span>
-                    <span class="match-meta">{{ match.overlapLabel }}</span>
-                    <span class="match-meta">Created {{ match.createdLabel }}</span>
-                    @if (match.respondedLabel) {
-                      <span class="match-meta">Accepted {{ match.respondedLabel }}</span>
-                    }
+                    <span class="match-status">{{ match.channelLabel }}</span>
                   </div>
 
                   <ion-icon
@@ -116,26 +181,16 @@
               </button>
 
               <div class="match-detail__avatar">{{ match.initials }}</div>
-              <p class="match-detail__eyebrow">{{ match.statusLabel }} match</p>
+              <p class="match-detail__eyebrow">Accepted match</p>
               <h2>{{ match.displayName }}</h2>
-              <p>{{ match.channelLabel }} during {{ match.overlapLabel }}</p>
+              <p>{{ match.channelLabel }}</p>
             </header>
 
             <section class="match-detail__summary" aria-label="Match details">
               <div>
-                <span>State</span>
-                <strong>{{ match.statusLabel }}</strong>
+                <span>Channel</span>
+                <strong>{{ match.channelLabel }}</strong>
               </div>
-              <div>
-                <span>Created</span>
-                <strong>{{ match.createdLabel }}</strong>
-              </div>
-              @if (match.respondedLabel) {
-                <div>
-                  <span>Accepted</span>
-                  <strong>{{ match.respondedLabel }}</strong>
-                </div>
-              }
             </section>
 
             <ion-button

@@ -115,6 +115,12 @@
   gap: 12px;
 }
 
+.suggestion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .match-item {
   display: flex;
   align-items: center;
@@ -127,6 +133,19 @@
   box-shadow: 0 10px 22px rgba(122, 99, 246, 0.06);
   text-align: left;
   appearance: none;
+}
+
+.suggestion-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 12px;
+  border: 1px solid rgba(122, 99, 246, 0.08);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.62);
+  box-shadow: 0 10px 22px rgba(122, 99, 246, 0.06);
 }
 
 .match-avatar {
@@ -226,12 +245,34 @@
   font-weight: 700;
 }
 
+.propose-button {
+  --background: rgba(122, 99, 246, 0.12);
+  --background-activated: rgba(122, 99, 246, 0.18);
+  --background-focused: rgba(122, 99, 246, 0.18);
+  --background-hover: rgba(122, 99, 246, 0.16);
+  --border-radius: 999px;
+  --box-shadow: none;
+  --color: var(--app-color-primary);
+  --padding-start: 12px;
+  --padding-end: 12px;
+  justify-self: end;
+  min-height: 36px;
+  font-weight: 800;
+}
+
+.propose-button ion-spinner {
+  width: 16px;
+  height: 16px;
+  --color: currentColor;
+}
+
 .retry-button ion-icon {
   font-size: 17px;
 }
 
 @media (max-width: 380px) {
-  .match-item {
+  .match-item,
+  .suggestion-item {
     gap: 8px;
     padding-inline: 10px;
   }

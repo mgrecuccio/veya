@@ -3,9 +3,10 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { RouterModule } from '@angular/router';
 import { IonicModule } from '@ionic/angular';
 import { catchError, map, Observable, of, shareReplay, startWith, Subject, switchMap } from 'rxjs';
-import { getApiErrorMessage } from 'src/app/core/api/api-error.util';
+import { extractApiError, getApiErrorMessage } from 'src/app/core/api/api-error.util';
 import { ChannelType } from 'src/app/core/api/model/channel-type.model';
 import { MatchInvitationView } from 'src/app/core/api/model/match-invitation-view.model';
+import { SuggestedMatchView } from 'src/app/core/api/model/suggested-match-view.model';
 import { MatchesService } from 'src/app/core/api/services/matches.service';
 import { AppToastService } from 'src/app/shared/toast/app-toast.service';
 
@@ -14,8 +15,25 @@ type MatchesPageVmState =
   | { kind: 'error'; message: string }
   | { kind: 'success'; data: MatchesPageVm };
 
+type SuggestionsVmState =
+  | { kind: 'loading' }
+  | { kind: 'error'; message: string }
+  | { kind: 'success'; data: SuggestionsVm };
+
 interface MatchesPageVm {
   matches: AcceptedMatchVm[];
+}
+
+interface SuggestionsVm {
+  suggestions: SuggestedMatchVm[];
+}
+
+interface SuggestedMatchVm {
+  candidateUserId: number;
+  displayName: string;
+  initials: string;
+  channelType: ChannelType;
+  channelLabel: string;
 }
 
 interface AcceptedMatchVm {
@@ -23,10 +41,6 @@ interface AcceptedMatchVm {
   displayName: string;
   initials: string;
   channelLabel: string;
-  statusLabel: string;
-  overlapLabel: string;
-  createdLabel: string;
-  respondedLabel: string | null;
 }
 
 @Component({
@@ -41,10 +55,37 @@ export class MatchesPage {
   private readonly matchesService = inject(MatchesService);
   private readonly appToastService = inject(AppToastService);
   private readonly reload$ = new Subject<void>();
+  private readonly suggestionsReload$ = new Subject<void>();
   private hasEntered = false;
 
   readonly selectedMatch = signal<AcceptedMatchVm | null>(null);
   readonly contactLinkBusyId = signal<number | null>(null);
+  readonly proposalBusyId = signal<number | null>(null);
+
+  readonly suggestionsState$: Observable<SuggestionsVmState> = this.suggestionsReload$.pipe(
+    startWith(void 0),
+    switchMap(() =>
+      this.matchesService.getSuggestions().pipe(
+        map((suggestions): SuggestionsVmState => ({
+          kind: 'success',
+          data: {
+            suggestions: suggestions.map((suggestion) => this.mapSuggestedMatch(suggestion)),
+          },
+        })),
+        startWith<SuggestionsVmState>({ kind: 'loading' }),
+        catchError((error: unknown) =>
+          of<SuggestionsVmState>({
+            kind: 'error',
+            message: getApiErrorMessage(
+              error,
+              'We could not load match suggestions right now. Please try again.',
+            ),
+          }),
+        ),
+      ),
+    ),
+    shareReplay({ bufferSize: 1, refCount: true }),
+  );
 
   readonly vmState$: Observable<MatchesPageVmState> = this.reload$.pipe(
     startWith(void 0),
@@ -78,10 +119,42 @@ export class MatchesPage {
     }
 
     this.retry();
+    this.retrySuggestions();
   }
 
   retry(): void {
     this.reload$.next();
+  }
+
+  retrySuggestions(): void {
+    this.suggestionsReload$.next();
+  }
+
+  proposeMatch(suggestion: SuggestedMatchVm): void {
+    if (this.proposalBusyId() !== null) {
+      return;
+    }
+
+    this.proposalBusyId.set(suggestion.candidateUserId);
+
+    this.matchesService.createMatch({
+      candidateUserId: suggestion.candidateUserId,
+      channelType: suggestion.channelType,
+    }).subscribe({
+      next: () => {
+        this.proposalBusyId.set(null);
+        void this.appToastService.show(
+          'Proposal sent.',
+          'success',
+          'app-toast matches-page-toast',
+        );
+        this.retrySuggestions();
+      },
+      error: (error: unknown) => {
+        this.proposalBusyId.set(null);
+        this.showToast(this.getProposalErrorMessage(error));
+      },
+    });
   }
 
   openMatchDetail(match: AcceptedMatchVm): void {
@@ -131,6 +204,18 @@ export class MatchesPage {
     });
   }
 
+  private mapSuggestedMatch(suggestion: SuggestedMatchView): SuggestedMatchVm {
+    const displayName = this.cleanText(suggestion.nickName) || 'Suggested match';
+
+    return {
+      candidateUserId: suggestion.candidateUserId,
+      displayName,
+      initials: this.toInitials(displayName),
+      channelType: suggestion.channelType,
+      channelLabel: this.formatChannel(suggestion.channelType),
+    };
+  }
+
   private mapAcceptedMatch(match: MatchInvitationView): AcceptedMatchVm {
     const displayName = this.cleanText(match.initiatorDisplayName) || 'Accepted match';
 
@@ -139,10 +224,6 @@ export class MatchesPage {
       displayName,
       initials: this.toInitials(displayName),
       channelLabel: this.formatChannel(match.channelType),
-      statusLabel: this.formatStatus(match.status),
-      overlapLabel: this.formatOverlap(match.overlapStart, match.overlapEnd),
-      createdLabel: this.formatDateTime(match.createdAt),
-      respondedLabel: match.respondedAt ? this.formatDateTime(match.respondedAt) : null,
     };
   }
 
@@ -166,47 +247,6 @@ export class MatchesPage {
       .join(' ') || 'Accepted';
   }
 
-  private formatOverlap(startValue: string, endValue: string): string {
-    const start = this.parseDate(startValue);
-    const end = this.parseDate(endValue);
-
-    if (!start || !end) {
-      return 'Overlap time unavailable';
-    }
-
-    const dateLabel = new Intl.DateTimeFormat(undefined, {
-      month: 'short',
-      day: 'numeric',
-    }).format(start);
-    const timeFormatter = new Intl.DateTimeFormat(undefined, {
-      hour: 'numeric',
-      minute: '2-digit',
-    });
-
-    return `${dateLabel}, ${timeFormatter.format(start)} - ${timeFormatter.format(end)}`;
-  }
-
-  private formatDateTime(value: string): string {
-    const date = this.parseDate(value);
-
-    if (!date) {
-      return 'Recently';
-    }
-
-    return new Intl.DateTimeFormat(undefined, {
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    }).format(date);
-  }
-
-  private parseDate(value: string): Date | null {
-    const date = new Date(value);
-
-    return Number.isNaN(date.getTime()) ? null : date;
-  }
-
   private cleanText(value: string | null | undefined): string | null {
     const cleanValue = value?.trim();
 
@@ -225,6 +265,22 @@ export class MatchesPage {
     }
 
     return words.map((word) => word.charAt(0).toUpperCase()).join('');
+  }
+
+  private getProposalErrorMessage(error: unknown): string {
+    const apiError = extractApiError(error);
+
+    switch (apiError?.code) {
+      case 'MATCH_ALREADY_EXISTS':
+      case 'DUPLICATE_MATCH_PROPOSAL':
+        return apiError.message || 'You already have a proposal for this suggestion.';
+      case 'MATCH_SCORE_BELOW_THRESHOLD':
+        return apiError.message || 'This suggestion is no longer available.';
+      case 'PHONE_NUMBER_REQUIRED_FOR_MATCH_PROPOSAL_CREATION':
+        return apiError.message || 'Add your phone number before sending a proposal.';
+      default:
+        return getApiErrorMessage(error, 'We could not send this proposal right now.');
+    }
   }
 
   private showToast(message: string): void {

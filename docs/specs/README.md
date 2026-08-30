@@ -12,7 +12,7 @@ Each feature/workstream spec uses:
 | `settings/` | 2, 3, 4, 20 | Planned | Settings, profile, preferences, logout entry point |
 | `matches-api/` | 6 | Planned | Typed matching API service |
 | `accepted-matches-list/` | 7 | Done | Backend-loaded accepted matches list |
-| `match-suggestions/` | 8 | Planned | Suggestions UI and proposal creation |
+| `match-suggestions/` | 8 | Done | Suggestions UI and proposal creation |
 | `incoming-match-invitations/` | 9, 16 | Planned | Incoming proposals, accept/decline, expiration UX |
 | `match-detail-whatsapp-handoff/` | 10 | Done | Accepted match detail and backend contact link |
 | `phone-number-setup/` | 11, 12 | Planned | Phone setup redirects and retry behavior |

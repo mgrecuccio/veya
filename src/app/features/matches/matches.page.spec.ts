@@ -3,6 +3,7 @@ import { ComponentFixture, fakeAsync, flushMicrotasks, TestBed } from '@angular/
 import { provideRouter } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
 import { MatchInvitationView } from 'src/app/core/api/model/match-invitation-view.model';
+import { SuggestedMatchView } from 'src/app/core/api/model/suggested-match-view.model';
 import { MatchesService } from 'src/app/core/api/services/matches.service';
 import { AppToastService } from 'src/app/shared/toast/app-toast.service';
 import { MatchesPage } from './matches.page';
@@ -22,7 +23,7 @@ describe('MatchesPage', () => {
           provide: MatchesService,
           useValue: jasmine.createSpyObj<MatchesService>(
             'MatchesService',
-            ['getAccepted', 'createContactLink'],
+            ['getSuggestions', 'getAccepted', 'createMatch', 'createContactLink'],
           ),
         },
         {
@@ -39,8 +40,21 @@ describe('MatchesPage', () => {
     component = fixture.componentInstance;
     matchesService = TestBed.inject(MatchesService) as jasmine.SpyObj<MatchesService>;
     appToastService = TestBed.inject(AppToastService) as jasmine.SpyObj<AppToastService>;
+    matchesService.getSuggestions.and.returnValue(of([]));
+    matchesService.getAccepted.and.returnValue(of([]));
     appToastService.show.and.returnValue(Promise.resolve());
   });
+
+  function mockSuggestion(
+    overrides: Partial<SuggestedMatchView> = {},
+  ): SuggestedMatchView {
+    return {
+      candidateUserId: 9,
+      nickName: 'Jamie',
+      channelType: 'CALL',
+      ...overrides,
+    };
+  }
 
   function mockAcceptedMatch(
     overrides: Partial<MatchInvitationView> = {},
@@ -52,13 +66,163 @@ describe('MatchesPage', () => {
       channelType: 'CHAT',
       status: 'ACCEPTED',
       score: 94,
-      overlapStart: '2026-06-12T12:00:00Z',
-      overlapEnd: '2026-06-12T13:30:00Z',
       createdAt: '2026-06-12T10:00:00Z',
       respondedAt: '2026-06-12T11:00:00Z',
       ...overrides,
     };
   }
+
+  it('should emit loading then success with suggested matches', (done) => {
+    matchesService.getSuggestions.and.returnValue(of([mockSuggestion()]));
+    const states: string[] = [];
+
+    component.suggestionsState$.subscribe((state) => {
+      states.push(state.kind);
+
+      if (state.kind === 'success') {
+        expect(states).toEqual(['loading', 'success']);
+        expect(state.data.suggestions.length).toBe(1);
+        expect(state.data.suggestions[0].displayName).toBe('Jamie');
+        expect(state.data.suggestions[0].initials).toBe('J');
+        expect(state.data.suggestions[0].channelLabel).toBe('Call');
+        done();
+      }
+    });
+  });
+
+  it('should render backend suggestions above accepted matches', () => {
+    matchesService.getSuggestions.and.returnValue(of([
+      mockSuggestion(),
+      mockSuggestion({
+        candidateUserId: 10,
+        nickName: 'Taylor',
+        channelType: 'CHAT',
+      }),
+    ]));
+    matchesService.getAccepted.and.returnValue(of([mockAcceptedMatch()]));
+
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent as string;
+    const cardTitles = Array.from(
+      fixture.nativeElement.querySelectorAll('.card-title'),
+      (element: Element) => element.textContent?.trim(),
+    );
+    expect(cardTitles).toEqual(['Suggested matches', 'Accepted matches']);
+    expect(text).toContain('Jamie');
+    expect(text).toContain('Taylor');
+    expect(text).toContain('Call');
+    expect(text).toContain('Chat');
+    expect(text).not.toContain('88');
+    expect(text).not.toContain('260');
+    expect(text).not.toContain('0.74');
+    expect(text).not.toContain('Favorite');
+    expect(text).not.toContain('Jun 12');
+    expect(text).not.toContain('3:00 PM');
+    expect(text).toContain('Propose');
+  });
+
+  it('should render the empty state when no suggestions are returned', () => {
+    matchesService.getSuggestions.and.returnValue(of([]));
+
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('No suggestions are available right now.');
+    expect(text).toContain('Suggested matches');
+  });
+
+  it('should render suggestion errors without hiding accepted matches', () => {
+    matchesService.getSuggestions.and.returnValue(
+      throwError(() => new HttpErrorResponse({
+        status: 500,
+        error: {
+          message: 'Suggestions are unavailable.',
+        },
+      })),
+    );
+    matchesService.getAccepted.and.returnValue(of([mockAcceptedMatch()]));
+
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('Suggestions are unavailable.');
+    expect(text).toContain('Accepted matches');
+    expect(text).toContain('Alex Morgan');
+  });
+
+  it('should show loading while suggestions are pending', () => {
+    const suggestions$ = new Subject<SuggestedMatchView[]>();
+    matchesService.getSuggestions.and.returnValue(suggestions$);
+
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('Loading match suggestions...');
+    suggestions$.complete();
+  });
+
+  it('should create a proposal with only candidate id and channel type then refresh suggestions', fakeAsync(() => {
+    matchesService.createMatch.and.returnValue(of({
+      id: 77,
+      candidateUserId: 9,
+      channelType: 'CALL',
+      status: 'PROPOSED',
+      score: 88,
+      createdAt: '2026-06-12T14:00:00Z',
+      respondedAt: null,
+    }));
+    const sub = component.suggestionsState$.subscribe();
+
+    component.proposeMatch({
+      candidateUserId: 9,
+      displayName: 'Jamie',
+      initials: 'J',
+      channelType: 'CALL',
+      channelLabel: 'Call',
+    });
+    flushMicrotasks();
+
+    expect(matchesService.createMatch).toHaveBeenCalledOnceWith({
+      candidateUserId: 9,
+      channelType: 'CALL',
+    });
+    expect(matchesService.getSuggestions).toHaveBeenCalledTimes(2);
+    expect(appToastService.show).toHaveBeenCalledWith(
+      'Proposal sent.',
+      'success',
+      'app-toast matches-page-toast',
+    );
+
+    sub.unsubscribe();
+  }));
+
+  it('should use backend error codes for duplicate proposal errors', fakeAsync(() => {
+    matchesService.createMatch.and.returnValue(
+      throwError(() => new HttpErrorResponse({
+        status: 409,
+        error: {
+          code: 'MATCH_ALREADY_EXISTS',
+          message: 'A proposal already exists for this suggestion.',
+        },
+      })),
+    );
+
+    component.proposeMatch({
+      candidateUserId: 9,
+      displayName: 'Jamie',
+      initials: 'J',
+      channelType: 'CALL',
+      channelLabel: 'Call',
+    });
+    flushMicrotasks();
+
+    expect(appToastService.show).toHaveBeenCalledWith(
+      'A proposal already exists for this suggestion.',
+      'danger',
+      'app-toast matches-page-toast',
+    );
+  }));
 
   it('should emit loading then success with accepted matches', (done) => {
     matchesService.getAccepted.and.returnValue(of([mockAcceptedMatch()]));
@@ -73,7 +237,6 @@ describe('MatchesPage', () => {
         expect(state.data.matches[0].displayName).toBe('Alex Morgan');
         expect(state.data.matches[0].initials).toBe('AM');
         expect(state.data.matches[0].channelLabel).toBe('Chat');
-        expect(state.data.matches[0].statusLabel).toBe('Accepted');
         done();
       }
     });
@@ -97,8 +260,11 @@ describe('MatchesPage', () => {
     expect(text).toContain('2');
     expect(text).toContain('Alex Morgan');
     expect(text).toContain('Sam Rivera');
-    expect(text).toContain('Accepted - Chat');
-    expect(text).toContain('Accepted - Call');
+    expect(text).toContain('Chat');
+    expect(text).toContain('Call');
+    expect(text).not.toContain('Accepted - Chat');
+    expect(text).not.toContain('Accepted - Call');
+    expect(text).not.toContain('Created Jun 12');
   });
 
   it('should open accepted match detail from the list', () => {
@@ -127,10 +293,6 @@ describe('MatchesPage', () => {
       displayName: match.initiatorDisplayName,
       initials: 'AM',
       channelLabel: 'Chat',
-      statusLabel: 'Accepted',
-      overlapLabel: 'Jun 12, 12:00 PM - 1:30 PM',
-      createdLabel: 'Jun 12, 10:00 AM',
-      respondedLabel: 'Jun 12, 11:00 AM',
     });
 
     expect(matchesService.createContactLink).toHaveBeenCalledOnceWith(42);
@@ -154,10 +316,6 @@ describe('MatchesPage', () => {
       displayName: 'Alex Morgan',
       initials: 'AM',
       channelLabel: 'Chat',
-      statusLabel: 'Accepted',
-      overlapLabel: 'Jun 12, 12:00 PM - 1:30 PM',
-      createdLabel: 'Jun 12, 10:00 AM',
-      respondedLabel: 'Jun 12, 11:00 AM',
     });
     flushMicrotasks();
 
@@ -184,10 +342,6 @@ describe('MatchesPage', () => {
       displayName: 'Alex Morgan',
       initials: 'AM',
       channelLabel: 'Chat',
-      statusLabel: 'Accepted',
-      overlapLabel: 'Jun 12, 12:00 PM - 1:30 PM',
-      createdLabel: 'Jun 12, 10:00 AM',
-      respondedLabel: 'Jun 12, 11:00 AM',
     });
     flushMicrotasks();
 
@@ -254,14 +408,19 @@ describe('MatchesPage', () => {
     matchesService.getAccepted.and.returnValue(of([]));
 
     const sub = component.vmState$.subscribe();
+    const suggestionsSub = component.suggestionsState$.subscribe();
     expect(matchesService.getAccepted).toHaveBeenCalledTimes(1);
+    expect(matchesService.getSuggestions).toHaveBeenCalledTimes(1);
 
     component.ionViewWillEnter();
     expect(matchesService.getAccepted).toHaveBeenCalledTimes(1);
+    expect(matchesService.getSuggestions).toHaveBeenCalledTimes(1);
 
     component.ionViewWillEnter();
     expect(matchesService.getAccepted).toHaveBeenCalledTimes(2);
+    expect(matchesService.getSuggestions).toHaveBeenCalledTimes(2);
 
     sub.unsubscribe();
+    suggestionsSub.unsubscribe();
   });
 });
