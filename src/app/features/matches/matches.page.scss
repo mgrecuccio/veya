@@ -24,6 +24,12 @@
   margin-top: 16px;
 }
 
+.matches-shell::after {
+  content: "";
+  display: block;
+  height: calc(var(--app-tab-bar-height) + var(--app-safe-area-bottom) + 56px);
+}
+
 .matches-hero {
   position: relative;
   overflow: hidden;
@@ -79,6 +85,13 @@
   border-radius: 26px;
 }
 
+.incoming-card {
+  border-color: rgba(255, 127, 115, 0.24);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.68)),
+    rgba(255, 127, 115, 0.08);
+}
+
 .card-header {
   display: flex;
   align-items: flex-start;
@@ -109,13 +122,9 @@
   text-align: center;
 }
 
-.match-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.suggestion-list {
+.match-list,
+.suggestion-list,
+.incoming-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -131,8 +140,59 @@
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.62);
   box-shadow: 0 10px 22px rgba(122, 99, 246, 0.06);
+}
+
+.match-summary-button {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1;
+  gap: 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
   text-align: left;
   appearance: none;
+}
+
+.match-contact-button {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(37, 211, 102, 0.1);
+  color: #25d366;
+  appearance: none;
+}
+
+.match-contact-button:disabled {
+  opacity: 0.58;
+}
+
+.match-contact-button ion-icon {
+  font-size: 22px;
+}
+
+.match-contact-button ion-spinner {
+  width: 18px;
+  height: 18px;
+  --color: currentColor;
+}
+
+.incoming-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 12px;
+  border: 1px solid rgba(255, 127, 115, 0.16);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 12px 24px rgba(255, 127, 115, 0.08);
 }
 
 .suggestion-item {
@@ -191,12 +251,6 @@
   color: rgba(45, 39, 58, 0.62);
   font-size: 12px;
   line-height: 1.35;
-}
-
-.match-detail-icon {
-  flex-shrink: 0;
-  color: rgba(122, 99, 246, 0.58);
-  font-size: 20px;
 }
 
 .matches-state {
@@ -260,6 +314,53 @@
   font-weight: 800;
 }
 
+.incoming-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 36px);
+  align-items: center;
+  gap: 8px;
+  justify-self: end;
+}
+
+.accept-button,
+.decline-button {
+  --border-radius: 999px;
+  --box-shadow: none;
+  --padding-start: 0;
+  --padding-end: 0;
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  min-width: 36px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.accept-button {
+  --background: rgba(255, 127, 115, 0.16);
+  --background-activated: rgba(255, 127, 115, 0.24);
+  --background-focused: rgba(255, 127, 115, 0.24);
+  --background-hover: rgba(255, 127, 115, 0.2);
+  --color: #8f3028;
+}
+
+.decline-button {
+  --background: rgba(255, 255, 255, 0.62);
+  --background-activated: rgba(90, 70, 128, 0.08);
+  --background-focused: rgba(90, 70, 128, 0.08);
+  --background-hover: rgba(90, 70, 128, 0.06);
+  --border-color: rgba(90, 70, 128, 0.22);
+  --border-width: 1px;
+  --color: rgba(45, 39, 58, 0.68);
+}
+
+.accept-button ion-spinner,
+.decline-button ion-spinner {
+  width: 16px;
+  height: 16px;
+  --color: currentColor;
+}
+
 .propose-button ion-spinner {
   width: 16px;
   height: 16px;
@@ -272,6 +373,7 @@
 
 @media (max-width: 380px) {
   .match-item,
+  .incoming-item,
   .suggestion-item {
     gap: 8px;
     padding-inline: 10px;
@@ -285,6 +387,11 @@
   .retry-button {
     --padding-start: 10px;
     --padding-end: 10px;
+  }
+
+  .incoming-actions {
+    gap: 4px;
+    grid-template-columns: repeat(2, 34px);
   }
 }
 
