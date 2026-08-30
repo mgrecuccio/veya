@@ -1,12 +1,12 @@
 # Match Suggestions Tasks
 
-Status: Planned
+Status: Done
 
-- [ ] Decide section vs route placement.
-- [ ] Add suggestions page or section.
-- [ ] Load suggestions through `MatchesService`.
-- [ ] Render suggestion cards from backend data.
-- [ ] Add create proposal action.
-- [ ] Refresh suggestions after proposal creation.
-- [ ] Handle duplicate and validation errors.
-- [ ] Add focused tests for load, empty, proposal success, and proposal error.
+- [x] Decide section vs route placement.
+- [x] Add suggestions page or section.
+- [x] Load suggestions through `MatchesService`.
+- [x] Render suggestion cards from backend data.
+- [x] Add create proposal action.
+- [x] Refresh suggestions after proposal creation.
+- [x] Handle duplicate and validation errors.
+- [x] Add focused tests for load, empty, proposal success, and proposal error.

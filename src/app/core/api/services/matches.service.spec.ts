@@ -36,11 +36,7 @@ describe('MatchesService', () => {
             {
                 candidateUserId: 1,
                 nickName: 'CandidateNickname',
-                favorite: true,
-                channelType: 'CALL',
-                score: 80,
-                overlapStart: '2026-06-12T12:00:00Z',
-                overlapEnd: '2026-06-12T14:00:00Z'
+                channelType: 'CALL'
             }
         ];
 
@@ -63,8 +59,6 @@ describe('MatchesService', () => {
                 channelType: 'CHAT',
                 status: 'PROPOSED',
                 score: 80,
-                overlapStart: '2026-06-12T12:00:00Z',
-                overlapEnd: '2026-06-12T12:00:00Z',
                 createdAt: '2026-06-12T12:00:00Z',
                 respondedAt: '2026-06-12T12:00:00Z'
             }
@@ -88,8 +82,6 @@ describe('MatchesService', () => {
                 channelType: 'CHAT',
                 status: 'ACCEPTED',
                 score: 80,
-                overlapStart: '2026-06-12T12:00:00Z',
-                overlapEnd: '2026-06-12T12:00:00Z',
                 createdAt: '2026-06-12T12:00:00Z',
                 respondedAt: '2026-06-12T12:00:00Z'
             }
@@ -116,8 +108,6 @@ describe('MatchesService', () => {
             channelType: 'CHAT',
             status: 'PROPOSED',
             score: 80,
-            overlapStart: '2026-06-12T12:00:00Z',
-            overlapEnd: '2026-06-12T13:00:00Z',
             createdAt: '2026-06-12T12:00:00Z',
             respondedAt: '2026-06-12T12:00:00Z'
         };
@@ -141,8 +131,6 @@ describe('MatchesService', () => {
             channelType: 'CHAT',
             status: 'PROPOSED',
             score: 80,
-            overlapStart: '2026-06-12T12:00:00Z',
-            overlapEnd: '2026-06-12T13:00:00Z',
             createdAt: '2026-06-12T12:00:00Z',
             respondedAt: '2026-06-12T12:00:00Z'
         };
@@ -168,8 +156,6 @@ describe('MatchesService', () => {
             channelType: 'CHAT',
             status: 'DECLINED',
             score: 80,
-            overlapStart: '2026-06-12T12:00:00Z',
-            overlapEnd: '2026-06-12T13:00:00Z',
             createdAt: '2026-06-12T12:00:00Z',
             respondedAt: '2026-06-12T12:00:00Z'
         };
