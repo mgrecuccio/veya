@@ -23,7 +23,15 @@ describe('MatchesPage', () => {
           provide: MatchesService,
           useValue: jasmine.createSpyObj<MatchesService>(
             'MatchesService',
-            ['getSuggestions', 'getAccepted', 'createMatch', 'createContactLink'],
+            [
+              'getSuggestions',
+              'getIncoming',
+              'getAccepted',
+              'createMatch',
+              'acceptMatch',
+              'declineMatch',
+              'createContactLink',
+            ],
           ),
         },
         {
@@ -41,6 +49,7 @@ describe('MatchesPage', () => {
     matchesService = TestBed.inject(MatchesService) as jasmine.SpyObj<MatchesService>;
     appToastService = TestBed.inject(AppToastService) as jasmine.SpyObj<AppToastService>;
     matchesService.getSuggestions.and.returnValue(of([]));
+    matchesService.getIncoming.and.returnValue(of([]));
     matchesService.getAccepted.and.returnValue(of([]));
     appToastService.show.and.returnValue(Promise.resolve());
   });
@@ -71,6 +80,116 @@ describe('MatchesPage', () => {
       ...overrides,
     };
   }
+
+  function mockIncomingProposal(
+    overrides: Partial<MatchInvitationView> = {},
+  ): MatchInvitationView {
+    return {
+      id: 31,
+      initiatorUserId: 11,
+      initiatorDisplayName: 'Riley Chen',
+      channelType: 'CALL',
+      status: 'PROPOSED',
+      score: 91,
+      createdAt: '2026-06-12T09:00:00Z',
+      respondedAt: null,
+      ...overrides,
+    };
+  }
+
+  it('should emit loading then success with incoming proposals', (done) => {
+    matchesService.getIncoming.and.returnValue(of([mockIncomingProposal()]));
+    const states: string[] = [];
+
+    component.incomingState$.subscribe((state) => {
+      states.push(state.kind);
+
+      if (state.kind === 'success') {
+        expect(states).toEqual(['loading', 'success']);
+        expect(state.data.proposals.length).toBe(1);
+        expect(state.data.proposals[0].displayName).toBe('Riley Chen');
+        expect(state.data.proposals[0].initials).toBe('RC');
+        expect(state.data.proposals[0].channelLabel).toBe('Call');
+        done();
+      }
+    });
+  });
+
+  it('should render match requests above suggestions and accepted matches', () => {
+    matchesService.getIncoming.and.returnValue(of([mockIncomingProposal()]));
+    matchesService.getSuggestions.and.returnValue(of([mockSuggestion()]));
+    matchesService.getAccepted.and.returnValue(of([mockAcceptedMatch()]));
+
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent as string;
+    const cardTitles = Array.from(
+      fixture.nativeElement.querySelectorAll('.card-title'),
+      (element: Element) => element.textContent?.trim(),
+    );
+    expect(cardTitles).toEqual(['Match requests', 'Suggested matches', 'Accepted matches']);
+    expect(text).toContain('Riley Chen');
+    expect(text).toContain('Jamie');
+    expect(text).toContain('Alex Morgan');
+
+    const declineButton = fixture.nativeElement.querySelector('.decline-button') as HTMLElement;
+    const acceptButton = fixture.nativeElement.querySelector('.accept-button') as HTMLElement;
+    expect(declineButton.textContent?.trim()).toBe('');
+    expect(acceptButton.textContent?.trim()).toBe('');
+    expect(declineButton.getAttribute('aria-label')).toBe('Decline match request');
+    expect(acceptButton.getAttribute('aria-label')).toBe('Accept match request');
+  });
+
+  it('should render initiator display name when backend returns a snake case key', () => {
+    matchesService.getIncoming.and.returnValue(of([
+      {
+        id: 31,
+        initiatorUserId: 11,
+        initiatorDisplayName: '',
+        initiator_display_name: 'Maya Rao',
+        channelType: 'CHAT',
+        status: 'PROPOSED',
+        score: 91,
+        createdAt: '2026-06-12T09:00:00Z',
+        respondedAt: null,
+      } as MatchInvitationView & { initiator_display_name: string },
+    ]));
+
+    fixture.detectChanges();
+
+    const matchName = fixture.nativeElement.querySelector('.incoming-item .match-name') as HTMLElement;
+    expect(matchName.textContent?.trim()).toBe('Maya Rao');
+  });
+
+  it('should render the empty state when no incoming proposals are returned', () => {
+    matchesService.getIncoming.and.returnValue(of([]));
+
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('No match requests are waiting right now.');
+    expect(text).toContain('Match requests');
+  });
+
+  it('should render incoming errors without hiding suggestions or accepted matches', () => {
+    matchesService.getIncoming.and.returnValue(
+      throwError(() => new HttpErrorResponse({
+        status: 500,
+        error: {
+          message: 'Incoming proposals are unavailable.',
+        },
+      })),
+    );
+    matchesService.getSuggestions.and.returnValue(of([mockSuggestion()]));
+    matchesService.getAccepted.and.returnValue(of([mockAcceptedMatch()]));
+
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('Incoming proposals are unavailable.');
+    expect(text).toContain('Suggested matches');
+    expect(text).toContain('Accepted matches');
+  });
 
   it('should emit loading then success with suggested matches', (done) => {
     matchesService.getSuggestions.and.returnValue(of([mockSuggestion()]));
@@ -108,7 +227,7 @@ describe('MatchesPage', () => {
       fixture.nativeElement.querySelectorAll('.card-title'),
       (element: Element) => element.textContent?.trim(),
     );
-    expect(cardTitles).toEqual(['Suggested matches', 'Accepted matches']);
+    expect(cardTitles).toEqual(['Match requests', 'Suggested matches', 'Accepted matches']);
     expect(text).toContain('Jamie');
     expect(text).toContain('Taylor');
     expect(text).toContain('Call');
@@ -224,6 +343,129 @@ describe('MatchesPage', () => {
     );
   }));
 
+  it('should accept an incoming proposal then refresh incoming and accepted matches', fakeAsync(() => {
+    matchesService.acceptMatch.and.returnValue(of({
+      id: 31,
+      candidateUserId: 2,
+      channelType: 'CALL',
+      status: 'ACCEPTED',
+      score: 91,
+      createdAt: '2026-06-12T09:00:00Z',
+      respondedAt: '2026-06-12T09:05:00Z',
+    }));
+    const incomingSub = component.incomingState$.subscribe();
+    const acceptedSub = component.vmState$.subscribe();
+
+    component.acceptProposal({
+      id: 31,
+      displayName: 'Riley Chen',
+      initials: 'RC',
+      channelLabel: 'Call',
+    });
+    flushMicrotasks();
+
+    expect(matchesService.acceptMatch).toHaveBeenCalledOnceWith(31);
+    expect(matchesService.getIncoming).toHaveBeenCalledTimes(2);
+    expect(matchesService.getAccepted).toHaveBeenCalledTimes(2);
+    expect(appToastService.show).toHaveBeenCalledWith(
+      'Proposal accepted.',
+      'success',
+      'app-toast matches-page-toast',
+    );
+
+    incomingSub.unsubscribe();
+    acceptedSub.unsubscribe();
+  }));
+
+  it('should decline an incoming proposal then refresh incoming proposals only', fakeAsync(() => {
+    matchesService.declineMatch.and.returnValue(of({
+      id: 31,
+      candidateUserId: 2,
+      channelType: 'CALL',
+      status: 'DECLINED',
+      score: 91,
+      createdAt: '2026-06-12T09:00:00Z',
+      respondedAt: '2026-06-12T09:05:00Z',
+    }));
+    const incomingSub = component.incomingState$.subscribe();
+    const acceptedSub = component.vmState$.subscribe();
+
+    component.declineProposal({
+      id: 31,
+      displayName: 'Riley Chen',
+      initials: 'RC',
+      channelLabel: 'Call',
+    });
+    flushMicrotasks();
+
+    expect(matchesService.declineMatch).toHaveBeenCalledOnceWith(31);
+    expect(matchesService.getIncoming).toHaveBeenCalledTimes(2);
+    expect(matchesService.getAccepted).toHaveBeenCalledTimes(1);
+    expect(appToastService.show).toHaveBeenCalledWith(
+      'Proposal declined.',
+      'success',
+      'app-toast matches-page-toast',
+    );
+
+    incomingSub.unsubscribe();
+    acceptedSub.unsubscribe();
+  }));
+
+  it('should refresh incoming proposals after an expired proposal error', fakeAsync(() => {
+    matchesService.acceptMatch.and.returnValue(
+      throwError(() => new HttpErrorResponse({
+        status: 409,
+        error: {
+          code: 'MATCH_PROPOSAL_EXPIRED',
+          message: 'This proposal has expired.',
+        },
+      })),
+    );
+    const incomingSub = component.incomingState$.subscribe();
+
+    component.acceptProposal({
+      id: 31,
+      displayName: 'Riley Chen',
+      initials: 'RC',
+      channelLabel: 'Call',
+    });
+    flushMicrotasks();
+
+    expect(matchesService.getIncoming).toHaveBeenCalledTimes(2);
+    expect(appToastService.show).toHaveBeenCalledWith(
+      'This proposal has expired.',
+      'danger',
+      'app-toast matches-page-toast',
+    );
+
+    incomingSub.unsubscribe();
+  }));
+
+  it('should surface candidate authorization errors for incoming actions', fakeAsync(() => {
+    matchesService.declineMatch.and.returnValue(
+      throwError(() => new HttpErrorResponse({
+        status: 403,
+        error: {
+          message: 'Only the candidate can decline this proposal.',
+        },
+      })),
+    );
+
+    component.declineProposal({
+      id: 31,
+      displayName: 'Riley Chen',
+      initials: 'RC',
+      channelLabel: 'Call',
+    });
+    flushMicrotasks();
+
+    expect(appToastService.show).toHaveBeenCalledWith(
+      'Only the candidate can decline this proposal.',
+      'danger',
+      'app-toast matches-page-toast',
+    );
+  }));
+
   it('should emit loading then success with accepted matches', (done) => {
     matchesService.getAccepted.and.returnValue(of([mockAcceptedMatch()]));
     const states: string[] = [];
@@ -272,11 +514,38 @@ describe('MatchesPage', () => {
 
     fixture.detectChanges();
 
-    const matchButton = fixture.nativeElement.querySelector('.match-item') as HTMLButtonElement;
+    const matchButton = fixture.nativeElement.querySelector('.match-summary-button') as HTMLButtonElement;
     matchButton.click();
     fixture.detectChanges();
 
     expect(component.selectedMatch()?.displayName).toBe('Alex Morgan');
+  });
+
+  it('should open WhatsApp when the accepted match WhatsApp icon is clicked', () => {
+    matchesService.getAccepted.and.returnValue(of([mockAcceptedMatch()]));
+    matchesService.createContactLink.and.returnValue(of({
+      type: 'WHATSAPP',
+      url: 'https://backend.example/contact-link/42',
+      expiresAt: '2026-06-12T12:00:00Z',
+    }));
+    const openSpy = spyOn(window, 'open').and.returnValue(window);
+
+    fixture.detectChanges();
+
+    const matchButton = fixture.nativeElement.querySelector('.match-contact-button') as HTMLButtonElement;
+    const matchIcon = matchButton.querySelector('ion-icon') as HTMLElement;
+    expect(matchButton.getAttribute('aria-label')).toBe('Open WhatsApp');
+    expect(matchIcon.getAttribute('name')).toBe('logo-whatsapp');
+
+    matchButton.click();
+    fixture.detectChanges();
+
+    expect(component.selectedMatch()).toBeNull();
+    expect(matchesService.createContactLink).toHaveBeenCalledOnceWith(42);
+    expect(openSpy).toHaveBeenCalledOnceWith(
+      'https://backend.example/contact-link/42',
+      '_blank',
+    );
   });
 
   it('should request the backend contact link and open the returned URL', () => {
@@ -409,18 +678,23 @@ describe('MatchesPage', () => {
 
     const sub = component.vmState$.subscribe();
     const suggestionsSub = component.suggestionsState$.subscribe();
+    const incomingSub = component.incomingState$.subscribe();
     expect(matchesService.getAccepted).toHaveBeenCalledTimes(1);
     expect(matchesService.getSuggestions).toHaveBeenCalledTimes(1);
+    expect(matchesService.getIncoming).toHaveBeenCalledTimes(1);
 
     component.ionViewWillEnter();
     expect(matchesService.getAccepted).toHaveBeenCalledTimes(1);
     expect(matchesService.getSuggestions).toHaveBeenCalledTimes(1);
+    expect(matchesService.getIncoming).toHaveBeenCalledTimes(1);
 
     component.ionViewWillEnter();
     expect(matchesService.getAccepted).toHaveBeenCalledTimes(2);
     expect(matchesService.getSuggestions).toHaveBeenCalledTimes(2);
+    expect(matchesService.getIncoming).toHaveBeenCalledTimes(2);
 
     sub.unsubscribe();
     suggestionsSub.unsubscribe();
+    incomingSub.unsubscribe();
   });
 });

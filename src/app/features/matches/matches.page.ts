@@ -20,12 +20,21 @@ type SuggestionsVmState =
   | { kind: 'error'; message: string }
   | { kind: 'success'; data: SuggestionsVm };
 
+type IncomingProposalsVmState =
+  | { kind: 'loading' }
+  | { kind: 'error'; message: string }
+  | { kind: 'success'; data: IncomingProposalsVm };
+
 interface MatchesPageVm {
   matches: AcceptedMatchVm[];
 }
 
 interface SuggestionsVm {
   suggestions: SuggestedMatchVm[];
+}
+
+interface IncomingProposalsVm {
+  proposals: IncomingProposalVm[];
 }
 
 interface SuggestedMatchVm {
@@ -37,6 +46,13 @@ interface SuggestedMatchVm {
 }
 
 interface AcceptedMatchVm {
+  id: number;
+  displayName: string;
+  initials: string;
+  channelLabel: string;
+}
+
+interface IncomingProposalVm {
   id: number;
   displayName: string;
   initials: string;
@@ -56,11 +72,39 @@ export class MatchesPage {
   private readonly appToastService = inject(AppToastService);
   private readonly reload$ = new Subject<void>();
   private readonly suggestionsReload$ = new Subject<void>();
+  private readonly incomingReload$ = new Subject<void>();
   private hasEntered = false;
 
   readonly selectedMatch = signal<AcceptedMatchVm | null>(null);
   readonly contactLinkBusyId = signal<number | null>(null);
   readonly proposalBusyId = signal<number | null>(null);
+  readonly incomingBusyId = signal<number | null>(null);
+  readonly incomingBusyAction = signal<'accept' | 'decline' | null>(null);
+
+  readonly incomingState$: Observable<IncomingProposalsVmState> = this.incomingReload$.pipe(
+    startWith(void 0),
+    switchMap(() =>
+      this.matchesService.getIncoming().pipe(
+        map((proposals): IncomingProposalsVmState => ({
+          kind: 'success',
+          data: {
+            proposals: proposals.map((proposal) => this.mapIncomingProposal(proposal)),
+          },
+        })),
+        startWith<IncomingProposalsVmState>({ kind: 'loading' }),
+        catchError((error: unknown) =>
+          of<IncomingProposalsVmState>({
+            kind: 'error',
+            message: getApiErrorMessage(
+              error,
+              'We could not load match requests right now. Please try again.',
+            ),
+          }),
+        ),
+      ),
+    ),
+    shareReplay({ bufferSize: 1, refCount: true }),
+  );
 
   readonly suggestionsState$: Observable<SuggestionsVmState> = this.suggestionsReload$.pipe(
     startWith(void 0),
@@ -120,6 +164,7 @@ export class MatchesPage {
 
     this.retry();
     this.retrySuggestions();
+    this.retryIncoming();
   }
 
   retry(): void {
@@ -128,6 +173,10 @@ export class MatchesPage {
 
   retrySuggestions(): void {
     this.suggestionsReload$.next();
+  }
+
+  retryIncoming(): void {
+    this.incomingReload$.next();
   }
 
   proposeMatch(suggestion: SuggestedMatchVm): void {
@@ -155,6 +204,14 @@ export class MatchesPage {
         this.showToast(this.getProposalErrorMessage(error));
       },
     });
+  }
+
+  acceptProposal(proposal: IncomingProposalVm): void {
+    this.respondToIncomingProposal(proposal, 'accept');
+  }
+
+  declineProposal(proposal: IncomingProposalVm): void {
+    this.respondToIncomingProposal(proposal, 'decline');
   }
 
   openMatchDetail(match: AcceptedMatchVm): void {
@@ -216,8 +273,19 @@ export class MatchesPage {
     };
   }
 
+  private mapIncomingProposal(proposal: MatchInvitationView): IncomingProposalVm {
+    const displayName = this.getInitiatorDisplayName(proposal) || 'Match request';
+
+    return {
+      id: proposal.id,
+      displayName,
+      initials: this.toInitials(displayName),
+      channelLabel: this.formatChannel(proposal.channelType),
+    };
+  }
+
   private mapAcceptedMatch(match: MatchInvitationView): AcceptedMatchVm {
-    const displayName = this.cleanText(match.initiatorDisplayName) || 'Accepted match';
+    const displayName = this.getInitiatorDisplayName(match) || 'Accepted match';
 
     return {
       id: match.id,
@@ -225,6 +293,48 @@ export class MatchesPage {
       initials: this.toInitials(displayName),
       channelLabel: this.formatChannel(match.channelType),
     };
+  }
+
+  private respondToIncomingProposal(
+    proposal: IncomingProposalVm,
+    action: 'accept' | 'decline',
+  ): void {
+    if (this.incomingBusyId() !== null) {
+      return;
+    }
+
+    this.incomingBusyId.set(proposal.id);
+    this.incomingBusyAction.set(action);
+    const request$ =
+      action === 'accept'
+        ? this.matchesService.acceptMatch(proposal.id)
+        : this.matchesService.declineMatch(proposal.id);
+
+    request$.subscribe({
+      next: () => {
+        this.incomingBusyId.set(null);
+        this.incomingBusyAction.set(null);
+        void this.appToastService.show(
+          action === 'accept' ? 'Proposal accepted.' : 'Proposal declined.',
+          'success',
+          'app-toast matches-page-toast',
+        );
+        this.retryIncoming();
+
+        if (action === 'accept') {
+          this.retry();
+        }
+      },
+      error: (error: unknown) => {
+        this.incomingBusyId.set(null);
+        this.incomingBusyAction.set(null);
+        this.showToast(this.getIncomingActionErrorMessage(error, action));
+
+        if (this.shouldRefreshIncomingAfterActionError(error)) {
+          this.retryIncoming();
+        }
+      },
+    });
   }
 
   private formatChannel(channel: ChannelType): string {
@@ -247,8 +357,25 @@ export class MatchesPage {
       .join(' ') || 'Accepted';
   }
 
-  private cleanText(value: string | null | undefined): string | null {
-    const cleanValue = value?.trim();
+  private getInitiatorDisplayName(match: MatchInvitationView): string | null {
+    const rawMatch = match as MatchInvitationView & Record<string, unknown>;
+
+    return (
+      this.cleanText(match.initiatorDisplayName) ||
+      this.cleanText(rawMatch['initiator_display_name']) ||
+      this.cleanText(rawMatch['initiatorName']) ||
+      this.cleanText(rawMatch['initiatorNickName']) ||
+      this.cleanText(rawMatch['initiatorNickname']) ||
+      null
+    );
+  }
+
+  private cleanText(value: unknown): string | null {
+    if (typeof value !== 'string') {
+      return null;
+    }
+
+    const cleanValue = value.trim();
 
     return cleanValue ? cleanValue : null;
   }
@@ -281,6 +408,30 @@ export class MatchesPage {
       default:
         return getApiErrorMessage(error, 'We could not send this proposal right now.');
     }
+  }
+
+  private getIncomingActionErrorMessage(error: unknown, action: 'accept' | 'decline'): string {
+    const apiError = extractApiError(error);
+
+    switch (apiError?.code) {
+      case 'MATCH_PROPOSAL_EXPIRED':
+        return apiError.message || 'This proposal is no longer available.';
+      case 'PHONE_NUMBER_REQUIRED_FOR_MATCH_ACCEPTANCE':
+        return apiError.message || 'Add your phone number before accepting this proposal.';
+      default:
+        return getApiErrorMessage(
+          error,
+          action === 'accept'
+            ? 'We could not accept this proposal right now.'
+            : 'We could not decline this proposal right now.',
+        );
+    }
+  }
+
+  private shouldRefreshIncomingAfterActionError(error: unknown): boolean {
+    const apiError = extractApiError(error);
+
+    return apiError?.code === 'MATCH_PROPOSAL_EXPIRED';
   }
 
   private showToast(message: string): void {
