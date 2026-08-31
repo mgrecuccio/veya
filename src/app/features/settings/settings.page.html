@@ -86,6 +86,13 @@
               </div>
             </div>
 
+            @if (phoneSetupMessage$ | async; as phoneSetupMessage) {
+              <div class="settings-phone-setup-notice" role="status">
+                <ion-icon name="call-outline" aria-hidden="true"></ion-icon>
+                <span>{{ phoneSetupMessage }}</span>
+              </div>
+            }
+
             <form class="settings-row-list" 
               [formGroup]="profileForm"
               (ngSubmit)="saveProfile()"

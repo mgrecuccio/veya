@@ -1,12 +1,14 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { IonicModule } from '@ionic/angular';
 import { catchError, map, Observable, of, shareReplay, startWith, Subject, switchMap, tap } from 'rxjs';
 import { SettingsPageData, SettingsPageDataService } from './data/settings-page-data.service';
 import { AuthService } from 'src/app/core/auth/auth.service';
 import { getApiErrorMessage } from 'src/app/core/api/api-error.util';
+import { MatchesService } from 'src/app/core/api/services/matches.service';
+import { PhoneNumberSetupService } from 'src/app/shared/phone/phone-number-setup.service';
 import { AppToastColor, AppToastService } from 'src/app/shared/toast/app-toast.service';
 import {
   createPhoneCountries,
@@ -72,6 +74,9 @@ export class SettingsPage {
     private readonly fb = inject(FormBuilder).nonNullable;
     private readonly settingsPageDataService = inject(SettingsPageDataService);
     private readonly authService = inject(AuthService);
+    private readonly matchesService = inject(MatchesService);
+    private readonly phoneNumberSetupService = inject(PhoneNumberSetupService);
+    private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
     private readonly appToastService = inject(AppToastService);
     private readonly reload$ = new Subject<void>();
@@ -114,6 +119,23 @@ export class SettingsPage {
         pushNotificationsEnabled: [false],
         suggestionNotificationsEnabled: [false],
     });
+
+    readonly phoneSetupMessage$: Observable<string | null> = this.route.queryParamMap.pipe(
+      map((params) => {
+        if (params.get('setup') !== 'phone') {
+          return null;
+        }
+
+        switch (params.get('action')) {
+          case 'proposal':
+            return 'Add your phone number to send this match proposal.';
+          case 'acceptance':
+            return 'Add your phone number to accept this match request.';
+          default:
+            return 'Add your phone number to continue with this match.';
+        }
+      }),
+    );
 
     readonly vmState$: Observable<SettingsPageVmState> = this.reload$.pipe(
       startWith(void 0),
@@ -195,7 +217,7 @@ export class SettingsPage {
         next: () => {
           this.isSavingProfile.set(false);
           this.retry();
-          this.showToast('Profile saved.', 'success');
+          this.retryPendingPhoneAction();
         },
         error: (error: any) => {
           this.isSavingProfile.set(false);
@@ -274,6 +296,46 @@ export class SettingsPage {
       });
 
       void this.appToastService.show(message, color, 'app-toast settings-page-toast');
+    }
+
+    private retryPendingPhoneAction(): void {
+      const pendingAction = this.phoneNumberSetupService.consumePendingAction();
+
+      if (!pendingAction) {
+        this.showToast('Profile saved.', 'success');
+        return;
+      }
+
+      const retry$ =
+        pendingAction.kind === 'proposal'
+          ? this.matchesService.createMatch({
+              candidateUserId: pendingAction.candidateUserId,
+              channelType: pendingAction.channelType,
+            })
+          : this.matchesService.acceptMatch(pendingAction.proposalId);
+
+      retry$.subscribe({
+        next: () => {
+          this.showToast(
+            pendingAction.kind === 'proposal'
+              ? 'Phone number saved. Proposal sent.'
+              : 'Phone number saved. Proposal accepted.',
+            'success',
+          );
+          void this.router.navigateByUrl(pendingAction.returnUrl);
+        },
+        error: (error: unknown) => {
+          this.showToast(
+            getApiErrorMessage(
+              error,
+              pendingAction.kind === 'proposal'
+                ? 'Your phone number was saved, but we couldn’t send the proposal.'
+                : 'Your phone number was saved, but we couldn’t accept the proposal.',
+            ),
+            'danger',
+          );
+        },
+      });
     }
 
     private blankToNull(value: string | null | undefined): string | null {

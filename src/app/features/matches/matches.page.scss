@@ -300,18 +300,29 @@
 }
 
 .propose-button {
-  --background: rgba(122, 99, 246, 0.12);
-  --background-activated: rgba(122, 99, 246, 0.18);
-  --background-focused: rgba(122, 99, 246, 0.18);
-  --background-hover: rgba(122, 99, 246, 0.16);
-  --border-radius: 999px;
-  --box-shadow: none;
-  --color: var(--app-color-primary);
-  --padding-start: 12px;
-  --padding-end: 12px;
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   justify-self: end;
-  min-height: 36px;
-  font-weight: 800;
+  min-height: 34px;
+  padding: 0 13px;
+  border: 1px solid rgba(122, 99, 246, 0.36);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--app-color-primary);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.propose-button:active {
+  background: rgba(122, 99, 246, 0.08);
+}
+
+.propose-button:disabled {
+  cursor: default;
+  opacity: 0.58;
 }
 
 .incoming-actions {
@@ -338,16 +349,12 @@
 
 .accept-button {
   --background: rgba(255, 127, 115, 0.16);
-  --background-activated: rgba(255, 127, 115, 0.24);
-  --background-focused: rgba(255, 127, 115, 0.24);
   --background-hover: rgba(255, 127, 115, 0.2);
   --color: #8f3028;
 }
 
 .decline-button {
   --background: rgba(255, 255, 255, 0.62);
-  --background-activated: rgba(90, 70, 128, 0.08);
-  --background-focused: rgba(90, 70, 128, 0.08);
   --background-hover: rgba(90, 70, 128, 0.06);
   --border-color: rgba(90, 70, 128, 0.22);
   --border-width: 1px;

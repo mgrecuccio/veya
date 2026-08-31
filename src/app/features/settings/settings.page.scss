@@ -212,6 +212,33 @@
   gap: 10px;
 }
 
+.settings-phone-setup-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 14px 15px;
+  border: 0;
+  border-radius: 18px;
+  background: linear-gradient(
+    135deg,
+    rgba(var(--app-color-accent-rgb), 0.92) 0%,
+    rgba(var(--app-color-primary-rgb), 0.9) 100%
+  );
+  box-shadow: 0 14px 28px rgba(var(--app-color-primary-rgb), 0.18);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.settings-phone-setup-notice ion-icon {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: #fff;
+  font-size: 18px;
+}
+
 .settings-row {
   display: flex;
   align-items: center;

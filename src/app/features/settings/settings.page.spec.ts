@@ -1,7 +1,9 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { Router } from '@angular/router';
-import { of, Subject, throwError } from 'rxjs';
+import { ActivatedRoute, convertToParamMap, ParamMap, Router } from '@angular/router';
+import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
+import { MatchesService } from 'src/app/core/api/services/matches.service';
 import { AuthService } from 'src/app/core/auth/auth.service';
+import { PhoneNumberSetupService } from 'src/app/shared/phone/phone-number-setup.service';
 import { AppToastService } from 'src/app/shared/toast/app-toast.service';
 import { SettingsPageData, SettingsPageDataService } from './data/settings-page-data.service';
 import { SettingsPage } from './settings.page';
@@ -11,10 +13,15 @@ describe('SettingsPage', () => {
     let component: SettingsPage;
     let dataService: jasmine.SpyObj<SettingsPageDataService>;
     let authService: jasmine.SpyObj<AuthService>;
+    let matchesService: jasmine.SpyObj<MatchesService>;
+    let phoneNumberSetupService: PhoneNumberSetupService;
     let appToastService: jasmine.SpyObj<AppToastService>;
     let router: jasmine.SpyObj<Router>;
+    let queryParamMap$: BehaviorSubject<ParamMap>;
 
     beforeEach(async () => {
+        queryParamMap$ = new BehaviorSubject(convertToParamMap({}));
+
         await TestBed.configureTestingModule({
             imports: [SettingsPage],
             providers: [
@@ -31,6 +38,19 @@ describe('SettingsPage', () => {
                         'AuthService',
                         ['logoutAndRevoke'],
                     ),
+                },
+                {
+                    provide: MatchesService,
+                    useValue: jasmine.createSpyObj<MatchesService>(
+                        'MatchesService',
+                        ['createMatch', 'acceptMatch'],
+                    ),
+                },
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        queryParamMap: queryParamMap$,
+                    },
                 },
                 {
                     provide: Router,
@@ -54,10 +74,30 @@ describe('SettingsPage', () => {
         component = fixture.componentInstance;
         dataService = TestBed.inject(SettingsPageDataService) as jasmine.SpyObj<SettingsPageDataService>;
         authService = TestBed.inject(AuthService) as jasmine.SpyObj<AuthService>;
+        matchesService = TestBed.inject(MatchesService) as jasmine.SpyObj<MatchesService>;
+        phoneNumberSetupService = TestBed.inject(PhoneNumberSetupService);
         appToastService = TestBed.inject(AppToastService) as jasmine.SpyObj<AppToastService>;
         router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
 
         authService.logoutAndRevoke.and.returnValue(of(void 0));
+        matchesService.createMatch.and.returnValue(of({
+            id: 77,
+            candidateUserId: 9,
+            channelType: 'CALL',
+            status: 'PROPOSED',
+            score: 88,
+            createdAt: '2026-06-12T14:00:00Z',
+            respondedAt: null,
+        }));
+        matchesService.acceptMatch.and.returnValue(of({
+            id: 31,
+            candidateUserId: 2,
+            channelType: 'CALL',
+            status: 'ACCEPTED',
+            score: 91,
+            createdAt: '2026-06-12T09:00:00Z',
+            respondedAt: '2026-06-12T09:05:00Z',
+        }));
         appToastService.show.and.returnValue(Promise.resolve());
         router.navigateByUrl.and.returnValue(Promise.resolve(true));
     });
@@ -178,6 +218,92 @@ describe('SettingsPage', () => {
             message: 'Profile saved.',
             color: 'success',
         });
+    }));
+
+    it('should explain why phone setup is required for a proposal', () => {
+        dataService.getPageData.and.returnValue(of(mockPageData()));
+        queryParamMap$.next(convertToParamMap({
+            setup: 'phone',
+            action: 'proposal',
+        }));
+
+        fixture.detectChanges();
+
+        const notice = fixture.nativeElement.querySelector(
+            '.settings-phone-setup-notice',
+        ) as HTMLElement;
+        expect(notice.textContent).toContain('Add your phone number to send this match proposal.');
+    });
+
+    it('should retry a pending proposal after saving the phone number', fakeAsync(() => {
+        const data = mockPageData();
+        dataService.getPageData.and.returnValue(of(data));
+        dataService.saveProfile.and.returnValue(of(data.userProfile));
+        phoneNumberSetupService.setPendingAction({
+            kind: 'proposal',
+            candidateUserId: 9,
+            channelType: 'CALL',
+            returnUrl: '/app/matches',
+        });
+        component.vmState$.subscribe();
+        component.profileForm.patchValue({
+            displayName: 'Marco',
+            timezone: 'Europe/Brussels',
+            phoneCountry: 'BE',
+            phoneNational: '0470 12 34 56',
+        });
+        component.profileForm.markAsDirty();
+
+        component.saveProfile();
+        tick();
+
+        expect(dataService.saveProfile).toHaveBeenCalledWith({
+            displayName: 'Marco',
+            timezone: 'Europe/Brussels',
+            phoneNumber: '+32470123456',
+        });
+        expect(matchesService.createMatch).toHaveBeenCalledOnceWith({
+            candidateUserId: 9,
+            channelType: 'CALL',
+        });
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/app/matches');
+        expect(component.toastState()).toEqual({
+            isOpen: true,
+            message: 'Phone number saved. Proposal sent.',
+            color: 'success',
+        });
+        expect(phoneNumberSetupService.consumePendingAction()).toBeNull();
+    }));
+
+    it('should retry a pending acceptance after saving the phone number', fakeAsync(() => {
+        const data = mockPageData();
+        dataService.getPageData.and.returnValue(of(data));
+        dataService.saveProfile.and.returnValue(of(data.userProfile));
+        phoneNumberSetupService.setPendingAction({
+            kind: 'acceptance',
+            proposalId: 31,
+            returnUrl: '/app/matches',
+        });
+        component.vmState$.subscribe();
+        component.profileForm.patchValue({
+            displayName: 'Marco',
+            timezone: 'Europe/Brussels',
+            phoneCountry: 'BE',
+            phoneNational: '0470 12 34 56',
+        });
+        component.profileForm.markAsDirty();
+
+        component.saveProfile();
+        tick();
+
+        expect(matchesService.acceptMatch).toHaveBeenCalledOnceWith(31);
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/app/matches');
+        expect(component.toastState()).toEqual({
+            isOpen: true,
+            message: 'Phone number saved. Proposal accepted.',
+            color: 'success',
+        });
+        expect(phoneNumberSetupService.consumePendingAction()).toBeNull();
     }));
 
     it('should save the selected timezone value', () => {

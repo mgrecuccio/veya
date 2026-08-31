@@ -65,6 +65,16 @@ describe('phone-number.util', () => {
     const countries = createPhoneCountries();
     const belgium = countries.find((country) => country.code === 'BE');
 
+    expect(countries.map((country) => country.code).sort()).toEqual([
+      'BE',
+      'DE',
+      'ES',
+      'FR',
+      'GB',
+      'IT',
+      'NL',
+      'US',
+    ]);
     expect(belgium).toEqual(
       jasmine.objectContaining({
         code: 'BE',

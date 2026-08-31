@@ -164,20 +164,19 @@
                     <span class="match-status">{{ suggestion.channelLabel }}</span>
                   </div>
 
-                  <ion-button
-                    size="small"
+                  <button
+                    type="button"
                     class="propose-button"
                     [disabled]="proposalBusyId() !== null"
                     (click)="proposeMatch(suggestion)"
                   >
                     @if (proposalBusyId() === suggestion.candidateUserId) {
-                      <ion-spinner slot="start" name="crescent"></ion-spinner>
-                      Sending
+                      <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
+                      <span>Sending</span>
                     } @else {
-                      <ion-icon slot="start" name="send-outline"></ion-icon>
-                      Propose
+                      <span>Propose</span>
                     }
-                  </ion-button>
+                  </button>
                 </article>
               }
             </div>
