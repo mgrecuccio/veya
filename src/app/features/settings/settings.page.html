@@ -250,6 +250,11 @@
                   formControlName="pushNotificationsEnabled"
                 />
               </div>
+              @if (isPushPermissionBlocked()) {
+                <p class="settings-permission-note" role="status">
+                  Notifications are blocked in device settings.
+                </p>
+              }
               <div class="settings-row">
                 <label class="settings-row__label" for="settings-suggestion-notifications">
                   Suggestion notifications

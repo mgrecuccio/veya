@@ -7,6 +7,7 @@ import { PhoneNumberSetupService } from 'src/app/shared/phone/phone-number-setup
 import { AppToastService } from 'src/app/shared/toast/app-toast.service';
 import { SettingsPageData, SettingsPageDataService } from './data/settings-page-data.service';
 import { SettingsPage } from './settings.page';
+import { PushRegistrationReconciliationService } from 'src/app/core/notifications/push-registration-reconciliation.service';
 
 describe('SettingsPage', () => {
     let fixture: ComponentFixture<SettingsPage>;
@@ -16,6 +17,7 @@ describe('SettingsPage', () => {
     let matchesService: jasmine.SpyObj<MatchesService>;
     let phoneNumberSetupService: PhoneNumberSetupService;
     let appToastService: jasmine.SpyObj<AppToastService>;
+    let pushRegistration: jasmine.SpyObj<PushRegistrationReconciliationService>;
     let router: jasmine.SpyObj<Router>;
     let queryParamMap$: BehaviorSubject<ParamMap>;
 
@@ -68,6 +70,13 @@ describe('SettingsPage', () => {
                         ['show'],
                     ),
                 },
+                {
+                    provide: PushRegistrationReconciliationService,
+                    useValue: jasmine.createSpyObj<PushRegistrationReconciliationService>(
+                        'PushRegistrationReconciliationService',
+                        ['refreshPermissionState', 'reconcile', 'disableCurrentDevice'],
+                    ),
+                },
             ],
         }).compileComponents();
 
@@ -78,8 +87,12 @@ describe('SettingsPage', () => {
         matchesService = TestBed.inject(MatchesService) as jasmine.SpyObj<MatchesService>;
         phoneNumberSetupService = TestBed.inject(PhoneNumberSetupService);
         appToastService = TestBed.inject(AppToastService) as jasmine.SpyObj<AppToastService>;
+        pushRegistration = TestBed.inject(PushRegistrationReconciliationService) as jasmine.SpyObj<PushRegistrationReconciliationService>;
         router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
 
+        pushRegistration.refreshPermissionState.and.returnValue(Promise.resolve('granted'));
+        pushRegistration.reconcile.and.returnValue(Promise.resolve());
+        pushRegistration.disableCurrentDevice.and.returnValue(Promise.resolve());
         authService.logoutAndRevoke.and.returnValue(of(void 0));
         matchesService.createMatch.and.returnValue(of({
             id: 77,
@@ -629,24 +642,28 @@ describe('SettingsPage', () => {
         sub.unsubscribe();
     });
 
-    it('should logout and navigate to login', () => {
+    it('should logout and navigate to login', fakeAsync(() => {
         component.logout();
+        tick();
 
         expect(component.isLoggingOut()).toBeTrue();
+        expect(pushRegistration.disableCurrentDevice).toHaveBeenCalledTimes(1);
         expect(authService.logoutAndRevoke).toHaveBeenCalledTimes(1);
         expect(router.navigateByUrl).toHaveBeenCalledOnceWith('/auth/login', {
             replaceUrl: true,
         });
-    });
+    }));
 
-    it('should ignore duplicate logout attempts while logging out', () => {
+    it('should ignore duplicate logout attempts while logging out', fakeAsync(() => {
         authService.logoutAndRevoke.and.returnValue(new Subject<void>());
 
         component.logout();
         component.logout();
+        tick();
 
+        expect(pushRegistration.disableCurrentDevice).toHaveBeenCalledTimes(1);
         expect(authService.logoutAndRevoke).toHaveBeenCalledTimes(1);
-    });
+    }));
 });
 
 function createAuthTokens() {
