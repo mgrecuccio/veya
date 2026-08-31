@@ -3,7 +3,6 @@ import { fakeAsync, flushMicrotasks, TestBed } from "@angular/core/testing";
 import { provideRouter } from "@angular/router";
 import { ContactsPage } from "./contacts.page";
 import { ContactsPageDataService } from "./data/contacts-page-data.service";
-import { AlertController } from '@ionic/angular';
 import { of, Subject, throwError } from "rxjs";
 import { AuthService } from "src/app/core/auth/auth.service";
 import { AppToastService } from "src/app/shared/toast/app-toast.service";
@@ -13,7 +12,6 @@ describe('ContactsPage', () => {
     let fixture: any;
     let component: ContactsPage;
     let dataService: jasmine.SpyObj<ContactsPageDataService>;
-    let alertController: jasmine.SpyObj<AlertController>;
     let appToastService: jasmine.SpyObj<AppToastService>;
 
     beforeEach(async () => {
@@ -39,15 +37,6 @@ describe('ContactsPage', () => {
                     ),
                 },
                 {
-                    provide: AlertController,
-                    useValue: jasmine.createSpyObj<AlertController>(
-                        'AlertController',
-                        [
-                            'create',
-                        ],
-                    ),
-                },
-                {
                     provide: AuthService,
                     useValue: {
                         authState$: of(createAuthTokens()),
@@ -66,7 +55,6 @@ describe('ContactsPage', () => {
         fixture = TestBed.createComponent(ContactsPage);
         component = fixture.componentInstance;
         dataService = TestBed.inject(ContactsPageDataService) as jasmine.SpyObj<ContactsPageDataService>;
-        alertController = TestBed.inject(AlertController) as jasmine.SpyObj<AlertController>;
         appToastService = TestBed.inject(AppToastService) as jasmine.SpyObj<AppToastService>;
         appToastService.show.and.returnValue(Promise.resolve());
     });
@@ -123,6 +111,33 @@ describe('ContactsPage', () => {
         expect(dataService.getPageData).toHaveBeenCalledTimes(2);
 
         sub.unsubscribe();
+    });
+
+    it('should use contact display name when nickname is missing', (done) => {
+        dataService.getPageData.and.returnValue(
+            of({
+                contacts: [
+                    {
+                        id: 1,
+                        contactUserId: 42,
+                        nickName: null,
+                        displayName: 'Giuda',
+                        favorite: false,
+                        createdAt: '2026-08-31T19:18:00.000Z',
+                    },
+                ],
+                blockedContacts: [],
+                pendingInvitations: [],
+            })
+        );
+
+        component.vmState$.subscribe((state) => {
+            if (state.kind === 'success') {
+                expect(state.data.contacts[0].displayLabel).toBe('Giuda');
+                expect(state.data.contacts[0].displayName).toBe('Giuda');
+                done();
+            }
+        });
     });
 
     it('should refresh when returning to the tab after first entry', () => {
@@ -233,14 +248,11 @@ describe('ContactsPage', () => {
     it('should set busy id and clear it after accepting invitation', async () => {
         const response$ = new Subject<void>();
         dataService.acceptInvitation.and.returnValue(response$);
-        const present = jasmine.createSpy('present').and.returnValue(Promise.resolve());
-        alertController.create.and.returnValue(Promise.resolve({ present } as any));
         spyOn(component, 'retry');
 
         component.acceptInvitation({
             id: 10,
             displayLabel: 'Alex',
-            nickName: 'Alex',
             senderUserId: 42,
             initials: 'A',
             createdAt: null,
@@ -255,9 +267,80 @@ describe('ContactsPage', () => {
 
         expect(component.rowActionBusyId()).toBeNull();
         expect(component.retry).toHaveBeenCalled();
-        await Promise.resolve();
-        expect(alertController.create).toHaveBeenCalled();
-        expect(present).toHaveBeenCalled();
+        await flushPromises();
+        expect(component.acceptedNicknameEditorOpen()).toBeTrue();
+        expect(component.acceptedNicknameDraft()).toBe('');
+        expect(component.acceptedNicknameContact()).toEqual(jasmine.objectContaining({
+            contactUserId: 42,
+            displayLabel: 'Alex',
+        }));
+    });
+
+    it('should save a receiver-provided nickname after accepting invitation', async () => {
+        dataService.acceptInvitation.and.returnValue(of(void 0));
+        dataService.editContact.and.returnValue(of({} as any));
+        spyOn(component, 'retry');
+
+        component.acceptInvitation({
+            id: 10,
+            displayLabel: 'Giuda',
+            senderUserId: 42,
+            initials: 'G',
+            createdAt: null,
+            createdLabel: 'today',
+        });
+
+        await flushPromises();
+        component.acceptedNicknameDraft.set(' Giuda ');
+        await component.saveAcceptedContactNickname(component.acceptedNicknameContact()!);
+
+        expect(dataService.editContact).toHaveBeenCalledWith(42, {
+            nickName: 'Giuda',
+            favorite: false,
+        });
+    });
+
+    it('should resolve the accepted contact before prompting when the invitation has no sender user id', async () => {
+        dataService.acceptInvitation.and.returnValue(of(void 0));
+        dataService.getPageData.and.returnValue(of({
+            contacts: [
+                {
+                    id: 21,
+                    contactUserId: 21,
+                    nickName: null,
+                    favorite: false,
+                    createdAt: '2026-08-31T19:18:00.000Z',
+                },
+            ],
+            blockedContacts: [],
+            pendingInvitations: [],
+        }));
+        dataService.editContact.and.returnValue(of({} as any));
+        spyOn(component, 'retry');
+
+        component.acceptInvitation({
+            id: 10,
+            displayLabel: 'Giuda',
+            senderUserId: null,
+            initials: 'G',
+            createdAt: null,
+            createdLabel: 'today',
+        });
+
+        expect(component.acceptedNicknameEditorOpen()).toBeTrue();
+        expect(component.acceptedNicknameContact()).toEqual(jasmine.objectContaining({
+            contactUserId: null,
+            displayLabel: 'Giuda',
+        }));
+
+        component.acceptedNicknameDraft.set(' Giuda ');
+        await component.saveAcceptedContactNickname(component.acceptedNicknameContact()!);
+
+        expect(component.acceptedNicknameEditorOpen()).toBeFalse();
+        expect(dataService.editContact).toHaveBeenCalledWith(21, {
+            nickName: 'Giuda',
+            favorite: false,
+        });
     });
 
     it('should ignore acceptInvitation when another row action is busy', () => {
@@ -266,7 +349,6 @@ describe('ContactsPage', () => {
         component.acceptInvitation({
             id: 10,
             displayLabel: 'Alex',
-            nickName: 'Alex',
             senderUserId: 42,
             initials: 'A',
             createdAt: null,
@@ -283,7 +365,6 @@ describe('ContactsPage', () => {
         component.rejectInvitation({
             id: 10,
             displayLabel: 'Alex',
-            nickName: 'Alex',
             senderUserId: 42,
             initials: 'A',
             createdAt: null,
@@ -309,7 +390,6 @@ describe('ContactsPage', () => {
         component.rejectInvitation({
             id: 10,
             displayLabel: 'Alex',
-            nickName: 'Alex',
             senderUserId: 42,
             initials: 'A',
             createdAt: null,
@@ -428,4 +508,8 @@ function createAuthTokens() {
         tokenType: 'Bearer',
         expiresInSeconds: 3600,
     };
+}
+
+function flushPromises(): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, 0));
 }
