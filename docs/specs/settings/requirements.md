@@ -57,6 +57,8 @@ Acceptance criteria:
 - The user can configure quiet hours start and end.
 - The user can enable or disable push notifications.
 - The user can enable or disable suggestion notifications.
+- The push notification toggle represents the user's app-level preference, not a guarantee that OS-level notification permission is currently granted.
+- If OS-level notification permission is denied while push notifications are enabled, settings communicates that notifications are blocked by device settings.
 - Quiet hours are sent as backend-compatible `LocalTime` strings or `null`.
 
 ### Logout
@@ -80,4 +82,3 @@ Acceptance criteria:
 - Ticket 2: profile update API.
 - Ticket 3: preferences API.
 - Ticket 4: backend logout, if included in the first release.
-
