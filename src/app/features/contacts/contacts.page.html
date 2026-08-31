@@ -209,12 +209,6 @@
                         <span class="contact-chip contact-chip--pending">Pending</span>
                       </div>
 
-                      @if (invitation.nickName) {
-                        <div class="contact-meta">
-                          Nickname: {{ invitation.nickName }}
-                        </div>
-                      }
-
                       <div class="contact-meta">
                         Invited {{ invitation.createdLabel }}
                       </div>
@@ -281,9 +275,13 @@
                         }
                       </div>
 
-                      @if (contact.nickName && contact.nickName !== contact.displayLabel) {
+                      @if (!contact.nickName) {
                         <div class="contact-meta">
-                          Nickname: {{ contact.nickName }}
+                          Add a nickname
+                        </div>
+                      } @else if (contact.displayName && contact.displayName !== contact.displayLabel) {
+                        <div class="contact-meta">
+                          {{ contact.displayName }}
                         </div>
                       }
 
@@ -353,9 +351,13 @@
                         <span class="contact-chip contact-chip--blocked">Blocked</span>
                       </div>
 
-                      @if (contact.nickName && contact.nickName !== contact.displayLabel) {
+                      @if (!contact.nickName) {
                         <div class="contact-meta">
-                          Nickname: {{ contact.nickName }}
+                          Add a nickname
+                        </div>
+                      } @else if (contact.displayName && contact.displayName !== contact.displayLabel) {
+                        <div class="contact-meta">
+                          {{ contact.displayName }}
                         </div>
                       }
 
@@ -453,6 +455,57 @@
             Cancel
           </button>
         }
+      </section>
+    </div>
+  }
+}
+
+@if (acceptedNicknameEditorOpen()) {
+  @if (acceptedNicknameContact(); as contact) {
+    <div
+      role="presentation"
+      (click)="closeAcceptedContactNickname()"
+      style="position: fixed; inset: 0; z-index: 2147483647; display: flex; align-items: flex-end; justify-content: center; padding: 16px 16px max(16px, env(safe-area-inset-bottom)); background: rgba(45, 39, 58, 0.28);"
+    >
+      <section
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="'Name ' + contact.displayLabel"
+        (click)="$event.stopPropagation()"
+        style="box-sizing: border-box; width: min(100%, 520px); padding: 22px 18px 18px; border: 1px solid rgba(122, 99, 246, 0.12); border-radius: 28px 28px 24px 24px; background: rgba(255, 255, 255, 0.98); box-shadow: 0 22px 50px rgba(45, 39, 58, 0.22);"
+      >
+        <h2 class="card-title">Name this contact</h2>
+        <p class="card-subtitle app-text-muted">
+          How would you like {{ contact.displayLabel }} to appear in your circle?
+        </p>
+
+        <div class="invite-row" style="margin-top: 14px;">
+          <label class="field-label" for="acceptedContactNicknameDraft">Nickname</label>
+          <input
+            id="acceptedContactNicknameDraft"
+            class="invite-input"
+            type="text"
+            maxlength="100"
+            autocomplete="off"
+            placeholder="Add a nickname"
+            [value]="acceptedNicknameDraft()"
+            (input)="acceptedNicknameDraft.set($any($event.target).value)"
+          />
+        </div>
+
+        <div class="invite-actions">
+          <button type="button" class="invite-cancel" (click)="closeAcceptedContactNickname()">
+            Skip
+          </button>
+          <button
+            type="button"
+            class="invite-submit"
+            (click)="saveAcceptedContactNickname(contact)"
+            [disabled]="!acceptedNicknameDraft().trim() || rowActionBusyId() !== null"
+          >
+            Save
+          </button>
+        </div>
       </section>
     </div>
   }
