@@ -5,6 +5,7 @@ import { ContactsPage } from "./contacts.page";
 import { ContactsPageDataService } from "./data/contacts-page-data.service";
 import { AlertController } from '@ionic/angular';
 import { of, Subject, throwError } from "rxjs";
+import { AuthService } from "src/app/core/auth/auth.service";
 import { AppToastService } from "src/app/shared/toast/app-toast.service";
 
 
@@ -45,6 +46,12 @@ describe('ContactsPage', () => {
                             'create',
                         ],
                     ),
+                },
+                {
+                    provide: AuthService,
+                    useValue: {
+                        authState$: of(createAuthTokens()),
+                    },
                 },
                 {
                     provide: AppToastService,
@@ -413,3 +420,12 @@ describe('ContactsPage', () => {
         });
     }));
 });
+
+function createAuthTokens() {
+    return {
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+        tokenType: 'Bearer',
+        expiresInSeconds: 3600,
+    };
+}

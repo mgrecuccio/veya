@@ -6,6 +6,7 @@ import { MatchInvitationView } from 'src/app/core/api/model/match-invitation-vie
 import { SuggestedMatchView } from 'src/app/core/api/model/suggested-match-view.model';
 import { MatchesService } from 'src/app/core/api/services/matches.service';
 import { UserService } from 'src/app/core/api/services/user.service';
+import { AuthService } from 'src/app/core/auth/auth.service';
 import { PhoneNumberSetupService } from 'src/app/shared/phone/phone-number-setup.service';
 import { AppToastService } from 'src/app/shared/toast/app-toast.service';
 import { MatchesPage } from './matches.page';
@@ -52,6 +53,12 @@ describe('MatchesPage', () => {
             'UserService',
             ['getMe'],
           ),
+        },
+        {
+          provide: AuthService,
+          useValue: {
+            authState$: of(createAuthTokens()),
+          },
         },
       ],
     }).compileComponents();
@@ -836,3 +843,12 @@ describe('MatchesPage', () => {
     incomingSub.unsubscribe();
   });
 });
+
+function createAuthTokens() {
+  return {
+    accessToken: 'access-token',
+    refreshToken: 'refresh-token',
+    tokenType: 'Bearer',
+    expiresInSeconds: 3600,
+  };
+}

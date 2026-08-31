@@ -2,13 +2,15 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { IonicModule } from '@ionic/angular';
-import { catchError, map, Observable, of, shareReplay, startWith, Subject, switchMap } from 'rxjs';
+import { catchError, map, merge, Observable, of, shareReplay, startWith, Subject, switchMap } from 'rxjs';
 import { extractApiError, getApiErrorMessage } from 'src/app/core/api/api-error.util';
 import { ChannelType } from 'src/app/core/api/model/channel-type.model';
 import { MatchInvitationView } from 'src/app/core/api/model/match-invitation-view.model';
 import { SuggestedMatchView } from 'src/app/core/api/model/suggested-match-view.model';
 import { MatchesService } from 'src/app/core/api/services/matches.service';
 import { UserService } from 'src/app/core/api/services/user.service';
+import { AuthService } from 'src/app/core/auth/auth.service';
+import { authenticatedSessionReload } from 'src/app/core/auth/authenticated-session-reload.util';
 import {
   PHONE_REQUIRED_FOR_ACCEPTANCE,
   PHONE_REQUIRED_FOR_PROPOSAL_CREATION,
@@ -79,9 +81,11 @@ export class MatchesPage {
   private readonly phoneNumberSetupService = inject(PhoneNumberSetupService);
   private readonly appToastService = inject(AppToastService);
   private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
   private readonly reload$ = new Subject<void>();
   private readonly suggestionsReload$ = new Subject<void>();
   private readonly incomingReload$ = new Subject<void>();
+  private readonly authenticatedReload$ = authenticatedSessionReload(this.authService.authState$);
   private hasEntered = false;
 
   readonly selectedMatch = signal<AcceptedMatchVm | null>(null);
@@ -90,8 +94,10 @@ export class MatchesPage {
   readonly incomingBusyId = signal<number | null>(null);
   readonly incomingBusyAction = signal<'accept' | 'decline' | null>(null);
 
-  readonly incomingState$: Observable<IncomingProposalsVmState> = this.incomingReload$.pipe(
-    startWith(void 0),
+  readonly incomingState$: Observable<IncomingProposalsVmState> = merge(
+    this.incomingReload$,
+    this.authenticatedReload$,
+  ).pipe(
     switchMap(() =>
       this.matchesService.getIncoming().pipe(
         map((proposals): IncomingProposalsVmState => ({
@@ -115,8 +121,10 @@ export class MatchesPage {
     shareReplay({ bufferSize: 1, refCount: true }),
   );
 
-  readonly suggestionsState$: Observable<SuggestionsVmState> = this.suggestionsReload$.pipe(
-    startWith(void 0),
+  readonly suggestionsState$: Observable<SuggestionsVmState> = merge(
+    this.suggestionsReload$,
+    this.authenticatedReload$,
+  ).pipe(
     switchMap(() =>
       this.matchesService.getSuggestions().pipe(
         map((suggestions): SuggestionsVmState => ({
@@ -140,8 +148,10 @@ export class MatchesPage {
     shareReplay({ bufferSize: 1, refCount: true }),
   );
 
-  readonly vmState$: Observable<MatchesPageVmState> = this.reload$.pipe(
-    startWith(void 0),
+  readonly vmState$: Observable<MatchesPageVmState> = merge(
+    this.reload$,
+    this.authenticatedReload$,
+  ).pipe(
     switchMap(() =>
       this.matchesService.getAccepted().pipe(
         map((matches): MatchesPageVmState => ({

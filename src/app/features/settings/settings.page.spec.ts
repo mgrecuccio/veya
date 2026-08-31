@@ -37,6 +37,7 @@ describe('SettingsPage', () => {
                     useValue: jasmine.createSpyObj<AuthService>(
                         'AuthService',
                         ['logoutAndRevoke'],
+                        { authState$: of(createAuthTokens()) },
                     ),
                 },
                 {
@@ -647,3 +648,12 @@ describe('SettingsPage', () => {
         expect(authService.logoutAndRevoke).toHaveBeenCalledTimes(1);
     });
 });
+
+function createAuthTokens() {
+    return {
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+        tokenType: 'Bearer',
+        expiresInSeconds: 3600,
+    };
+}
