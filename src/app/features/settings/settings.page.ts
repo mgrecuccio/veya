@@ -9,6 +9,7 @@ import { AuthService } from 'src/app/core/auth/auth.service';
 import { authenticatedSessionReload } from 'src/app/core/auth/authenticated-session-reload.util';
 import { getApiErrorMessage } from 'src/app/core/api/api-error.util';
 import { MatchesService } from 'src/app/core/api/services/matches.service';
+import { PushRegistrationReconciliationService } from 'src/app/core/notifications/push-registration-reconciliation.service';
 import { PhoneNumberSetupService } from 'src/app/shared/phone/phone-number-setup.service';
 import { AppToastColor, AppToastService } from 'src/app/shared/toast/app-toast.service';
 import {
@@ -80,6 +81,7 @@ export class SettingsPage {
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
     private readonly appToastService = inject(AppToastService);
+    private readonly pushRegistration = inject(PushRegistrationReconciliationService);
     private readonly reload$ = new Subject<void>();
 
     readonly countries: PhoneCountry[] = createPhoneCountries();
@@ -87,6 +89,7 @@ export class SettingsPage {
     readonly isSavingProfile = signal(false);
     readonly isSavingPreferences = signal(false);
     readonly isLoggingOut = signal(false);
+    readonly isPushPermissionBlocked = signal(false);
     profileError: string | null = null;
     preferencesError: string | null = null;
 
@@ -144,7 +147,12 @@ export class SettingsPage {
     ).pipe(
       switchMap(() =>
         this.settingsPageDataService.getPageData().pipe(
-          tap((data) => this.patchForms(data)),
+          tap((data) => {
+            this.patchForms(data);
+            void this.refreshNotificationPermissionDisplay(
+              data.userPreferences.pushNotificationsEnabled,
+            );
+          }),
           map((data): SettingsPageVmState => ({
             kind: 'success',
             data: this.mapToVm(data),
@@ -249,8 +257,14 @@ export class SettingsPage {
           pushNotificationsEnabled: raw.pushNotificationsEnabled,
           suggestionNotificationsEnabled: raw.suggestionNotificationsEnabled
       }).subscribe({
-        next: () => {
+        next: (preferences) => {
           this.isSavingPreferences.set(false);
+          void this.pushRegistration.reconcile({
+            requestPermission: preferences.pushNotificationsEnabled,
+          });
+          void this.refreshNotificationPermissionDisplay(
+            preferences.pushNotificationsEnabled,
+          );
           this.retry();
           this.showToast('Preferences saved.', 'success');
         },
@@ -270,13 +284,15 @@ export class SettingsPage {
       }
 
       this.isLoggingOut.set(true);
-      this.authService.logoutAndRevoke().subscribe({
-        next: () => {
-          this.router.navigateByUrl('/auth/login', { replaceUrl: true });
-        },
-        error: () => {
-          this.router.navigateByUrl('/auth/login', { replaceUrl: true });
-        },
+      void this.pushRegistration.disableCurrentDevice().finally(() => {
+        this.authService.logoutAndRevoke().subscribe({
+          next: () => {
+            this.router.navigateByUrl('/auth/login', { replaceUrl: true });
+          },
+          error: () => {
+            this.router.navigateByUrl('/auth/login', { replaceUrl: true });
+          },
+        });
       });
     }
 
@@ -388,5 +404,14 @@ export class SettingsPage {
 
       this.profileForm.markAsPristine();
       this.preferencesForm.markAsPristine();
+    }
+
+    private async refreshNotificationPermissionDisplay(
+      pushNotificationsEnabled: boolean,
+    ): Promise<void> {
+      const permission = await this.pushRegistration.refreshPermissionState();
+      this.isPushPermissionBlocked.set(
+        pushNotificationsEnabled && permission === 'denied',
+      );
     }
 }

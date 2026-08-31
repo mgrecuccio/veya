@@ -79,6 +79,34 @@ https://api.sponti.uk
 
 Use a production build before syncing/installing the Android app on a physical device when you want it to communicate with the Azure-hosted API.
 
+## Push Notification Setup
+
+Native push registration is disabled by default until the mobile build is configured for Firebase Cloud Messaging.
+
+For Android:
+
+1. Create/register the Android app in Firebase using application id `com.mgrtech.veya`.
+2. Add Firebase's `google-services.json` to:
+
+```text
+android/app/google-services.json
+```
+
+3. Enable native push registration in the Angular environment used for the device build:
+
+```ts
+nativePushNotificationsConfigured: true
+```
+
+4. Rebuild and sync the native project:
+
+```bash
+npm run build:prod
+npx cap sync android
+```
+
+Without `google-services.json`, Android push token registration cannot work. The app will keep the in-app notification preference, but it will skip native token registration for that build.
+
 ## Getting Started
 
 ### 1. Install dependencies

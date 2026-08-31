@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { IonicModule } from '@ionic/angular';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { catchError, map, merge, Observable, of, shareReplay, startWith, Subject, switchMap } from 'rxjs';
 import { extractApiError, getApiErrorMessage } from 'src/app/core/api/api-error.util';
 import { ChannelType } from 'src/app/core/api/model/channel-type.model';
@@ -11,6 +12,7 @@ import { MatchesService } from 'src/app/core/api/services/matches.service';
 import { UserService } from 'src/app/core/api/services/user.service';
 import { AuthService } from 'src/app/core/auth/auth.service';
 import { authenticatedSessionReload } from 'src/app/core/auth/authenticated-session-reload.util';
+import { PushNotificationRefreshService } from 'src/app/core/notifications/push-notification-refresh.service';
 import {
   PHONE_REQUIRED_FOR_ACCEPTANCE,
   PHONE_REQUIRED_FOR_PROPOSAL_CREATION,
@@ -82,6 +84,8 @@ export class MatchesPage {
   private readonly appToastService = inject(AppToastService);
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly pushNotificationRefreshService = inject(PushNotificationRefreshService);
   private readonly reload$ = new Subject<void>();
   private readonly suggestionsReload$ = new Subject<void>();
   private readonly incomingReload$ = new Subject<void>();
@@ -174,6 +178,26 @@ export class MatchesPage {
     ),
     shareReplay({ bufferSize: 1, refCount: true }),
   );
+
+  constructor() {
+    this.pushNotificationRefreshService.intents$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((intent) => {
+        if (intent.type === 'MATCH_PROPOSAL_CREATED') {
+          this.retryIncoming();
+          return;
+        }
+
+        if (intent.type === 'MATCH_PROPOSAL_ACCEPTED') {
+          this.retry();
+          return;
+        }
+
+        if (intent.type === 'MATCH_SUGGESTIONS_AVAILABLE') {
+          this.retrySuggestions();
+        }
+      });
+  }
 
   ionViewWillEnter(): void {
     if (!this.hasEntered) {

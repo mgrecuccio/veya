@@ -11,6 +11,8 @@ import {
   Platform
 } from '@ionic/angular/standalone';
 import { AppToastService } from './shared/toast/app-toast.service';
+import { PushNotificationRoutingService } from './core/notifications/push-notification-routing.service';
+import { PushRegistrationReconciliationService } from './core/notifications/push-registration-reconciliation.service';
 import { addIcons } from 'ionicons';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
@@ -64,6 +66,8 @@ export class AppComponent implements OnDestroy {
   private readonly platform = inject(Platform);
   private readonly zone = inject(NgZone);
   readonly appToastService = inject(AppToastService);
+  private readonly pushRegistration = inject(PushRegistrationReconciliationService);
+  private readonly pushNotificationRouting = inject(PushNotificationRoutingService);
 
   private keyboardListeners: Promise<PluginListenerHandle>[] = [];
   private backButtonSubscription?: Subscription;
@@ -95,6 +99,8 @@ export class AppComponent implements OnDestroy {
     this.registerKeyboardListeners();
     this.registerBackButtonHandler();
     this.registerContentScrollRefresh();
+    this.pushRegistration.initialize();
+    this.pushNotificationRouting.initialize();
   }
 
   ngOnDestroy(): void {
