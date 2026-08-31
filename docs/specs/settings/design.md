@@ -49,13 +49,20 @@ Use a reactive form with these controls:
 
 Bind `timezone` to profile data unless the backend later exposes a separate preference timezone.
 
+## Notification Permission Display
+
+`pushNotificationsEnabled` is the user's app-level notification preference. The push-notifications feature owns token registration and OS permission reconciliation.
+
+When settings is opened, the app should use the push platform integration to determine the current OS notification permission state. If `pushNotificationsEnabled` is true but OS permission is denied, keep the toggle value enabled and display a blocked state with an action or hint to open device settings. Do not silently switch the preference off unless the user explicitly changes the in-app toggle.
+
 ## Data Flow
 
 On page enter:
 1. Load profile.
 2. Load preferences.
-3. Patch the form once both responses are available.
-4. Show a recoverable error if either request fails.
+3. Check notification permission state when the push platform integration is available.
+4. Patch the form once both responses are available.
+5. Show a recoverable error if either request fails.
 
 On save:
 1. Build `UpdateProfileRequest`.
@@ -91,4 +98,3 @@ For modal:
 - Create one launcher method or service.
 - Use the same launcher from every page.
 - Dismiss only after explicit close, successful logout, or navigation.
-
