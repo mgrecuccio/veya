@@ -1,5 +1,6 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { throwError } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
@@ -7,6 +8,7 @@ import { AuthService } from '../auth/auth.service';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
+  const router = inject(Router);
 
   const isAuthEndpoint =
     req.url.includes('/api/v1/auth/login') ||
@@ -28,9 +30,14 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((error: HttpErrorResponse) => {
       if (
         error.status !== 401 ||
-        isAuthEndpoint ||
-        !authService.getRefreshToken()
+        isAuthEndpoint
       ) {
+        return throwError(() => error);
+      }
+
+      if (!authService.getRefreshToken()) {
+        authService.logout();
+        redirectToLogin(router);
         return throwError(() => error);
       }
 
@@ -46,9 +53,14 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         }),
         catchError((refreshError) => {
           authService.logout();
+          redirectToLogin(router);
           return throwError(() => refreshError);
         })
       );
     })
   );
 };
+
+function redirectToLogin(router: Router): void {
+  void router.navigateByUrl('/auth/login', { replaceUrl: true });
+}

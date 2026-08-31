@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
+import { Router } from '@angular/router';
 import {
   HttpTestingController,
   provideHttpClientTesting,
@@ -15,6 +16,7 @@ describe('authInterceptor', () => {
     let httpMock: HttpTestingController;
     let authService: AuthService;
     let tokenStorage: TokenStorageService;
+    let router: jasmine.SpyObj<Router>;
 
     const mockTokens: AuthTokens = {
         accessToken: 'access-token',
@@ -32,6 +34,8 @@ describe('authInterceptor', () => {
 
     beforeEach(() => {
         localStorage.clear();
+        router = jasmine.createSpyObj<Router>('Router', ['navigateByUrl']);
+        router.navigateByUrl.and.resolveTo(true);
 
         TestBed.configureTestingModule({
             providers: [
@@ -39,6 +43,7 @@ describe('authInterceptor', () => {
                 provideHttpClientTesting(),
                 AuthService,
                 TokenStorageService,
+                { provide: Router, useValue: router },
             ],
         });
 
@@ -103,7 +108,7 @@ describe('authInterceptor', () => {
         expect(responseBody).toEqual({ ok: true });
     });
 
-    it('should logout if refresh fails', () => {
+    it('should logout and redirect to login if refresh fails', () => {
         spyOn(authService, 'logout').and.callThrough();
         tokenStorage.setTokens(mockTokens);
 
@@ -112,6 +117,9 @@ describe('authInterceptor', () => {
         error: () => {
             expect(authService.logout).toHaveBeenCalled();
             expect(tokenStorage.getAccessToken()).toBeNull();
+            expect(router.navigateByUrl).toHaveBeenCalledWith('/auth/login', {
+                replaceUrl: true,
+            });
         },
         });
 
@@ -122,11 +130,17 @@ describe('authInterceptor', () => {
         refreshReq.flush({}, { status: 401, statusText: 'Unauthorized' });
     });
 
-    it('should not try refresh if no refresh token exists', () => {
+    it('should logout and redirect to login without refresh when no refresh token exists', () => {
+        spyOn(authService, 'logout').and.callThrough();
+
         http.get('http://localhost:8080/api/v1/protected').subscribe({
             next: () => fail('Expected error'),
             error: (error) => {
                 expect(error.status).toBe(401);
+                expect(authService.logout).toHaveBeenCalled();
+                expect(router.navigateByUrl).toHaveBeenCalledWith('/auth/login', {
+                    replaceUrl: true,
+                });
             },
         });
 
