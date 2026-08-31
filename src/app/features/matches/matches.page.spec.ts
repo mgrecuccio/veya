@@ -1,10 +1,12 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, flushMicrotasks, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
 import { MatchInvitationView } from 'src/app/core/api/model/match-invitation-view.model';
 import { SuggestedMatchView } from 'src/app/core/api/model/suggested-match-view.model';
 import { MatchesService } from 'src/app/core/api/services/matches.service';
+import { UserService } from 'src/app/core/api/services/user.service';
+import { PhoneNumberSetupService } from 'src/app/shared/phone/phone-number-setup.service';
 import { AppToastService } from 'src/app/shared/toast/app-toast.service';
 import { MatchesPage } from './matches.page';
 
@@ -12,7 +14,10 @@ describe('MatchesPage', () => {
   let fixture: ComponentFixture<MatchesPage>;
   let component: MatchesPage;
   let matchesService: jasmine.SpyObj<MatchesService>;
+  let userService: jasmine.SpyObj<UserService>;
+  let phoneNumberSetupService: PhoneNumberSetupService;
   let appToastService: jasmine.SpyObj<AppToastService>;
+  let router: Router;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -41,17 +46,36 @@ describe('MatchesPage', () => {
             ['show'],
           ),
         },
+        {
+          provide: UserService,
+          useValue: jasmine.createSpyObj<UserService>(
+            'UserService',
+            ['getMe'],
+          ),
+        },
       ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(MatchesPage);
     component = fixture.componentInstance;
     matchesService = TestBed.inject(MatchesService) as jasmine.SpyObj<MatchesService>;
+    userService = TestBed.inject(UserService) as jasmine.SpyObj<UserService>;
+    phoneNumberSetupService = TestBed.inject(PhoneNumberSetupService);
     appToastService = TestBed.inject(AppToastService) as jasmine.SpyObj<AppToastService>;
+    router = TestBed.inject(Router);
     matchesService.getSuggestions.and.returnValue(of([]));
     matchesService.getIncoming.and.returnValue(of([]));
     matchesService.getAccepted.and.returnValue(of([]));
+    userService.getMe.and.returnValue(of({
+      id: 1,
+      displayName: 'Marco',
+      timezone: 'Europe/Brussels',
+      email: 'marco@example.com',
+      phoneNumber: '+32470000000',
+      status: 'ACTIVE',
+    }));
     appToastService.show.and.returnValue(Promise.resolve());
+    spyOn(router, 'navigateByUrl').and.returnValue(Promise.resolve(true));
   });
 
   function mockSuggestion(
@@ -316,6 +340,65 @@ describe('MatchesPage', () => {
     sub.unsubscribe();
   }));
 
+  it('should route to phone setup before creating a proposal when the profile has no phone number', fakeAsync(() => {
+    userService.getMe.and.returnValue(of({
+      id: 1,
+      displayName: 'Marco',
+      timezone: 'Europe/Brussels',
+      email: 'marco@example.com',
+      phoneNumber: null,
+      status: 'ACTIVE',
+    }));
+
+    component.proposeMatch({
+      candidateUserId: 9,
+      displayName: 'Jamie',
+      initials: 'J',
+      channelType: 'CALL',
+      channelLabel: 'Call',
+    });
+    flushMicrotasks();
+
+    expect(matchesService.createMatch).not.toHaveBeenCalled();
+    expect(phoneNumberSetupService.consumePendingAction()).toEqual({
+      kind: 'proposal',
+      candidateUserId: 9,
+      channelType: 'CALL',
+      returnUrl: '/app/matches',
+    });
+    expect(router.navigateByUrl).toHaveBeenCalledOnceWith('/settings?setup=phone&action=proposal');
+  }));
+
+  it('should route to phone setup when proposal creation returns a phone-required error', fakeAsync(() => {
+    matchesService.createMatch.and.returnValue(
+      throwError(() => new HttpErrorResponse({
+        status: 409,
+        error: {
+          code: 'PHONE_NUMBER_REQUIRED_FOR_MATCH_PROPOSAL_CREATION',
+          message: 'Add your phone number before sending a proposal.',
+        },
+      })),
+    );
+
+    component.proposeMatch({
+      candidateUserId: 9,
+      displayName: 'Jamie',
+      initials: 'J',
+      channelType: 'CALL',
+      channelLabel: 'Call',
+    });
+    flushMicrotasks();
+
+    expect(phoneNumberSetupService.consumePendingAction()).toEqual({
+      kind: 'proposal',
+      candidateUserId: 9,
+      channelType: 'CALL',
+      returnUrl: '/app/matches',
+    });
+    expect(router.navigateByUrl).toHaveBeenCalledOnceWith('/settings?setup=phone&action=proposal');
+    expect(appToastService.show).not.toHaveBeenCalled();
+  }));
+
   it('should use backend error codes for duplicate proposal errors', fakeAsync(() => {
     matchesService.createMatch.and.returnValue(
       throwError(() => new HttpErrorResponse({
@@ -375,6 +458,61 @@ describe('MatchesPage', () => {
 
     incomingSub.unsubscribe();
     acceptedSub.unsubscribe();
+  }));
+
+  it('should route to phone setup before accepting a proposal when the profile has no phone number', fakeAsync(() => {
+    userService.getMe.and.returnValue(of({
+      id: 1,
+      displayName: 'Marco',
+      timezone: 'Europe/Brussels',
+      email: 'marco@example.com',
+      phoneNumber: '',
+      status: 'ACTIVE',
+    }));
+
+    component.acceptProposal({
+      id: 31,
+      displayName: 'Riley Chen',
+      initials: 'RC',
+      channelLabel: 'Call',
+    });
+    flushMicrotasks();
+
+    expect(matchesService.acceptMatch).not.toHaveBeenCalled();
+    expect(phoneNumberSetupService.consumePendingAction()).toEqual({
+      kind: 'acceptance',
+      proposalId: 31,
+      returnUrl: '/app/matches',
+    });
+    expect(router.navigateByUrl).toHaveBeenCalledOnceWith('/settings?setup=phone&action=acceptance');
+  }));
+
+  it('should route to phone setup when proposal acceptance returns a phone-required error', fakeAsync(() => {
+    matchesService.acceptMatch.and.returnValue(
+      throwError(() => new HttpErrorResponse({
+        status: 409,
+        error: {
+          code: 'PHONE_NUMBER_REQUIRED_FOR_MATCH_ACCEPTANCE',
+          message: 'Add your phone number before accepting this proposal.',
+        },
+      })),
+    );
+
+    component.acceptProposal({
+      id: 31,
+      displayName: 'Riley Chen',
+      initials: 'RC',
+      channelLabel: 'Call',
+    });
+    flushMicrotasks();
+
+    expect(phoneNumberSetupService.consumePendingAction()).toEqual({
+      kind: 'acceptance',
+      proposalId: 31,
+      returnUrl: '/app/matches',
+    });
+    expect(router.navigateByUrl).toHaveBeenCalledOnceWith('/settings?setup=phone&action=acceptance');
+    expect(appToastService.show).not.toHaveBeenCalled();
   }));
 
   it('should decline an incoming proposal then refresh incoming proposals only', fakeAsync(() => {

@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { IonicModule } from '@ionic/angular';
 import { catchError, map, Observable, of, shareReplay, startWith, Subject, switchMap } from 'rxjs';
 import { extractApiError, getApiErrorMessage } from 'src/app/core/api/api-error.util';
@@ -8,6 +8,12 @@ import { ChannelType } from 'src/app/core/api/model/channel-type.model';
 import { MatchInvitationView } from 'src/app/core/api/model/match-invitation-view.model';
 import { SuggestedMatchView } from 'src/app/core/api/model/suggested-match-view.model';
 import { MatchesService } from 'src/app/core/api/services/matches.service';
+import { UserService } from 'src/app/core/api/services/user.service';
+import {
+  PHONE_REQUIRED_FOR_ACCEPTANCE,
+  PHONE_REQUIRED_FOR_PROPOSAL_CREATION,
+  PhoneNumberSetupService,
+} from 'src/app/shared/phone/phone-number-setup.service';
 import { AppToastService } from 'src/app/shared/toast/app-toast.service';
 
 type MatchesPageVmState =
@@ -69,7 +75,10 @@ interface IncomingProposalVm {
 })
 export class MatchesPage {
   private readonly matchesService = inject(MatchesService);
+  private readonly userService = inject(UserService);
+  private readonly phoneNumberSetupService = inject(PhoneNumberSetupService);
   private readonly appToastService = inject(AppToastService);
+  private readonly router = inject(Router);
   private readonly reload$ = new Subject<void>();
   private readonly suggestionsReload$ = new Subject<void>();
   private readonly incomingReload$ = new Subject<void>();
@@ -185,6 +194,29 @@ export class MatchesPage {
     }
 
     this.proposalBusyId.set(suggestion.candidateUserId);
+    this.userService.getMe().subscribe({
+      next: (profile) => {
+        if (!this.phoneNumberSetupService.hasPhoneNumber(profile.phoneNumber)) {
+          this.proposalBusyId.set(null);
+          this.routeToPhoneSetup({
+            kind: 'proposal',
+            candidateUserId: suggestion.candidateUserId,
+            channelType: suggestion.channelType,
+            returnUrl: '/app/matches',
+          });
+          return;
+        }
+
+        this.createProposal(suggestion);
+      },
+      error: () => {
+        this.createProposal(suggestion);
+      },
+    });
+  }
+
+  private createProposal(suggestion: SuggestedMatchVm): void {
+    this.proposalBusyId.set(suggestion.candidateUserId);
 
     this.matchesService.createMatch({
       candidateUserId: suggestion.candidateUserId,
@@ -201,6 +233,16 @@ export class MatchesPage {
       },
       error: (error: unknown) => {
         this.proposalBusyId.set(null);
+        if (this.phoneNumberSetupService.isPhoneRequiredError(error)) {
+          this.routeToPhoneSetup({
+            kind: 'proposal',
+            candidateUserId: suggestion.candidateUserId,
+            channelType: suggestion.channelType,
+            returnUrl: '/app/matches',
+          });
+          return;
+        }
+
         this.showToast(this.getProposalErrorMessage(error));
       },
     });
@@ -305,6 +347,37 @@ export class MatchesPage {
 
     this.incomingBusyId.set(proposal.id);
     this.incomingBusyAction.set(action);
+
+    if (action === 'accept') {
+      this.userService.getMe().subscribe({
+        next: (profile) => {
+          if (!this.phoneNumberSetupService.hasPhoneNumber(profile.phoneNumber)) {
+            this.incomingBusyId.set(null);
+            this.incomingBusyAction.set(null);
+            this.routeToPhoneSetup({
+              kind: 'acceptance',
+              proposalId: proposal.id,
+              returnUrl: '/app/matches',
+            });
+            return;
+          }
+
+          this.submitIncomingProposalAction(proposal, action);
+        },
+        error: () => {
+          this.submitIncomingProposalAction(proposal, action);
+        },
+      });
+      return;
+    }
+
+    this.submitIncomingProposalAction(proposal, action);
+  }
+
+  private submitIncomingProposalAction(
+    proposal: IncomingProposalVm,
+    action: 'accept' | 'decline',
+  ): void {
     const request$ =
       action === 'accept'
         ? this.matchesService.acceptMatch(proposal.id)
@@ -328,6 +401,18 @@ export class MatchesPage {
       error: (error: unknown) => {
         this.incomingBusyId.set(null);
         this.incomingBusyAction.set(null);
+        if (
+          action === 'accept' &&
+          this.phoneNumberSetupService.isPhoneRequiredError(error)
+        ) {
+          this.routeToPhoneSetup({
+            kind: 'acceptance',
+            proposalId: proposal.id,
+            returnUrl: '/app/matches',
+          });
+          return;
+        }
+
         this.showToast(this.getIncomingActionErrorMessage(error, action));
 
         if (this.shouldRefreshIncomingAfterActionError(error)) {
@@ -403,7 +488,7 @@ export class MatchesPage {
         return apiError.message || 'You already have a proposal for this suggestion.';
       case 'MATCH_SCORE_BELOW_THRESHOLD':
         return apiError.message || 'This suggestion is no longer available.';
-      case 'PHONE_NUMBER_REQUIRED_FOR_MATCH_PROPOSAL_CREATION':
+      case PHONE_REQUIRED_FOR_PROPOSAL_CREATION:
         return apiError.message || 'Add your phone number before sending a proposal.';
       default:
         return getApiErrorMessage(error, 'We could not send this proposal right now.');
@@ -416,7 +501,7 @@ export class MatchesPage {
     switch (apiError?.code) {
       case 'MATCH_PROPOSAL_EXPIRED':
         return apiError.message || 'This proposal is no longer available.';
-      case 'PHONE_NUMBER_REQUIRED_FOR_MATCH_ACCEPTANCE':
+      case PHONE_REQUIRED_FOR_ACCEPTANCE:
         return apiError.message || 'Add your phone number before accepting this proposal.';
       default:
         return getApiErrorMessage(
@@ -436,5 +521,12 @@ export class MatchesPage {
 
   private showToast(message: string): void {
     void this.appToastService.show(message, 'danger', 'app-toast matches-page-toast');
+  }
+
+  private routeToPhoneSetup(
+    action: Parameters<PhoneNumberSetupService['setPendingAction']>[0],
+  ): void {
+    this.phoneNumberSetupService.setPendingAction(action);
+    void this.router.navigateByUrl(`/settings?setup=phone&action=${action.kind}`);
   }
 }

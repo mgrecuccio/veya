@@ -18,6 +18,16 @@ export interface PhoneCountry {
 }
 
 export const E164_REGEX = /^\+[1-9]\d{1,14}$/;
+const SUPPORTED_PHONE_COUNTRIES: CountryCode[] = [
+  'BE',
+  'NL',
+  'FR',
+  'DE',
+  'IT',
+  'ES',
+  'GB',
+  'US',
+];
 
 export function countryCodeToFlag(countryCode: CountryCode): string {
   return countryCode
@@ -106,7 +116,7 @@ export function createPhoneCountries(): PhoneCountry[] {
     type: 'region',
   });
 
-  return getCountries()
+  return SUPPORTED_PHONE_COUNTRIES
     .map((code) => ({
       code,
       name: displayNames.of(code) ?? code,
@@ -126,7 +136,7 @@ export function getDefaultPhoneCountry(): CountryCode {
 
     if (
       region &&
-      getCountries().includes(region as CountryCode)
+      SUPPORTED_PHONE_COUNTRIES.includes(region as CountryCode)
     ) {
       return region as CountryCode;
     }
