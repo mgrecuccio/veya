@@ -4,8 +4,10 @@ import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { RouterModule } from "@angular/router";
 import { IonicModule, AlertController } from '@ionic/angular';
 import { ContactsPageData, ContactsPageDataService } from "./data/contacts-page-data.service";
-import { catchError, map, Observable, of, shareReplay, startWith, Subject, switchMap } from "rxjs";
+import { catchError, map, merge, Observable, of, shareReplay, startWith, Subject, switchMap } from "rxjs";
 import { getApiErrorMessage } from "src/app/core/api/api-error.util";
+import { AuthService } from "src/app/core/auth/auth.service";
+import { authenticatedSessionReload } from "src/app/core/auth/authenticated-session-reload.util";
 import { AppToastColor, AppToastService } from "src/app/shared/toast/app-toast.service";
 
 type ContactsPageVmState =
@@ -59,6 +61,7 @@ export class ContactsPage {
     private readonly contactsDataService = inject(ContactsPageDataService);
     private readonly alertController = inject(AlertController);
     private readonly appToastService = inject(AppToastService);
+    private readonly authService = inject(AuthService);
     private readonly reload$ = new Subject<void>();
     private hasEntered = false;
 
@@ -84,8 +87,10 @@ export class ContactsPage {
         nickName:['', [Validators.maxLength(100)]],
     });
 
-    readonly vmState$: Observable<ContactsPageVmState> = this.reload$.pipe(
-      startWith(void 0),
+    readonly vmState$: Observable<ContactsPageVmState> = merge(
+      this.reload$,
+      authenticatedSessionReload(this.authService.authState$),
+    ).pipe(
       switchMap(() =>
         this.contactsDataService.getPageData().pipe(
           map((data): ContactsPageVmState => ({

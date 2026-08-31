@@ -4,6 +4,7 @@ import { AvailabilityPage } from "./availability.page";
 import { AvailabilityPageDataService } from "./data/availability-page-data.service";
 import { of, Subject, throwError } from "rxjs";
 import { AvailabilityRuleView } from "src/app/core/api/model/availability-rule-view.model";
+import { AuthService } from "src/app/core/auth/auth.service";
 import { AppToastService } from "src/app/shared/toast/app-toast.service";
 
 describe('AbailabilityPage', () => {
@@ -36,6 +37,12 @@ describe('AbailabilityPage', () => {
                         'AppToastService',
                         ['show'],
                     ),
+                },
+                {
+                    provide: AuthService,
+                    useValue: {
+                        authState$: of(createAuthTokens()),
+                    },
                 },
             ],
         }).compileComponents();
@@ -551,3 +558,12 @@ describe('AbailabilityPage', () => {
         });
     }));
 });
+
+function createAuthTokens() {
+    return {
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+        tokenType: 'Bearer',
+        expiresInSeconds: 3600,
+    };
+}

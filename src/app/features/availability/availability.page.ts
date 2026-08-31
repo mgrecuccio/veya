@@ -4,7 +4,7 @@ import { toSignal } from "@angular/core/rxjs-interop";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { RouterModule } from "@angular/router";
 import { IonicModule } from '@ionic/angular';
-import { BehaviorSubject, catchError, finalize, map, Observable, of, shareReplay, startWith, switchMap } from "rxjs";
+import { catchError, finalize, map, merge, Observable, of, shareReplay, startWith, Subject, switchMap } from "rxjs";
 import { AvailabilityOverrideType, AvailabilityOverrideView } from "src/app/core/api/model/availability-override-view-model";
 import { AvailabilityChannelType, AvailabilityDayOfWeek, AvailabilityRuleView } from "src/app/core/api/model/availability-rule-view.model";
 import { EffectiveAvailabilityView } from "src/app/core/api/model/effective-availability-view.model";
@@ -13,6 +13,8 @@ import { CreateAvailabilityOverrideRequest } from "src/app/core/api/request/crea
 import { CreateAvailabilityRuleRequest } from "src/app/core/api/request/create-availability-rule.request";
 import { AvailabilityPageData, AvailabilityPageDataService } from "./data/availability-page-data.service";
 import { getApiErrorMessage } from "src/app/core/api/api-error.util";
+import { AuthService } from "src/app/core/auth/auth.service";
+import { authenticatedSessionReload } from "src/app/core/auth/authenticated-session-reload.util";
 import { AppToastColor, AppToastService } from "src/app/shared/toast/app-toast.service";
 
 type AvailabilityVmState =
@@ -67,7 +69,8 @@ export class AvailabilityPage {
     private readonly fb = inject(FormBuilder);
     private readonly availabilityPageDataService = inject(AvailabilityPageDataService);
     private readonly appToastService = inject(AppToastService);
-    private readonly reload$ = new BehaviorSubject<void>(void 0);
+    private readonly authService = inject(AuthService);
+    private readonly reload$ = new Subject<void>();
     private hasEntered = false;
 
     readonly ruleFormExpanded = signal(false);
@@ -137,7 +140,10 @@ export class AvailabilityPage {
             : minDateTime;
     });
 
-    readonly vmState$: Observable<AvailabilityVmState> = this.reload$.pipe(
+    readonly vmState$: Observable<AvailabilityVmState> = merge(
+        this.reload$,
+        authenticatedSessionReload(this.authService.authState$),
+    ).pipe(
         switchMap(() =>
             this.availabilityPageDataService.getPageData().pipe(
                 map((data): AvailabilityVmState => ({

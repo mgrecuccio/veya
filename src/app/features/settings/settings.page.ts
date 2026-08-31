@@ -3,9 +3,10 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonicModule } from '@ionic/angular';
-import { catchError, map, Observable, of, shareReplay, startWith, Subject, switchMap, tap } from 'rxjs';
+import { catchError, map, merge, Observable, of, shareReplay, startWith, Subject, switchMap, tap } from 'rxjs';
 import { SettingsPageData, SettingsPageDataService } from './data/settings-page-data.service';
 import { AuthService } from 'src/app/core/auth/auth.service';
+import { authenticatedSessionReload } from 'src/app/core/auth/authenticated-session-reload.util';
 import { getApiErrorMessage } from 'src/app/core/api/api-error.util';
 import { MatchesService } from 'src/app/core/api/services/matches.service';
 import { PhoneNumberSetupService } from 'src/app/shared/phone/phone-number-setup.service';
@@ -137,8 +138,10 @@ export class SettingsPage {
       }),
     );
 
-    readonly vmState$: Observable<SettingsPageVmState> = this.reload$.pipe(
-      startWith(void 0),
+    readonly vmState$: Observable<SettingsPageVmState> = merge(
+      this.reload$,
+      authenticatedSessionReload(this.authService.authState$),
+    ).pipe(
       switchMap(() =>
         this.settingsPageDataService.getPageData().pipe(
           tap((data) => this.patchForms(data)),
