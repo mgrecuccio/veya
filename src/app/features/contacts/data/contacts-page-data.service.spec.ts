@@ -55,7 +55,6 @@ describe('ContactPageDataService', () => {
                     senderUserId: 2,
                     senderEmail: 'test@email.com',
                     senderDisplayName: 'senderDisplayName',
-                    nickName: 'nickName',
                     status: 'PENDING',
                     createdAt: '2026-04-19',
                 }
@@ -99,7 +98,6 @@ describe('ContactPageDataService', () => {
                     senderUserId: 2,
                     senderEmail: 'test@email.com',
                     senderDisplayName: 'senderDisplayName',
-                    nickName: 'nickName',
                     status: 'PENDING',
                     createdAt: '2026-04-19',
                 }),

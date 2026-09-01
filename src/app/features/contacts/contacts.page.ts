@@ -4,7 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { RouterModule } from "@angular/router";
 import { IonicModule } from '@ionic/angular';
 import { ContactsPageData, ContactsPageDataService } from "./data/contacts-page-data.service";
-import { catchError, firstValueFrom, map, merge, Observable, of, shareReplay, startWith, Subject, switchMap } from "rxjs";
+import { catchError, map, merge, Observable, of, shareReplay, startWith, Subject, switchMap } from "rxjs";
 import { getApiErrorMessage } from "src/app/core/api/api-error.util";
 import { AuthService } from "src/app/core/auth/auth.service";
 import { authenticatedSessionReload } from "src/app/core/auth/authenticated-session-reload.util";
@@ -42,13 +42,6 @@ interface PendingInvitationCardVm {
   createdLabel: string;
 }
 
-interface AcceptedNicknameTargetVm {
-  contactUserId: number | null;
-  displayLabel: string;
-  favorite: boolean;
-  invitation: PendingInvitationCardVm;
-}
-
 @Component({
     selector: 'app-contacts',
     standalone: true,
@@ -69,6 +62,7 @@ export class ContactsPage {
     private readonly appToastService = inject(AppToastService);
     private readonly authService = inject(AuthService);
     private readonly reload$ = new Subject<void>();
+    private readonly acceptedDisplayNameFallbacks = new Map<number, string>();
     private hasEntered = false;
 
     readonly inviteExpanded = signal(false);
@@ -78,9 +72,6 @@ export class ContactsPage {
     readonly contactActionsContact = signal<ContactCardVm | null>(null);
     readonly contactNicknameEditorOpen = signal(false);
     readonly contactNicknameDraft = signal('');
-    readonly acceptedNicknameEditorOpen = signal(false);
-    readonly acceptedNicknameContact = signal<AcceptedNicknameTargetVm | null>(null);
-    readonly acceptedNicknameDraft = signal('');
     readonly toastState = signal<{
       isOpen: boolean;
       message: string;
@@ -179,10 +170,13 @@ export class ContactsPage {
 
       this.contactsDataService.acceptInvitation(invitation.id).subscribe({
         next: () => {
+          if (invitation.senderUserId != null && invitation.displayLabel !== 'Pending invitation') {
+            this.acceptedDisplayNameFallbacks.set(invitation.senderUserId, invitation.displayLabel);
+          }
+
           this.rowActionBusyId.set(null);
-          this.promptToEditAcceptedContact(invitation);
           this.retry();
-          this.showToast('Invitation accepted', 'success');
+          this.showToast('Invitation accepted. You can add a nickname anytime.', 'success');
         },
         error: (error: Error) => {
           this.rowActionBusyId.set(null);
@@ -248,32 +242,6 @@ export class ContactsPage {
 
       this.closeContactActions();
       this.updateContactNickname(contact.id, nickName, contact.favorite);
-    }
-
-    closeAcceptedContactNickname(): void {
-      this.acceptedNicknameEditorOpen.set(false);
-      this.acceptedNicknameContact.set(null);
-      this.acceptedNicknameDraft.set('');
-    }
-
-    async saveAcceptedContactNickname(contact: AcceptedNicknameTargetVm): Promise<void> {
-      const nickName = this.acceptedNicknameDraft().trim();
-
-      if (!nickName || this.rowActionBusyId() !== null) {
-        return;
-      }
-
-      this.rowActionBusyId.set(contact.contactUserId ?? contact.invitation.id);
-      const contactUserId = contact.contactUserId ?? await this.resolveAcceptedContactUserId(contact.invitation);
-
-      if (contactUserId == null) {
-        this.rowActionBusyId.set(null);
-        this.showToast('Contact accepted. Open contact controls to add a nickname.', 'success');
-        return;
-      }
-
-      this.closeAcceptedContactNickname();
-      this.updateContactNickname(contactUserId, nickName, contact.favorite);
     }
 
     removeManagedContact(contact: ContactCardVm): void {
@@ -385,45 +353,6 @@ export class ContactsPage {
     });
   }
 
-  private promptToEditAcceptedContact(invitation: PendingInvitationCardVm): void {
-    this.acceptedNicknameContact.set({
-      contactUserId: invitation.senderUserId,
-      displayLabel: invitation.displayLabel,
-      favorite: false,
-      invitation,
-    });
-    this.acceptedNicknameDraft.set('');
-    this.acceptedNicknameEditorOpen.set(true);
-  }
-
-  private async resolveAcceptedContactUserId(invitation: PendingInvitationCardVm): Promise<number | null> {
-    if (invitation.senderUserId != null) {
-      return invitation.senderUserId;
-    }
-
-    for (let attempt = 0; attempt < 5; attempt += 1) {
-      try {
-        const data = await firstValueFrom(this.contactsDataService.getPageData());
-        const contacts = this.mapToVm(data).contacts;
-
-        const unnamedContacts = contacts
-          .filter((contact) => contact.nickName == null)
-          .sort((left, right) => this.toTimestamp(right.createdAt) - this.toTimestamp(left.createdAt));
-
-        if (unnamedContacts[0]) {
-          return unnamedContacts[0].id;
-        }
-      } catch (error) {
-        console.error('[ContactsPage] Failed to resolve accepted contact for nickname prompt', error);
-        return null;
-      }
-
-      await this.wait(250);
-    }
-
-    return null;
-  }
-
   private updateContactNickname(contactUserId: number, nickName: string, favorite: boolean): void {
     this.rowActionBusyId.set(contactUserId);
 
@@ -467,11 +396,15 @@ export class ContactsPage {
     private mapToVm(data: ContactsPageData): ContactsPageVm {
       const contacts = data.contacts.map((contact) => {
           const nickName = this.cleanText(contact.nickName);
-          const displayName = this.cleanText(contact.displayName);
+          const contactUserId = Number(contact.contactUserId);
+          const displayName =
+            this.cleanText(contact.displayName) ||
+            this.acceptedDisplayNameFallbacks.get(contactUserId) ||
+            null;
           const displayLabel = nickName || displayName || 'Trusted contact';
 
           return {
-              id: Number(contact.contactUserId),
+              id: contactUserId,
               displayLabel,
               nickName,
               displayName,
@@ -579,16 +512,4 @@ export class ContactsPage {
       return trimmed ? trimmed : null;
     }
 
-    private toTimestamp(value: string | null): number {
-      if (!value) {
-        return 0;
-      }
-
-      const timestamp = new Date(value).getTime();
-      return Number.isNaN(timestamp) ? 0 : timestamp;
-    }
-
-    private wait(milliseconds: number): Promise<void> {
-      return new Promise((resolve) => setTimeout(resolve, milliseconds));
-    }
 }
