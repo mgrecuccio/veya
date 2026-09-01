@@ -90,5 +90,18 @@ yarn-error.log*
 # environment files if you use local-only variants
 src/environments/*.local.ts
 
-/android
-/ios
+# Native platform generated output and local state
+android/.gradle/
+android/**/build/
+android/local.properties
+
+ios/App/Pods/
+ios/App/build/
+ios/App/DerivedData/
+ios/App/*.xcworkspace/xcuserdata/
+ios/App/*.xcodeproj/xcuserdata/
+ios/App/*.xcodeproj/project.xcworkspace/xcuserdata/
+
+# Firebase app config - injected locally/CI
+android/app/google-services.json
+ios/App/App/GoogleService-Info.plist

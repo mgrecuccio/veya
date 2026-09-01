@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Veya</string>
+    <string name="title_activity_main">Veya</string>
+    <string name="package_name">com.mgrtech.veya</string>
+    <string name="custom_url_scheme">com.mgrtech.veya</string>
+</resources>
