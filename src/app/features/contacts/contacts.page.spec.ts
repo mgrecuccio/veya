@@ -245,7 +245,7 @@ describe('ContactsPage', () => {
         });
     }));
 
-    it('should set busy id and clear it after accepting invitation', async () => {
+    it('should set busy id and refresh after accepting invitation', fakeAsync(() => {
         const response$ = new Subject<void>();
         dataService.acceptInvitation.and.returnValue(response$);
         spyOn(component, 'retry');
@@ -267,19 +267,32 @@ describe('ContactsPage', () => {
 
         expect(component.rowActionBusyId()).toBeNull();
         expect(component.retry).toHaveBeenCalled();
-        await flushPromises();
-        expect(component.acceptedNicknameEditorOpen()).toBeTrue();
-        expect(component.acceptedNicknameDraft()).toBe('');
-        expect(component.acceptedNicknameContact()).toEqual(jasmine.objectContaining({
-            contactUserId: 42,
-            displayLabel: 'Alex',
-        }));
-    });
+        flushMicrotasks();
 
-    it('should save a receiver-provided nickname after accepting invitation', async () => {
+        expect(dataService.editContact).not.toHaveBeenCalled();
+        expect(component.toastState()).toEqual({
+            isOpen: true,
+            message: 'Invitation accepted. You can add a nickname anytime.',
+            color: 'success',
+        });
+    }));
+
+    it('should reuse accepted invitation display name when refreshed contact has no display name yet', (done) => {
         dataService.acceptInvitation.and.returnValue(of(void 0));
-        dataService.editContact.and.returnValue(of({} as any));
-        spyOn(component, 'retry');
+        dataService.getPageData.and.returnValue(of({
+            contacts: [
+                {
+                    id: 1,
+                    contactUserId: 42,
+                    nickName: null,
+                    displayName: null,
+                    favorite: false,
+                    createdAt: '2026-08-31T19:18:00.000Z',
+                },
+            ],
+            blockedContacts: [],
+            pendingInvitations: [],
+        }));
 
         component.acceptInvitation({
             id: 10,
@@ -290,56 +303,12 @@ describe('ContactsPage', () => {
             createdLabel: 'today',
         });
 
-        await flushPromises();
-        component.acceptedNicknameDraft.set(' Giuda ');
-        await component.saveAcceptedContactNickname(component.acceptedNicknameContact()!);
-
-        expect(dataService.editContact).toHaveBeenCalledWith(42, {
-            nickName: 'Giuda',
-            favorite: false,
-        });
-    });
-
-    it('should resolve the accepted contact before prompting when the invitation has no sender user id', async () => {
-        dataService.acceptInvitation.and.returnValue(of(void 0));
-        dataService.getPageData.and.returnValue(of({
-            contacts: [
-                {
-                    id: 21,
-                    contactUserId: 21,
-                    nickName: null,
-                    favorite: false,
-                    createdAt: '2026-08-31T19:18:00.000Z',
-                },
-            ],
-            blockedContacts: [],
-            pendingInvitations: [],
-        }));
-        dataService.editContact.and.returnValue(of({} as any));
-        spyOn(component, 'retry');
-
-        component.acceptInvitation({
-            id: 10,
-            displayLabel: 'Giuda',
-            senderUserId: null,
-            initials: 'G',
-            createdAt: null,
-            createdLabel: 'today',
-        });
-
-        expect(component.acceptedNicknameEditorOpen()).toBeTrue();
-        expect(component.acceptedNicknameContact()).toEqual(jasmine.objectContaining({
-            contactUserId: null,
-            displayLabel: 'Giuda',
-        }));
-
-        component.acceptedNicknameDraft.set(' Giuda ');
-        await component.saveAcceptedContactNickname(component.acceptedNicknameContact()!);
-
-        expect(component.acceptedNicknameEditorOpen()).toBeFalse();
-        expect(dataService.editContact).toHaveBeenCalledWith(21, {
-            nickName: 'Giuda',
-            favorite: false,
+        component.vmState$.subscribe((state) => {
+            if (state.kind === 'success') {
+                expect(state.data.contacts[0].displayLabel).toBe('Giuda');
+                expect(state.data.contacts[0].displayName).toBe('Giuda');
+                done();
+            }
         });
     });
 
@@ -508,8 +477,4 @@ function createAuthTokens() {
         tokenType: 'Bearer',
         expiresInSeconds: 3600,
     };
-}
-
-function flushPromises(): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, 0));
 }
