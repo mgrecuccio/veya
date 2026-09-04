@@ -629,6 +629,27 @@ describe('MatchesPage', () => {
     });
   });
 
+  it('should render the other participant name for an accepted request', (done) => {
+    matchesService.getAccepted.and.returnValue(of([
+      mockAcceptedMatch({
+        initiatorUserId: 1,
+        initiatorDisplayName: 'Marco',
+        candidateUserId: 11,
+        candidateDisplayName: 'Accepted Candidate',
+        otherParticipantUserId: 11,
+        otherParticipantDisplayName: 'Riley Chen',
+      }),
+    ]));
+
+    component.vmState$.subscribe((state) => {
+      if (state.kind === 'success') {
+        expect(state.data.matches[0].displayName).toBe('Riley Chen');
+        expect(state.data.matches[0].initials).toBe('RC');
+        done();
+      }
+    });
+  });
+
   it('should render backend accepted matches and count', () => {
     matchesService.getAccepted.and.returnValue(of([
       mockAcceptedMatch(),

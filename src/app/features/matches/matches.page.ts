@@ -361,7 +361,7 @@ export class MatchesPage {
   }
 
   private mapAcceptedMatch(match: MatchInvitationView): AcceptedMatchVm {
-    const displayName = this.getInitiatorDisplayName(match) || 'Accepted match';
+    const displayName = this.getAcceptedMatchDisplayName(match) || 'Accepted match';
 
     return {
       id: match.id,
@@ -486,6 +486,16 @@ export class MatchesPage {
       this.cleanText(rawMatch['initiatorNickName']) ||
       this.cleanText(rawMatch['initiatorNickname']) ||
       null
+    );
+  }
+
+  private getAcceptedMatchDisplayName(match: MatchInvitationView): string | null {
+    const rawMatch = match as MatchInvitationView & Record<string, unknown>;
+
+    return (
+      this.cleanText(match.otherParticipantDisplayName) ||
+      this.cleanText(rawMatch['other_participant_display_name']) ||
+      this.getInitiatorDisplayName(match)
     );
   }
 
