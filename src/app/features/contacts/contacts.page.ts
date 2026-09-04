@@ -176,7 +176,7 @@ export class ContactsPage {
 
           this.rowActionBusyId.set(null);
           this.retry();
-          this.showToast('Invitation accepted. You can add a nickname anytime.', 'success');
+          this.showToast('Invitation accepted.', 'success');
         },
         error: (error: Error) => {
           this.rowActionBusyId.set(null);
@@ -286,7 +286,7 @@ export class ContactsPage {
       this.rowActionBusyId.set(contact.id);
 
       this.contactsDataService.editContact(contact.id, {
-        nickName: contact.nickName,
+        nickName: this.getContactUpdateNickName(contact),
         favorite,
       }).subscribe({
         next: () => {
@@ -391,6 +391,10 @@ export class ContactsPage {
       });
 
       void this.appToastService.show(message, color, 'app-toast contacts-page-toast');
+    }
+
+    private getContactUpdateNickName(contact: ContactCardVm): string {
+      return contact.nickName || contact.displayName || contact.displayLabel;
     }
 
     private mapToVm(data: ContactsPageData): ContactsPageVm {
