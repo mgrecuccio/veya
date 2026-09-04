@@ -140,6 +140,32 @@ describe('ContactsPage', () => {
         });
     });
 
+    it('should not render original display name after nickname is edited', () => {
+        dataService.getPageData.and.returnValue(
+            of({
+                contacts: [
+                    {
+                        id: 1,
+                        contactUserId: 42,
+                        nickName: 'Die',
+                        displayName: 'Diego',
+                        favorite: true,
+                        createdAt: '2026-08-31T19:18:00.000Z',
+                    },
+                ],
+                blockedContacts: [],
+                pendingInvitations: [],
+            })
+        );
+
+        fixture.detectChanges();
+
+        const text = fixture.nativeElement.textContent;
+        expect(text).toContain('Die');
+        expect(text).toContain('Favorite');
+        expect(text).not.toContain('Diego');
+    });
+
     it('should refresh when returning to the tab after first entry', () => {
         dataService.getPageData.and.returnValue(
             of({ contacts: [], blockedContacts: [], pendingInvitations: [] })
@@ -272,7 +298,7 @@ describe('ContactsPage', () => {
         expect(dataService.editContact).not.toHaveBeenCalled();
         expect(component.toastState()).toEqual({
             isOpen: true,
-            message: 'Invitation accepted. You can add a nickname anytime.',
+            message: 'Invitation accepted.',
             color: 'success',
         });
     }));
@@ -428,6 +454,37 @@ describe('ContactsPage', () => {
 
         expect(dataService.editContact).toHaveBeenCalledWith(1, {
             nickName: 'Alex',
+            favorite: true,
+        });
+        expect(component.rowActionBusyId()).toBeNull();
+        expect(component.retry).toHaveBeenCalled();
+
+        flushMicrotasks();
+
+        expect(component.toastState()).toEqual({
+            isOpen: true,
+            message: 'Added to favorites.',
+            color: 'success',
+        });
+    }));
+
+    it('should toggle favorite with display name when nickname is missing', fakeAsync(() => {
+        dataService.editContact.and.returnValue(of({} as any));
+        spyOn(component, 'retry');
+
+        component.toggleFavorite({
+            id: 1,
+            displayLabel: 'Diego',
+            nickName: null,
+            displayName: 'Diego',
+            initials: 'D',
+            favorite: false,
+            createdAt: null,
+            createdLabel: 'today',
+        });
+
+        expect(dataService.editContact).toHaveBeenCalledWith(1, {
+            nickName: 'Diego',
             favorite: true,
         });
         expect(component.rowActionBusyId()).toBeNull();

@@ -275,16 +275,6 @@
                         }
                       </div>
 
-                      @if (!contact.nickName) {
-                        <div class="contact-meta">
-                          Add a nickname
-                        </div>
-                      } @else if (contact.displayName && contact.displayName !== contact.displayLabel) {
-                        <div class="contact-meta">
-                          {{ contact.displayName }}
-                        </div>
-                      }
-
                       <div class="contact-meta">
                         Added {{ contact.createdLabel }}
                       </div>
@@ -350,16 +340,6 @@
                         <strong class="contact-name">{{ contact.displayLabel }}</strong>
                         <span class="contact-chip contact-chip--blocked">Blocked</span>
                       </div>
-
-                      @if (!contact.nickName) {
-                        <div class="contact-meta">
-                          Add a nickname
-                        </div>
-                      } @else if (contact.displayName && contact.displayName !== contact.displayLabel) {
-                        <div class="contact-meta">
-                          {{ contact.displayName }}
-                        </div>
-                      }
 
                       <div class="contact-meta">
                         Added {{ contact.createdLabel }}
@@ -428,7 +408,7 @@
               type="text"
               maxlength="100"
               autocomplete="off"
-              placeholder="Add a nickname"
+              placeholder="Nickname"
               [value]="contactNicknameDraft()"
               (input)="contactNicknameDraft.set($any($event.target).value)"
             />
