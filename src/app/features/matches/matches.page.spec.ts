@@ -240,6 +240,23 @@ describe('MatchesPage', () => {
     });
   });
 
+  it('should use candidate display name when suggested match nickname is missing', (done) => {
+    matchesService.getSuggestions.and.returnValue(of([
+      mockSuggestion({
+        nickName: null,
+        candidateDisplayName: 'Giuda',
+      }),
+    ]));
+
+    component.suggestionsState$.subscribe((state) => {
+      if (state.kind === 'success') {
+        expect(state.data.suggestions[0].displayName).toBe('Giuda');
+        expect(state.data.suggestions[0].initials).toBe('G');
+        done();
+      }
+    });
+  });
+
   it('should render backend suggestions above accepted matches', () => {
     matchesService.getSuggestions.and.returnValue(of([
       mockSuggestion(),

@@ -338,7 +338,10 @@ export class MatchesPage {
   }
 
   private mapSuggestedMatch(suggestion: SuggestedMatchView): SuggestedMatchVm {
-    const displayName = this.cleanText(suggestion.nickName) || 'Suggested match';
+    const displayName =
+      this.cleanText(suggestion.nickName) ||
+      this.cleanText(suggestion.candidateDisplayName) ||
+      'Suggested match';
 
     return {
       candidateUserId: suggestion.candidateUserId,
