@@ -12,6 +12,7 @@ import { MatchesService } from 'src/app/core/api/services/matches.service';
 import { PushRegistrationReconciliationService } from 'src/app/core/notifications/push-registration-reconciliation.service';
 import { PhoneNumberSetupService } from 'src/app/shared/phone/phone-number-setup.service';
 import { AppToastColor, AppToastService } from 'src/app/shared/toast/app-toast.service';
+import { APP_VERSION } from 'src/environments/app-version';
 import {
   createPhoneCountries,
   getDefaultPhoneCountry,
@@ -86,6 +87,7 @@ export class SettingsPage {
 
     readonly countries: PhoneCountry[] = createPhoneCountries();
     readonly timezoneOptions = TIMEZONE_OPTIONS;
+    readonly appVersion = APP_VERSION;
     readonly isSavingProfile = signal(false);
     readonly isSavingPreferences = signal(false);
     readonly isLoggingOut = signal(false);
