@@ -1,0 +1,422 @@
+<ion-content class="app-gradient-content availability-content" [fullscreen]="true" [scrollY]="true">
+  <header class="app-page-topbar">
+    <div class="app-page-brand">Veya</div>
+
+    <ion-button
+      class="page-settings-button page-settings-button--topbar"
+      aria-label="Open settings"
+      title="Settings preview"
+      routerLink="/settings"
+      routerDirection="forward"
+    >
+      <ion-icon slot="icon-only" name="settings-outline"></ion-icon>
+    </ion-button>
+  </header>
+
+  <div class="app-page availability-page">
+    <div class="availability-shell">
+      @if (vmState$ | async; as state) {
+        @if (state.kind === 'loading') {
+          <section class="app-surface availability-hero availability-skeleton">
+            <div class="skeleton-line skeleton-line--sm"></div>
+            <div class="skeleton-line skeleton-line--lg"></div>
+            <div class="skeleton-line skeleton-line--md"></div>
+          </section>
+
+          <section class="app-surface availability-card app-section availability-skeleton">
+            <div class="skeleton-line skeleton-line--md"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+          </section>
+        } @else if (state.kind === 'error') {
+          <section class="app-surface availability-card app-section">
+            <div class="card-header">
+              <div>
+                <h1 class="card-title">Availability</h1>
+                <p class="card-subtitle app-text-muted">{{ state.message }}</p>
+              </div>
+            </div>
+
+            <button type="button" class="primary-cta-card" (click)="retry()">
+              <div class="primary-cta-card__content">
+                <span class="primary-cta-card__kicker">Retry</span>
+                <strong class="primary-cta-card__title">Reload availability</strong>
+                <span class="primary-cta-card__subtitle">
+                  Try fetching your rhythm and temporary changes again.
+                </span>
+              </div>
+              <span class="primary-cta-card__arrow">→</span>
+            </button>
+          </section>
+        } @else {
+          <section class="app-surface availability-hero">
+            <div class="availability-hero__glow"></div>
+
+            <div class="availability-hero__content">
+              <p class="availability-hero__eyebrow">Your rhythm</p>
+              <h1 class="availability-hero__title">
+                Let people catch you at the right moment.
+              </h1>
+              <p class="availability-hero__subtitle app-text-muted">
+                Set your usual rhythm, then adjust when life shifts. You stay in control of what you share.
+              </p>
+            </div>
+          </section>
+
+          <section class="app-surface availability-card app-section">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">This week</h2>
+                <p class="card-subtitle app-text-muted">
+                  A simple view of how your week looks once everything is taken into account.
+                </p>
+              </div>
+            </div>
+
+            <div class="preview-list">
+              @for (group of state.data.effectiveGroups; track group.title) {
+                <article class="preview-group">
+                  <div class="preview-group__title">{{ group.title }}</div>
+
+                  @if (group.items.length > 0) {
+                    <div class="preview-slots">
+                      @for (item of group.items; track item.id) {
+                        <div class="preview-slot">
+                          <span>{{ item.dateLabel }}</span>
+                          <strong>{{ item.timeRange }}</strong>
+                        </div>
+                      }
+                    </div>
+                  } @else {
+                    <p class="preview-empty app-text-muted">
+                      Nothing shared here yet — your week is currently quiet.
+                    </p>
+                  }
+                </article>
+              }
+            </div>
+          </section>
+
+          <section class="app-surface availability-card app-section">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">Weekly routine</h2>
+                <p class="card-subtitle app-text-muted">
+                  Your usual moments to reconnect. Think of this as your default rhythm.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                class="round-icon-button"
+                (click)="openCreateRule()"
+                aria-label="Add regular time"
+              >
+                <ion-icon name="add" aria-hidden="true"></ion-icon>
+              </button>
+            </div>
+
+            @if (!ruleFormExpanded()) {
+              <button type="button" class="primary-cta-card" (click)="openCreateRule()">
+                <div class="primary-cta-card__content">
+                  <span class="primary-cta-card__kicker">Your routine</span>
+                  <strong class="primary-cta-card__title">Add a regular time</strong>
+                  <span class="primary-cta-card__subtitle">
+                    For example: Tuesday evenings for a quick chat.
+                  </span>
+                </div>
+                <span class="primary-cta-card__arrow">→</span>
+              </button>
+            } @else {
+              <form class="availability-form" [formGroup]="ruleForm" (ngSubmit)="submitRule()">
+                <label class="field-label" for="dayOfWeek">Day</label>
+                <select
+                  id="dayOfWeek"
+                  class="availability-input"
+                  formControlName="dayOfWeek"
+                >
+                  @for (day of days; track day) {
+                    <option [value]="day">{{ formatDay(day) }}</option>
+                  }
+                </select>
+
+                <div class="form-grid">
+                  <div>
+                    <label class="field-label" for="startTime">From</label>
+                    <input
+                      id="startTime"
+                      class="availability-input"
+                      type="time"
+                      formControlName="startTime"
+                    />
+                  </div>
+
+                  <div>
+                    <label class="field-label" for="endTime">To</label>
+                    <input
+                      id="endTime"
+                      class="availability-input"
+                      type="time"
+                      formControlName="endTime"
+                    />
+                  </div>
+                </div>
+
+                <label class="field-label" for="channelType">How you prefer to connect</label>
+                <div
+                  id="channelType"
+                  class="availability-segment"
+                  role="radiogroup"
+                  aria-label="How you prefer to connect"
+                >
+                  <button
+                    type="button"
+                    class="availability-segment-button"
+                    role="radio"
+                    [class.availability-segment-button--checked]="ruleForm.controls.channelType.value === 'CHAT'"
+                    [attr.aria-checked]="ruleForm.controls.channelType.value === 'CHAT'"
+                    (click)="ruleForm.controls.channelType.setValue('CHAT')"
+                  >
+                    Chat
+                  </button>
+                  <button
+                    type="button"
+                    class="availability-segment-button"
+                    role="radio"
+                    [class.availability-segment-button--checked]="ruleForm.controls.channelType.value === 'CALL'"
+                    [attr.aria-checked]="ruleForm.controls.channelType.value === 'CALL'"
+                    (click)="ruleForm.controls.channelType.setValue('CALL')"
+                  >
+                    Call
+                  </button>
+                </div>
+
+                @if (editingRuleId() !== null) {
+                  <ion-toggle formControlName="enabled" class="availability-toggle">
+                    Active
+                  </ion-toggle>
+                }
+
+                <div class="form-actions">
+                  <button
+                    type="submit"
+                    class="form-submit"
+                    [disabled]="ruleForm.invalid || submittingRule()"
+                  >
+                    {{ submittingRule() ? 'Saving…' : editingRuleId() === null ? 'Add time' : 'Save changes' }}
+                  </button>
+
+                  <button
+                    type="button"
+                    class="form-cancel"
+                    (click)="closeRuleForm()"
+                    [disabled]="submittingRule()"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            }
+
+            @if (state.data.rules.length > 0) {
+              <div class="availability-list">
+                @for (rule of state.data.rules; track rule.id) {
+                  <article class="availability-item" [class.availability-item--muted]="!rule.enabled">
+                    <div class="availability-item__body">
+                      <div class="availability-item__topline">
+                        <strong>{{ rule.dayLabel }}</strong>
+                        <span class="availability-chip">{{ rule.channelLabel }}</span>
+                      </div>
+
+                      <div class="availability-meta">{{ rule.timeRange }}</div>
+
+                      @if (!rule.enabled) {
+                        <div class="availability-meta">Turned off</div>
+                      }
+                    </div>
+
+                    <div class="availability-item__actions">
+                      <button
+                        type="button"
+                        class="item-action-button"
+                        (click)="openEditRule(rule)"
+                      >
+                        Change
+                      </button>
+
+                      <button
+                        type="button"
+                        class="item-action-button item-action-button--danger"
+                        (click)="deleteRule(rule)"
+                        [disabled]="rowActionBusyId() === rule.id"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </article>
+                }
+              </div>
+            } @else {
+              <div class="empty-card">
+                <strong>No rhythm yet</strong>
+                <p class="app-text-muted">
+                  Start small — even one regular moment can make reconnecting easier.
+                </p>
+              </div>
+            }
+          </section>
+
+          <section class="app-surface availability-card app-section">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">Adjust for real life</h2>
+                <p class="card-subtitle app-text-muted">
+                  Temporary changes that sit on top of your routine. Close a moment, or open one — whatever fits your day.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                class="round-icon-button"
+                (click)="openCreateOverride()"
+                aria-label="Add temporary change"
+              >
+                <ion-icon name="add" aria-hidden="true"></ion-icon>
+              </button>
+            </div>
+
+            @if (!overrideFormExpanded()) {
+              <button type="button" class="primary-cta-card" (click)="openCreateOverride()">
+                <div class="primary-cta-card__content">
+                  <span class="primary-cta-card__kicker">Temporary change</span>
+                  <strong class="primary-cta-card__title">Adjust a moment</strong>
+                  <span class="primary-cta-card__subtitle">
+                    Close off time, or make space for something spontaneous.
+                  </span>
+                </div>
+                <span class="primary-cta-card__arrow">→</span>
+              </button>
+            } @else {
+              <form class="availability-form" [formGroup]="overrideForm" (ngSubmit)="submitOverride()">
+                <label class="field-label" for="overrideType">Temporary change</label>
+                <div
+                  id="overrideType"
+                  class="availability-segment"
+                  role="radiogroup"
+                  aria-label="Temporary change"
+                >
+                  <button
+                    type="button"
+                    class="availability-segment-button"
+                    role="radio"
+                    [class.availability-segment-button--checked]="overrideForm.controls.type.value === 'AVAILABLE'"
+                    [attr.aria-checked]="overrideForm.controls.type.value === 'AVAILABLE'"
+                    (click)="overrideForm.controls.type.setValue('AVAILABLE')"
+                  >
+                    Available
+                  </button>
+                  <button
+                    type="button"
+                    class="availability-segment-button"
+                    role="radio"
+                    [class.availability-segment-button--checked]="overrideForm.controls.type.value === 'UNAVAILABLE'"
+                    [attr.aria-checked]="overrideForm.controls.type.value === 'UNAVAILABLE'"
+                    (click)="overrideForm.controls.type.setValue('UNAVAILABLE')"
+                  >
+                    Unavailable
+                  </button>
+                </div>
+
+                <label class="field-label" for="startDateTime">From</label>
+                <input
+                  id="startDateTime"
+                  class="availability-input"
+                  type="datetime-local"
+                  formControlName="startDateTime"
+                  [min]="overrideMinDateTime()"
+                />
+
+                <label class="field-label" for="endDateTime">To</label>
+                <input
+                  id="endDateTime"
+                  class="availability-input"
+                  type="datetime-local"
+                  formControlName="endDateTime"
+                  [min]="overrideEndMinDateTime()"
+                />
+
+                <div class="form-actions">
+                  <button
+                    type="submit"
+                    class="form-submit"
+                    [disabled]="overrideForm.invalid || submittingOverride()"
+                  >
+                    {{ submittingOverride() ? 'Saving…' : 'Save change' }}
+                  </button>
+
+                  <button
+                    type="button"
+                    class="form-cancel"
+                    (click)="closeOverrideForm()"
+                    [disabled]="submittingOverride()"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            }
+
+            @if (state.data.overrides.length > 0) {
+              @let visibleOverrides = showAllOverrides()
+                ? state.data.overrides
+                : state.data.overrides.slice(0, overridePreviewLimit);
+
+              <div class="availability-list">
+                @for (override of visibleOverrides; track override.id) {
+                  <article class="availability-item">
+                    <div class="availability-item__body">
+                      <div class="availability-item__topline">
+                        <strong>{{ override.dateLabel }}</strong>
+                        <span
+                          class="availability-chip"
+                          [class.availability-chip--available]="override.type === 'AVAILABLE'"
+                          [class.availability-chip--unavailable]="override.type === 'UNAVAILABLE'"
+                        >
+                          {{ override.typeLabel }}
+                        </span>
+                      </div>
+
+                      <div class="availability-meta">{{ override.timeRange }}</div>
+                    </div>
+
+                    <div class="availability-item__hint app-text-muted">
+                      Add another exception to adjust this.
+                    </div>
+                  </article>
+                }
+              </div>
+
+              @if (state.data.overrides.length > overridePreviewLimit) {
+                <button
+                  type="button"
+                  class="availability-show-more"
+                  (click)="toggleOverridesExpanded()"
+                >
+                  {{ showAllOverrides() ? 'Show fewer adjustments' : 'Show all ' + state.data.overrides.length + ' adjustments' }}
+                </button>
+              }
+            } @else {
+              <div class="empty-card">
+                <strong>No adjustments right now</strong>
+                <p class="app-text-muted">
+                  Your routine is being shared just as it is.
+                </p>
+              </div>
+            }
+          </section>
+        }
+      }
+    </div>
+  </div>
+
+</ion-content>

@@ -1,2 +1,52 @@
-// For information on how to create your own theme, please refer to:
-// https://ionicframework.com/docs/theming/
+:root {
+  /* Brand */
+  --app-color-primary: #7a63f6;
+  --app-color-primary-rgb: 122, 99, 246;
+  --app-color-primary-contrast: #ffffff;
+
+  --app-color-accent: #ff7f73;
+  --app-color-accent-rgb: 255, 127, 115;
+  --app-color-accent-contrast: #ffffff;
+
+  /* Backgrounds */
+  --app-color-bg: #fff8f6;
+  --app-color-bg-soft: #f7efff;
+  --app-color-surface: rgba(255, 255, 255, 0.85);
+
+  /* Text */
+  --app-color-text: #5a4680;
+  --app-color-text-muted: #7e7198;
+
+  /* Borders */
+  --app-color-border: rgba(122, 99, 246, 0.12);
+
+  /* Gradient */
+  --app-gradient-main:
+    linear-gradient(180deg, #f8a99a 0%, #f1bfd2 28%, #f6ecf7 62%, #e3d7ff 100%);
+
+  --app-gradient-hero:
+    linear-gradient(135deg, #f8ae9d 0%, #e7c2f5 48%, #cfc5ff 100%);
+
+  /* Shadows */
+  --app-shadow-card: 0 10px 28px rgba(122, 99, 246, 0.10);
+  --app-shadow-button: 0 10px 20px rgba(122, 99, 246, 0.18);
+
+  /* Native layout */
+  --app-space-3: 8px;
+  --app-space-4: 12px;
+  --app-space-5: 16px;
+  --app-space-6: 20px;
+  --app-space-7: 24px;
+
+  --app-safe-area-top: max(var(--ion-safe-area-top, 0px), env(safe-area-inset-top), 8px);
+  --app-safe-area-bottom: max(var(--ion-safe-area-bottom, 0px), env(safe-area-inset-bottom), 16px);
+  --app-header-height: 64px;
+  --app-header-offset: calc(var(--app-safe-area-top) + var(--app-header-height));
+  --app-tab-bar-height: 56px;
+  --app-tab-content-offset: calc(var(--app-tab-bar-height) + var(--app-safe-area-bottom) + 10px);
+}
+
+html.app-platform-android {
+  --app-safe-area-top: max(var(--ion-safe-area-top, 0px), env(safe-area-inset-top), 56px);
+  --app-safe-area-bottom: max(var(--ion-safe-area-bottom, 0px), env(safe-area-inset-bottom), 24px);
+}

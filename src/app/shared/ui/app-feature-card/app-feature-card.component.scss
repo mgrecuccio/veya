@@ -1,0 +1,61 @@
+.feature-card {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 16px;
+  border-radius: 22px; /* ← softer than before */
+  background: rgba(255, 255, 255, 0.85);
+  height: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 28px rgba(122, 99, 246, 0.10);
+}
+
+.feature-card__row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+}
+
+/* ICON BOX */
+.feature-card__icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+
+  display: grid;
+  place-items: center;
+
+  background: linear-gradient(
+    135deg,
+    rgba(122, 99, 246, 0.2),
+    rgba(255, 127, 115, 0.2)
+  );
+
+  color: var(--app-color-primary);
+  font-size: 22px;
+  overflow: hidden;
+}
+
+.feature-card__icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* TEXT */
+.feature-card__title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--app-color-text);
+}
+
+.feature-card__description {
+  font-size: 13px;
+  color: var(--app-color-text-muted);
+  line-height: 1.4;
+}

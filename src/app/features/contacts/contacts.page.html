@@ -1,0 +1,441 @@
+<ion-content class="app-gradient-content contacts-content" [fullscreen]="true" [scrollY]="true">
+  <header class="app-page-topbar">
+    <div class="app-page-brand">Veya</div>
+
+    <ion-button
+      class="page-settings-button page-settings-button--topbar"
+      aria-label="Open settings"
+      title="Settings preview"
+      routerLink="/settings"
+      routerDirection="forward"
+    >
+      <ion-icon slot="icon-only" name="settings-outline"></ion-icon>
+    </ion-button>
+  </header>
+
+  <div class="app-page contacts-page">
+    <div class="contacts-shell">
+      @if (vmState$ | async; as state) {
+        @if (state.kind === 'loading') {
+          <section class="app-surface contacts-hero contacts-skeleton">
+            <div class="skeleton-line skeleton-line--sm"></div>
+            <div class="skeleton-line skeleton-line--lg"></div>
+            <div class="skeleton-line skeleton-line--md"></div>
+          </section>
+
+          <section class="app-surface contacts-card app-section contacts-skeleton">
+            <div class="skeleton-line skeleton-line--md"></div>
+            <div class="skeleton-card"></div>
+          </section>
+
+          <section class="app-surface contacts-card app-section contacts-skeleton">
+            <div class="skeleton-line skeleton-line--md"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+          </section>
+
+          <section class="app-surface contacts-card app-section contacts-skeleton">
+            <div class="skeleton-line skeleton-line--md"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+          </section>
+        } @else if (state.kind === 'error') {
+          <section class="app-surface contacts-card app-section">
+            <div class="card-header">
+              <div>
+                <h1 class="card-title">Your circle</h1>
+                <p class="card-subtitle app-text-muted">
+                  {{ state.message }}
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              class="primary-cta-card"
+              (click)="retry()"
+            >
+              <div class="primary-cta-card__content">
+                <span class="primary-cta-card__kicker">Retry</span>
+                <strong class="primary-cta-card__title">Reload contacts</strong>
+                <span class="primary-cta-card__subtitle">
+                  Try fetching your circle and invitations again.
+                </span>
+              </div>
+
+              <span class="primary-cta-card__arrow">→</span>
+            </button>
+          </section>
+        } @else {
+          <section class="app-surface contacts-hero">
+            <div class="contacts-hero__glow"></div>
+
+            <div class="contacts-hero__content">
+              <p class="contacts-hero__eyebrow">Private circle</p>
+              <h1 class="contacts-hero__title">Your circle</h1>
+              <p class="contacts-hero__subtitle app-text-muted">
+                Trusted people you’d like to reconnect with.
+              </p>
+
+              <div class="stats-grid">
+                <div class="stat-tile">
+                  <div class="stat-tile__value">{{ state.data.contacts.length }}</div>
+                  <div class="stat-tile__label app-text-muted">Contacts</div>
+                </div>
+
+                <div class="stat-tile">
+                  <div class="stat-tile__value">{{ state.data.pendingInvitations.length }}</div>
+                  <div class="stat-tile__label app-text-muted">Pending</div>
+                </div>
+
+                <div class="stat-tile">
+                  <div class="stat-tile__value">{{ state.data.blockedContacts.length }}</div>
+                  <div class="stat-tile__label app-text-muted">Blocked</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="app-surface contacts-card app-section">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">Invite someone</h2>
+                <p class="card-subtitle app-text-muted">
+                  Add a trusted person you’d love to hear from more often.
+                </p>
+              </div>
+            </div>
+
+            @if (!inviteExpanded()) {
+              <button
+                type="button"
+                class="primary-cta-card"
+                (click)="openInvite()"
+              >
+                <div class="primary-cta-card__content">
+                  <span class="primary-cta-card__kicker">New invitation</span>
+                  <strong class="primary-cta-card__title">Invite a contact</strong>
+                  <span class="primary-cta-card__subtitle">
+                    Send a private invitation by email.
+                  </span>
+                </div>
+
+                <span class="primary-cta-card__arrow">→</span>
+              </button>
+            } @else {
+              <form
+                class="invite-form"
+                [formGroup]="inviteForm"
+                (ngSubmit)="submitInvite()"
+              >
+                <div class="invite-row">
+                  <label class="field-label" for="email">Email</label>
+                  <input
+                    id="email"
+                    class="invite-input"
+                    type="email"
+                    formControlName="email"
+                    inputmode="email"
+                    autocomplete="email"
+                    placeholder="friend@example.com"
+                  />
+                </div>
+
+                @if (inviteForm.controls.email.touched && inviteForm.controls.email.invalid) {
+                  <p class="field-error">Please enter a valid email address.</p>
+                }
+
+                <div class="invite-row">
+                  <label class="field-label" for="nickName">Nickname <span class="app-text-muted">(optional)</span></label>
+                  <input
+                    id="nickName"
+                    class="invite-input"
+                    type="text"
+                    formControlName="nickName"
+                    maxlength="100"
+                    autocomplete="nickname"
+                    placeholder="How you know them"
+                  />
+                </div>
+
+                <div class="invite-actions">
+                  <button
+                    type="button"
+                    class="invite-submit"
+                    (click)="submitInvite()"
+                    [disabled]="inviteSubmitting()"
+                  >
+                    {{ inviteSubmitting() ? 'Sending…' : 'Send invitation' }}
+                  </button>
+
+                  <button
+                    type="button"
+                    class="invite-cancel"
+                    (click)="closeInvite()"
+                    [disabled]="inviteSubmitting()"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            }
+          </section>
+
+          @if (state.data.pendingInvitations.length > 0) {
+            <section class="app-surface contacts-card app-section">
+              <div class="card-header">
+                <div>
+                  <h2 class="card-title">Pending invitations</h2>
+                  <p class="card-subtitle app-text-muted">
+                    A few people are waiting to join your trusted circle.
+                  </p>
+                </div>
+
+                <div class="progress-badge">
+                  {{ state.data.pendingInvitations.length }}
+                </div>
+              </div>
+
+              <div class="contact-list">
+                @for (invitation of state.data.pendingInvitations; track invitation.id) {
+                  <article class="contact-item contact-item--pending">
+                    <div class="contact-avatar">
+                      {{ invitation.initials }}
+                    </div>
+
+                    <div class="contact-item__body">
+                      <div class="contact-item__topline">
+                        <strong class="contact-name">{{ invitation.displayLabel }}</strong>
+                        <span class="contact-chip contact-chip--pending">Pending</span>
+                      </div>
+
+                      <div class="contact-meta">
+                        Invited {{ invitation.createdLabel }}
+                      </div>
+                    </div>
+
+                    <div class="contact-item__actions">
+                      <button
+                        type="button"
+                        class="light-action-button"
+                        (click)="acceptInvitation(invitation)"
+                        [disabled]="rowActionBusyId() === invitation.id"
+                      >
+                        {{ rowActionBusyId() === invitation.id ? 'Accepting…' : 'Accept' }}
+                      </button>
+
+                      <button
+                        type="button"
+                        class="reject-action-button"
+                        (click)="rejectInvitation(invitation)"
+                        [disabled]="rowActionBusyId() === invitation.id"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </article>
+                }
+              </div>
+            </section>
+          } @else if (state.data.contacts.length > 0) {
+            <section class="app-surface contacts-card app-section">
+              <div class="empty-card">
+                <strong class="ready-state-card__title">No pending invitations right now</strong>
+                <p class="app-text-muted">
+                  Your circle is feeling settled. Invite someone new whenever the moment feels right.
+                </p>
+              </div>
+            </section>
+          }
+
+          @if (state.data.contacts.length > 0) {
+            <section class="app-surface contacts-card app-section">
+              <div class="card-header">
+                <div>
+                  <h2 class="card-title">Accepted contacts</h2>
+                  <p class="card-subtitle app-text-muted">
+                    People already in your private circle.
+                  </p>
+                </div>
+              </div>
+
+              <div class="contact-list">
+                @for (contact of state.data.contacts; track contact.id) {
+                  <article class="contact-item">
+                    <div class="contact-avatar">
+                      {{ contact.initials }}
+                    </div>
+
+                    <div class="contact-item__body">
+                      <div class="contact-item__topline">
+                        <strong class="contact-name">{{ contact.displayLabel }}</strong>
+
+                        @if (contact.favorite) {
+                          <span class="contact-chip">Favorite</span>
+                        }
+                      </div>
+
+                      <div class="contact-meta">
+                        Added {{ contact.createdLabel }}
+                      </div>
+                    </div>
+
+                    <div class="contact-item__actions">
+                      <button
+                        type="button"
+                        class="favorite-button"
+                        (click)="toggleFavorite(contact)"
+                        [disabled]="rowActionBusyId() === contact.id"
+                        [attr.aria-label]="contact.favorite ? 'Remove ' + contact.displayLabel + ' from favorites' : 'Mark ' + contact.displayLabel + ' as favorite'"
+                        [attr.aria-pressed]="contact.favorite"
+                      >
+                        <ion-icon [name]="contact.favorite ? 'star' : 'star-outline'" aria-hidden="true"></ion-icon>
+                      </button>
+
+                      <button
+                        type="button"
+                        class="contact-menu-button"
+                        (click)="openContactActions(contact)"
+                        [disabled]="rowActionBusyId() === contact.id"
+                        aria-label="Open contact controls"
+                      >
+                        <ion-icon name="settings-outline" aria-hidden="true"></ion-icon>
+                      </button>
+                    </div>
+                  </article>
+                }
+              </div>
+            </section>
+          } @else if (state.data.pendingInvitations.length > 0) {
+            <section class="app-surface contacts-card app-section">
+              <div class="empty-card">
+                <strong class="ready-state-card__title">Your accepted circle is still taking shape</strong>
+                <p class="app-text-muted">
+                  You’ve got invitations in motion. Once accepted, your trusted people will appear here.
+                </p>
+              </div>
+            </section>
+          }
+
+          @if (state.data.blockedContacts.length > 0) {
+            <section class="app-surface contacts-card app-section">
+              <div class="card-header">
+                <div>
+                  <h2 class="card-title">Blocked contacts</h2>
+                  <p class="card-subtitle app-text-muted">
+                    People you have paused contact with.
+                  </p>
+                </div>
+              </div>
+
+              <div class="contact-list">
+                @for (contact of state.data.blockedContacts; track contact.id) {
+                  <article class="contact-item contact-item--blocked">
+                    <div class="contact-avatar">
+                      {{ contact.initials }}
+                    </div>
+
+                    <div class="contact-item__body">
+                      <div class="contact-item__topline">
+                        <strong class="contact-name">{{ contact.displayLabel }}</strong>
+                        <span class="contact-chip contact-chip--blocked">Blocked</span>
+                      </div>
+
+                      <div class="contact-meta">
+                        Added {{ contact.createdLabel }}
+                      </div>
+                    </div>
+
+                    <div class="contact-item__actions">
+                      <button
+                        type="button"
+                        class="light-action-button"
+                        (click)="unblockContact(contact)"
+                        [disabled]="rowActionBusyId() === contact.id"
+                      >
+                        {{ rowActionBusyId() === contact.id ? 'Unblocking…' : 'Unblock' }}
+                      </button>
+                    </div>
+                  </article>
+                }
+              </div>
+            </section>
+          }
+
+          @if (state.data.showFullyEmptyState) {
+            <section class="app-surface contacts-card app-section">
+              <div class="empty-state">
+                <div class="empty-state__icon">♡</div>
+                <strong class="empty-state__title">Your circle starts small.</strong>
+                <p class="empty-state__text app-text-muted">
+                  Invite someone you’d love to hear from more often. Veya works best with people you already know and trust.
+                </p>
+
+                <ion-button class="empty-state__button" (click)="openInvite()">
+                  Invite your first contact
+                </ion-button>
+              </div>
+            </section>
+          }
+        }
+      }
+    </div>
+  </div>
+
+</ion-content>
+
+@if (contactActionsOpen()) {
+  @if (contactActionsContact(); as contact) {
+    <div class="contact-actions-overlay" (click)="closeContactActions()">
+      <section
+        class="contact-actions-sheet"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="'Manage ' + contact.displayLabel"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="contact-actions-sheet__handle"></div>
+        <div class="contact-actions-sheet__header">{{ contact.displayLabel }}</div>
+
+        @if (contactNicknameEditorOpen()) {
+          <div class="contact-actions-editor">
+            <label class="contact-actions-editor__label" for="contactNicknameDraft">
+              Nickname
+            </label>
+            <input
+              id="contactNicknameDraft"
+              class="contact-actions-editor__input"
+              type="text"
+              maxlength="100"
+              autocomplete="off"
+              placeholder="Nickname"
+              [value]="contactNicknameDraft()"
+              (input)="contactNicknameDraft.set($any($event.target).value)"
+            />
+            <div class="contact-actions-editor__actions">
+              <button type="button" class="contact-actions-editor__button" (click)="contactNicknameEditorOpen.set(false)">
+                Cancel
+              </button>
+              <button type="button" class="contact-actions-editor__button contact-actions-editor__button--primary" (click)="saveManagedContactNickname(contact)">
+                Save
+              </button>
+            </div>
+          </div>
+        } @else {
+          <button type="button" class="contact-actions-sheet__button" (click)="editManagedContact(contact)">
+            Edit nickname
+          </button>
+          <button type="button" class="contact-actions-sheet__button contact-actions-sheet__button--danger" (click)="removeManagedContact(contact)">
+            Remove contact
+          </button>
+          <button type="button" class="contact-actions-sheet__button contact-actions-sheet__button--danger" (click)="blockManagedContact(contact)">
+            Block contact
+          </button>
+          <button type="button" class="contact-actions-sheet__button contact-actions-sheet__button--cancel" (click)="closeContactActions()">
+            Cancel
+          </button>
+        }
+      </section>
+    </div>
+  }
+}

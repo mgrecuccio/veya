@@ -1,0 +1,211 @@
+<ion-content class="app-gradient-content home-content" [fullscreen]="true" [scrollY]="true">
+  <header class="app-page-topbar">
+    <div class="app-page-brand">Veya</div>
+
+    <ion-button
+      class="page-settings-button page-settings-button--topbar"
+      aria-label="Open settings"
+      title="Settings preview"
+      routerLink="/settings"
+      routerDirection="forward"
+    >
+      <ion-icon slot="icon-only" name="settings-outline"></ion-icon>
+    </ion-button>
+  </header>
+
+  <div class="app-page home-page">
+    <div class="home-shell">
+      @if (vmState$ | async; as state) {
+        @if (state.kind === 'loading') {
+          <section class="app-surface home-hero home-skeleton">
+            <div class="skeleton-line skeleton-line--sm"></div>
+            <div class="skeleton-line skeleton-line--lg"></div>
+            <div class="skeleton-line skeleton-line--md"></div>
+            <div class="skeleton-card"></div>
+          </section>
+
+          <section class="app-surface dashboard-card app-section home-skeleton">
+            <div class="skeleton-line skeleton-line--md"></div>
+            <div class="skeleton-card"></div>
+          </section>
+
+          <section class="app-surface dashboard-card app-section home-skeleton">
+            <div class="skeleton-line skeleton-line--md"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+          </section>
+        } @else if (state.kind === 'error') {
+          <section class="app-surface dashboard-card app-section">
+            <div class="card-header">
+              <div>
+                <h3 class="card-title">Home unavailable</h3>
+                <p class="card-subtitle app-text-muted">
+                  {{ state.message }}
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              class="primary-cta-card"
+              (click)="retry()"
+            >
+              <div class="primary-cta-card__content">
+                <span class="primary-cta-card__kicker">Retry</span>
+                <strong class="primary-cta-card__title">Reload dashboard</strong>
+                <span class="primary-cta-card__subtitle">
+                  Try fetching your contacts and availability again.
+                </span>
+              </div>
+
+              <span class="primary-cta-card__arrow">→</span>
+            </button>
+          </section>
+        } @else {
+          <section
+            class="app-surface home-hero"
+            [class.home-hero--active]="freeNowState.active"
+          >
+            <div class="home-hero__glow"></div>
+
+            <div class="home-hero__content">
+              <p class="home-hero__eyebrow">
+                Readiness dashboard
+              </p>
+
+              <h1 class="home-hero__title">
+                Hi, {{ state.data.dashboard.displayName }}
+              </h1>
+
+              <h2 class="home-hero__status">
+                {{ state.data.readinessContent.title }}
+              </h2>
+
+              <p class="home-hero__subtitle app-text-muted">
+                {{ state.data.readinessContent.subtitle }}
+              </p>
+
+              <button
+                type="button"
+                class="free-now-card"
+                [class.free-now-card--active]="freeNowState.active"
+                (click)="toggleFreeNow()"
+                [attr.aria-pressed]="freeNowState.active"
+              >
+                <div class="free-now-card__copy">
+                  <div class="free-now-card__label">
+                    {{ freeNowState.active ? "You're free now ✨" : "Free now" }}
+                  </div>
+
+                  <div class="free-now-card__text">
+                    {{
+                      freeNowState.active
+                        ? "We'll look for available contacts"
+                        : "Let friends know you're available right now"
+                    }}
+                  </div>
+                </div>
+
+                <div class="free-now-card__action">
+                  <span
+                    class="free-now-pill"
+                    [class.free-now-pill--active]="freeNowState.active"
+                  >
+                    {{ freeNowState.active ? 'On now' : 'Turn on' }}
+                  </span>
+                </div>
+              </button>
+            </div>
+          </section>
+
+          <section class="app-surface dashboard-card app-section">
+            <div class="card-header">
+              <div>
+                <h3 class="card-title">Today’s availability</h3>
+                <p class="card-subtitle app-text-muted">
+                  Windows still open for reconnecting today.
+                </p>
+              </div>
+            </div>
+
+            @if (state.data.availabilityErrorMessage) {
+              <div class="inline-notice app-text-muted">
+                {{ state.data.availabilityErrorMessage }}
+              </div>
+            }
+
+            @if (state.data.dashboard.upcomingAvailability.length > 0) {
+              <div class="checklist">
+                @for (item of state.data.dashboard.upcomingAvailability; track item.id) {
+                  <div class="checklist-item">
+                    <div class="checklist-item__icon">◌</div>
+
+                    <div class="checklist-item__body">
+                      <div class="checklist-item__title">
+                        {{ item.label }} · {{ item.timeRange }}
+                      </div>
+                      <div class="checklist-item__status app-text-muted">
+                        Available
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="ready-state-card">
+                <div>
+                  <strong class="ready-state-card__title">
+                    No availability later today
+                  </strong>
+                  <p class="ready-state-card__text app-text-muted">
+                    Use Free now when you are open to reconnecting, or add temporary or recurring availability when you want to plan ahead.
+                  </p>
+                </div>
+              </div>
+            }
+          </section>
+
+          <section class="app-surface dashboard-card app-section">
+            <div class="card-header">
+              <div>
+                <h3 class="card-title">Contacts snapshot</h3>
+                <p class="card-subtitle app-text-muted">
+                  Your trusted circle is starting to take shape.
+                </p>
+              </div>
+            </div>
+
+            <div class="stats-grid">
+              <div class="stat-tile">
+                <div class="stat-tile__value">
+                  {{ state.data.dashboard.contactsCount }}
+                </div>
+                <div class="stat-tile__label app-text-muted">Contacts</div>
+              </div>
+
+              <div class="stat-tile">
+                <div class="stat-tile__value">
+                  {{ state.data.dashboard.pendingInvitationsCount }}
+                </div>
+                <div class="stat-tile__label app-text-muted">
+                  Received invitations
+                </div>
+              </div>
+            </div>
+
+            <a class="secondary-link-card" routerLink="/app/contacts">
+              <div>
+                <strong>Open Contacts</strong>
+                <p class="app-text-muted">
+                  Manage trusted people, invitations, and future favorites.
+                </p>
+              </div>
+
+              <span class="secondary-link-card__arrow">→</span>
+            </a>
+          </section>
+        }
+      }
+    </div>
+  </div>
+</ion-content>

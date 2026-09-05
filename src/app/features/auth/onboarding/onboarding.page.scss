@@ -1,0 +1,148 @@
+.onboarding-page {
+  --auth-brand-top-padding: calc(12px + env(safe-area-inset-top));
+  padding: 0 20px max(20px, env(safe-area-inset-bottom));
+  min-height: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding-bottom: 124px;
+}
+
+.onboarding-main {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  flex: 0 0 auto;
+}
+
+.onboarding-footer {
+  position: fixed;
+  right: 20px;
+  bottom: max(20px, calc(env(safe-area-inset-bottom) + 16px));
+  left: 20px;
+  z-index: 2;
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* HERO */
+
+.hero {
+  text-align: center;
+  position: relative;
+  padding-top: var(--auth-brand-top-padding);
+}
+
+.hero-visual img {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.hero-visual__image {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  padding: 0;
+}
+
+.hero-brand {
+  font-family: var(--app-font-family);
+  font-size: clamp(40px, 7.5vw, 46px);
+  font-weight: 700;
+  color: white;
+  margin-bottom: 12px;
+  line-height: 1.08;
+  letter-spacing: 0;
+}
+
+.hero-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: white;
+  line-height: 1.3;
+}
+
+.hero-title span {
+  font-style: italic;
+  font-weight: 500;
+}
+
+.hero-visual {
+  margin-top: 14px;
+  height: clamp(120px, 22vh, 180px);
+  border-radius: 32px;
+  background: var(--app-gradient-hero);
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* soft wave effect */
+
+.hero-visual::after {
+  content: '';
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  bottom: -40px;
+  height: 120px;
+  background: rgba(255, 250, 248, 0.95);
+  border-radius: 50%;
+  z-index: 0;
+}
+
+/* ACTION BUTTONS */
+
+.actions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* FEATURES */
+
+.features-section {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.features-section app-feature-card {
+  display: block;
+  height: 100%;
+}
+
+/* CTA */
+
+.cta-text {
+  text-align: center;
+  font-size: 14px;
+  color: var(--app-color-text-muted);
+}
+
+app-cta-button {
+  margin-top: 2px;
+}
+
+@media (min-height: 840px) {
+  .onboarding-footer {
+    bottom: max(24px, calc(env(safe-area-inset-bottom) + 18px));
+  }
+}
+
+html.plt-hybrid .onboarding-page,
+html.plt-android .onboarding-page {
+  --auth-brand-top-padding: max(56px, calc(12px + env(safe-area-inset-top)));
+}

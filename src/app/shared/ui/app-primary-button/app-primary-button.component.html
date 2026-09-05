@@ -1,0 +1,9 @@
+<button
+  class="app-primary-button"
+  [class.app-primary-button--full]="expand === 'full'"
+  [disabled]="disabled"
+  [type]="type"
+  (click)="buttonClick.emit($event)"
+>
+  <ng-content></ng-content>
+</button>

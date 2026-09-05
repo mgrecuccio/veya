@@ -1,0 +1,21 @@
+.app-outline-button {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 56px;
+  margin: 0;
+  padding: 16px 22px;
+  border: 1.5px solid rgba(var(--app-color-primary-rgb), 0.35);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--app-color-primary);
+  cursor: pointer;
+  font-weight: 600;
+  font: inherit;
+  line-height: 1.2;
+  text-transform: none;
+  backdrop-filter: blur(6px);
+  -webkit-tap-highlight-color: transparent;
+}

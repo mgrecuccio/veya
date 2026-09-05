@@ -1,0 +1,11 @@
+name: Angular PR Checks
+
+on:
+  pull_request:
+    branches:
+      - develop
+  workflow_dispatch:
+
+jobs:
+  ci:
+    uses: ./.github/workflows/angular-ci-reusable.yml

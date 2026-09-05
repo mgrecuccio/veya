@@ -1,0 +1,192 @@
+<ion-content
+  class="app-gradient-content auth-content auth-content--register"
+  [fullscreen]="true"
+  [style.--auth-focus-offset.px]="authFocusOffset"
+  (focusin)="scrollFocusedControlIntoView($event)"
+  (focusout)="clearFocusedControlOffset()"
+>
+  <header class="auth-topbar">
+    <button type="button" class="auth-back-button" aria-label="Go back" (click)="goBack()">
+      <span class="auth-back-button__icon" aria-hidden="true">‹</span>
+    </button>
+    <div class="auth-topbar__brand">Veya</div>
+  </header>
+
+  <div class="app-content-shell app-content-shell--auth">
+    <div class="auth-shell">
+      <section class="app-surface auth-card">
+        <div class="auth-header">
+          <h1 class="auth-title">Create your account</h1>
+          <p class="auth-subtitle">
+            Start planning spontaneous moments with the people you care about.
+          </p>
+        </div>
+
+        <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <div class="auth-field">
+            <label class="auth-label" for="register-name">Name</label>
+            <input
+              id="register-name"
+              class="auth-input-item auth-input"
+              [class.auth-input-item--invalid]="isInvalid('name')"
+              type="text"
+              autocomplete="name"
+              placeholder="Your name"
+              formControlName="name"
+            />
+
+            @if (isInvalid('name')) {
+              <div class="auth-error">
+                @if (name.errors?.['required']) {
+                  <span>Name is required.</span>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="auth-field">
+            <label class="auth-label" for="register-email">Email</label>
+            <input
+              id="register-email"
+              class="auth-input-item auth-input"
+              [class.auth-input-item--invalid]="isInvalid('email')"
+              type="email"
+              inputmode="email"
+              autocomplete="email"
+              placeholder="you@example.com"
+              formControlName="email"
+            />
+
+            @if (isInvalid('email') || email.errors?.['emailAlreadyExists']) {
+              <div class="auth-error">
+                @if (email.errors?.['required']) {
+                  <span>Email is required.</span>
+                } @else if (email.errors?.['email']) {
+                  <span>Enter a valid email address.</span>
+                } @else if (email.errors?.['emailAlreadyExists']) {
+                  <span>An account with this email already exists.</span>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="auth-field">
+            <label class="auth-label" for="register-phone">
+              Phone number
+              <span class="auth-label-optional">(optional)</span>
+            </label>
+
+            <div class="phone-input-row">
+              <select
+                class="auth-input-item auth-select phone-country-item"
+                aria-label="Country calling code"
+                formControlName="phoneCountry"
+              >
+                @for (country of countries; track country.code) {
+                  <option [value]="country.code">
+                    {{ country.flag }} {{ country.dialCode }}
+                  </option>
+                }
+              </select>
+
+              <input
+                id="register-phone"
+                class="auth-input-item auth-input phone-number-item"
+                [class.auth-input-item--invalid]="isPhoneInvalid()"
+                type="tel"
+                inputmode="tel"
+                autocomplete="tel-national"
+                placeholder="470 12 34 56"
+                formControlName="phoneNational"
+              />
+            </div>
+
+            @if (isPhoneInvalid()) {
+              <div class="auth-error">
+                <span>Enter a valid phone number.</span>
+              </div>
+            }
+          </div>
+          
+          <div class="auth-field">
+            <label class="auth-label" for="register-password">Password</label>
+            <input
+              id="register-password"
+              class="auth-input-item auth-input"
+              [class.auth-input-item--invalid]="isInvalid('password')"
+              type="password"
+              autocomplete="new-password"
+              placeholder="Create a password"
+              formControlName="password"
+            />
+
+            @if (isInvalid('password')) {
+              <div class="auth-error">
+                @if (password.errors?.['required']) {
+                  <span>Password is required.</span>
+                } @else if (password.errors?.['minlength']) {
+                  <span>Password must be at least 8 characters.</span>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="auth-field">
+            <label class="auth-label" for="register-confirm-password">Confirm password</label>
+            <input
+              id="register-confirm-password"
+              class="auth-input-item auth-input"
+              [class.auth-input-item--invalid]="isInvalid('confirmPassword')"
+              type="password"
+              autocomplete="new-password"
+              placeholder="Repeat your password"
+              formControlName="confirmPassword"
+            />
+
+            @if (isInvalid('confirmPassword') || form.errors?.['passwordMismatch']) {
+              <div class="auth-error">
+                @if (confirmPassword.errors?.['required']) {
+                  <span>Please confirm your password.</span>
+                } @else if (confirmPassword.errors?.['mismatch'] || form.errors?.['passwordMismatch']) {
+                  <span>Passwords do not match.</span>
+                }
+              </div>
+            }
+          </div>
+
+          @if (serverError) {
+            <div class="auth-error auth-error--form">
+              <span>{{ serverError }}</span>
+            </div>
+          }
+
+          <div class="auth-submit">
+            <app-primary-button
+              type="submit"
+              [disabled]="form.invalid || isSubmitting"
+            >
+              @if (isSubmitting) {
+                Creating account...
+              } @else {
+                Create Account
+              }
+            </app-primary-button>
+          </div>
+        </form>
+
+        <div class="auth-footer">
+          Already have an account?
+          <button
+            type="button"
+            class="auth-footer-link"
+            (click)="goToLogin()"
+          >
+            Log in
+          </button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="auth-keyboard-spacer" aria-hidden="true"></div>
+</ion-content>

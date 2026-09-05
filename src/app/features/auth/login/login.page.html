@@ -1,0 +1,125 @@
+<ion-content
+  class="app-gradient-content auth-content"
+  [fullscreen]="true"
+  [style.--auth-focus-offset.px]="authFocusOffset"
+  (focusin)="scrollFocusedControlIntoView($event)"
+  (focusout)="clearFocusedControlOffset()"
+>
+  <header class="auth-topbar">
+    <button type="button" class="auth-back-button" aria-label="Go back" (click)="goBack()">
+      <span class="auth-back-button__icon" aria-hidden="true">‹</span>
+    </button>
+    <div class="auth-topbar__brand">Veya</div>
+  </header>
+
+  <div class="app-content-shell app-content-shell--auth">
+    <div class="auth-shell">
+      <section class="app-surface auth-card">
+        <div class="auth-header">
+          <h1 class="auth-title">Welcome back</h1>
+          <p class="auth-subtitle">
+            Log in to pick up where your plans left off.
+          </p>
+        </div>
+
+        <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <div class="auth-field">
+            <label class="auth-label" for="login-email">Email</label>
+            <input
+              id="login-email"
+              class="auth-input-item auth-input"
+              [class.auth-input-item--invalid]="isInvalid('email')"
+              type="email"
+              inputmode="email"
+              autocomplete="email"
+              placeholder="you@example.com"
+              formControlName="email"
+            />
+
+            @if (isInvalid('email')) {
+              <div class="auth-error">
+                @if (email.errors?.['required']) {
+                  <span>Email is required.</span>
+                } @else if (email.errors?.['email']) {
+                  <span>Enter a valid email address.</span>
+                }
+              </div>
+            }
+          </div>
+
+          <div class="auth-field">
+            <label class="auth-label" for="login-password">Password</label>
+            <input
+              id="login-password"
+              class="auth-input-item auth-input"
+              [class.auth-input-item--invalid]="isInvalid('password')"
+              type="password"
+              autocomplete="current-password"
+              placeholder="Enter your password"
+              formControlName="password"
+            />
+
+            @if (isInvalid('password')) {
+              <div class="auth-error">
+                @if (password.errors?.['required']) {
+                  <span>Password is required.</span>
+                } @else if (password.errors?.['minlength']) {
+                  <span>Password must be at least 8 characters.</span>
+                }
+              </div>
+            }
+          </div>
+
+          @if (form.errors?.['invalidCredentials']) {
+            <div class="auth-error auth-error--form">
+              <span>Invalid email or password.</span>
+            </div>
+          }
+
+          @if (serverError) {
+            <div class="auth-error auth-error--form">
+              <span>{{ serverError }}</span>
+            </div>
+          }
+
+          <div class="auth-row">
+            <button
+              type="button"
+              class="auth-text-button"
+              (click)="forgotPassword()"
+              [disabled]="isSubmitting"
+            >
+              Forgot password?
+            </button>
+          </div>
+
+          <div class="auth-submit">
+            <app-primary-button
+              type="submit"
+              [disabled]="form.invalid || isSubmitting"
+            >
+              @if (isSubmitting) {
+                Logging in...
+              } @else {
+                Log In
+              }
+            </app-primary-button>
+          </div>
+        </form>
+
+        <div class="auth-footer">
+          Don’t have an account?
+          <button
+            type="button"
+            class="auth-footer-link"
+            (click)="goToRegister()"
+          >
+            Sign up
+          </button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div class="auth-keyboard-spacer" aria-hidden="true"></div>
+</ion-content>

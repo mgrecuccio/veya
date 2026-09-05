@@ -1,0 +1,11 @@
+name: Angular Develop Checks
+
+on:
+  push:
+    branches:
+      - develop
+  workflow_dispatch:
+
+jobs:
+  ci:
+    uses: ./.github/workflows/angular-ci-reusable.yml

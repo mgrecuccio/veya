@@ -1,0 +1,15 @@
+@use '../auth-form.shared';
+
+:host {
+  display: block;
+}
+
+.auth-shell {
+  max-width: 560px;
+  margin: 0 auto;
+  padding-top: 8px;
+}
+
+.auth-card {
+  margin-top: 6px;
+}

@@ -1,0 +1,317 @@
+<ion-content class="app-gradient-content matches-content" [fullscreen]="true" [scrollY]="true">
+  <header class="app-page-topbar">
+    <div class="app-page-brand">Veya</div>
+
+    <ion-button
+      class="page-settings-button page-settings-button--topbar"
+      aria-label="Open settings"
+      title="Settings preview"
+      routerLink="/settings"
+      routerDirection="forward"
+    >
+      <ion-icon slot="icon-only" name="settings-outline"></ion-icon>
+    </ion-button>
+  </header>
+
+  <div class="app-page matches-page">
+    <div class="matches-shell">
+      <section class="app-surface matches-hero">
+        <div class="matches-hero__glow"></div>
+
+        <div class="matches-hero__content">
+          <p class="matches-hero__eyebrow">Ready to reconnect</p>
+          <h1 class="matches-hero__title">Your matches</h1>
+          <p class="matches-hero__subtitle">
+            Accepted matches will appear here when your availability lines up.
+          </p>
+        </div>
+      </section>
+
+      <section class="app-surface matches-card incoming-card">
+        @if (incomingState$ | async; as incomingState) {
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Match requests</h2>
+              <p class="card-subtitle">
+                People who want to reconnect with you.
+              </p>
+            </div>
+
+            <div class="match-count">
+              @if (incomingState.kind === 'success') {
+                {{ incomingState.data.proposals.length }}
+              } @else {
+                -
+              }
+            </div>
+          </div>
+
+          @if (incomingState.kind === 'loading') {
+            <div class="matches-state" aria-live="polite">
+              <ion-spinner name="crescent"></ion-spinner>
+              <p>Loading match requests...</p>
+            </div>
+          } @else if (incomingState.kind === 'error') {
+            <div class="matches-state matches-state--error" role="alert">
+              <ion-icon name="alert-circle-outline" aria-hidden="true"></ion-icon>
+              <p>{{ incomingState.message }}</p>
+              <ion-button size="small" class="retry-button" (click)="retryIncoming()">
+                <ion-icon slot="start" name="refresh-outline"></ion-icon>
+                Retry
+              </ion-button>
+            </div>
+          } @else if (incomingState.data.proposals.length === 0) {
+            <div class="matches-state">
+              <ion-icon name="mail-open-outline" aria-hidden="true"></ion-icon>
+              <p>No match requests are waiting right now.</p>
+            </div>
+          } @else {
+            <div class="incoming-list">
+              @for (proposal of incomingState.data.proposals; track proposal.id) {
+                <article class="incoming-item">
+                  <div class="match-avatar">{{ proposal.initials }}</div>
+
+                  <div class="match-copy">
+                    <strong class="match-name">{{ proposal.displayName }}</strong>
+                    <span class="match-status">{{ proposal.channelLabel }}</span>
+                  </div>
+
+                  <div class="incoming-actions">
+                    <ion-button
+                      fill="outline"
+                      size="small"
+                      class="decline-button"
+                      aria-label="Decline match request"
+                      title="Decline"
+                      [disabled]="incomingBusyId() !== null"
+                      (click)="declineProposal(proposal)"
+                    >
+                      @if (incomingBusyId() === proposal.id && incomingBusyAction() === 'decline') {
+                        <ion-spinner name="crescent"></ion-spinner>
+                      } @else {
+                        <ion-icon slot="icon-only" name="close-outline"></ion-icon>
+                      }
+                    </ion-button>
+
+                    <ion-button
+                      size="small"
+                      class="accept-button"
+                      aria-label="Accept match request"
+                      title="Accept"
+                      [disabled]="incomingBusyId() !== null"
+                      (click)="acceptProposal(proposal)"
+                    >
+                      @if (incomingBusyId() === proposal.id && incomingBusyAction() === 'accept') {
+                        <ion-spinner name="crescent"></ion-spinner>
+                      } @else {
+                        <ion-icon slot="icon-only" name="checkmark-outline"></ion-icon>
+                      }
+                    </ion-button>
+                  </div>
+                </article>
+              }
+            </div>
+          }
+        }
+      </section>
+
+      <section class="app-surface matches-card suggestions-card">
+        @if (suggestionsState$ | async; as suggestionsState) {
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Suggested matches</h2>
+              <p class="card-subtitle">
+                Suggested people are based on backend-computed availability overlap.
+              </p>
+            </div>
+
+            <div class="match-count">
+              @if (suggestionsState.kind === 'success') {
+                {{ suggestionsState.data.suggestions.length }}
+              } @else {
+                -
+              }
+            </div>
+          </div>
+
+          @if (suggestionsState.kind === 'loading') {
+            <div class="matches-state" aria-live="polite">
+              <ion-spinner name="crescent"></ion-spinner>
+              <p>Loading match suggestions...</p>
+            </div>
+          } @else if (suggestionsState.kind === 'error') {
+            <div class="matches-state matches-state--error" role="alert">
+              <ion-icon name="alert-circle-outline" aria-hidden="true"></ion-icon>
+              <p>{{ suggestionsState.message }}</p>
+              <ion-button size="small" class="retry-button" (click)="retrySuggestions()">
+                <ion-icon slot="start" name="refresh-outline"></ion-icon>
+                Retry
+              </ion-button>
+            </div>
+          } @else if (suggestionsState.data.suggestions.length === 0) {
+            <div class="matches-state">
+              <ion-icon name="sparkles-outline" aria-hidden="true"></ion-icon>
+              <p>No suggestions are available right now.</p>
+            </div>
+          } @else {
+            <div class="suggestion-list">
+              @for (suggestion of suggestionsState.data.suggestions; track suggestion.candidateUserId) {
+                <article class="suggestion-item">
+                  <div class="match-avatar">{{ suggestion.initials }}</div>
+
+                  <div class="match-copy">
+                    <strong class="match-name">{{ suggestion.displayName }}</strong>
+                    <span class="match-status">{{ suggestion.channelLabel }}</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    class="propose-button"
+                    [disabled]="proposalBusyId() !== null"
+                    (click)="proposeMatch(suggestion)"
+                  >
+                    @if (proposalBusyId() === suggestion.candidateUserId) {
+                      <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
+                      <span>Sending</span>
+                    } @else {
+                      <span>Propose</span>
+                    }
+                  </button>
+                </article>
+              }
+            </div>
+          }
+        }
+      </section>
+
+      <section class="app-surface matches-card">
+        @if (vmState$ | async; as state) {
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Accepted matches</h2>
+              <p class="card-subtitle">
+                Matches appear here after both people agree to reconnect.
+              </p>
+            </div>
+
+            <div class="match-count">
+              @if (state.kind === 'success') {
+                {{ state.data.matches.length }}
+              } @else {
+                -
+              }
+            </div>
+          </div>
+
+          @if (state.kind === 'loading') {
+            <div class="matches-state" aria-live="polite">
+              <ion-spinner name="crescent"></ion-spinner>
+              <p>Loading accepted matches...</p>
+            </div>
+          } @else if (state.kind === 'error') {
+            <div class="matches-state matches-state--error" role="alert">
+              <ion-icon name="alert-circle-outline" aria-hidden="true"></ion-icon>
+              <p>{{ state.message }}</p>
+              <ion-button size="small" class="retry-button" (click)="retry()">
+                <ion-icon slot="start" name="refresh-outline"></ion-icon>
+                Retry
+              </ion-button>
+            </div>
+          } @else if (state.data.matches.length === 0) {
+            <div class="matches-state">
+              <ion-icon name="sparkles-outline" aria-hidden="true"></ion-icon>
+              <p>Accepted matches will appear here after both required consents exist.</p>
+            </div>
+          } @else {
+            <div class="match-list">
+              @for (match of state.data.matches; track match.id) {
+                <article class="match-item">
+                  <button
+                    class="match-summary-button"
+                    type="button"
+                    (click)="openMatchDetail(match)"
+                  >
+                    <div class="match-avatar">{{ match.initials }}</div>
+
+                    <div class="match-copy">
+                      <strong class="match-name">{{ match.displayName }}</strong>
+                      <span class="match-status">{{ match.channelLabel }}</span>
+                    </div>
+                  </button>
+
+                  <button
+                    class="match-contact-button"
+                    type="button"
+                    aria-label="Open WhatsApp"
+                    title="Open WhatsApp"
+                    [disabled]="contactLinkBusyId() !== null"
+                    (click)="openWhatsApp(match)"
+                  >
+                    @if (contactLinkBusyId() === match.id) {
+                      <ion-spinner name="crescent"></ion-spinner>
+                    } @else {
+                      <ion-icon name="logo-whatsapp" aria-hidden="true"></ion-icon>
+                    }
+                  </button>
+                </article>
+              }
+            </div>
+          }
+        }
+      </section>
+    </div>
+  </div>
+
+  <ion-modal
+    [isOpen]="selectedMatch() !== null"
+    [backdropDismiss]="contactLinkBusyId() === null"
+    (didDismiss)="closeMatchDetail()"
+  >
+    <ng-template>
+      @if (selectedMatch(); as match) {
+        <ion-content class="match-detail-content">
+          <div class="match-detail">
+            <header class="match-detail__header">
+              <button
+                class="match-detail__close"
+                type="button"
+                aria-label="Close match detail"
+                [disabled]="contactLinkBusyId() !== null"
+                (click)="closeMatchDetail()"
+              >
+                <ion-icon name="close-outline" aria-hidden="true"></ion-icon>
+              </button>
+
+              <div class="match-detail__avatar">{{ match.initials }}</div>
+              <p class="match-detail__eyebrow">Accepted match</p>
+              <h2>{{ match.displayName }}</h2>
+              <p>{{ match.channelLabel }}</p>
+            </header>
+
+            <section class="match-detail__summary" aria-label="Match details">
+              <div>
+                <span>Channel</span>
+                <strong>{{ match.channelLabel }}</strong>
+              </div>
+            </section>
+
+            <ion-button
+              class="whatsapp-button"
+              expand="block"
+              [disabled]="contactLinkBusyId() !== null"
+              (click)="openWhatsApp(match)"
+            >
+              @if (contactLinkBusyId() === match.id) {
+                <ion-spinner slot="start" name="crescent"></ion-spinner>
+                Opening...
+              } @else {
+                <ion-icon slot="start" name="logo-whatsapp"></ion-icon>
+                Open WhatsApp
+              }
+            </ion-button>
+          </div>
+        </ion-content>
+      }
+    </ng-template>
+  </ion-modal>
+</ion-content>

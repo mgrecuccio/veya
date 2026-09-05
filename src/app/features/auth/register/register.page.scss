@@ -1,0 +1,41 @@
+@use '../auth-form.shared';
+
+:host {
+  display: block;
+}
+
+.auth-shell {
+  max-width: 560px;
+  margin: 0 auto;
+  padding-top: 8px;
+}
+
+.auth-card {
+  margin-top: 6px;
+}
+
+.phone-input-row {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.phone-country-item,
+.phone-number-item {
+  min-width: 0;
+}
+
+.phone-country-item {
+  padding: 0 12px;
+}
+
+.auth-label-optional {
+  color: var(--app-color-text-muted);
+  font-weight: 400;
+}
+
+@media (max-width: 380px) {
+  .phone-input-row {
+    grid-template-columns: 118px minmax(0, 1fr);
+  }
+}

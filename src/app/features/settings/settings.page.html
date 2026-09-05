@@ -1,0 +1,307 @@
+<ion-content class="app-gradient-content settings-content" [fullscreen]="true" [scrollY]="true">
+  <header class="settings-topbar">
+    <div class="settings-brand">Veya</div>
+  <button
+    type="button"
+    class="settings-back-button"
+    aria-label="Go back"
+    (click)="goBack()"
+  >
+    <span class="settings-back-button__icon" aria-hidden="true">‹</span>
+  </button>
+  </header>
+
+  <div class="app-page settings-page">
+    <div class="settings-shell">
+      @if (vmState$ | async; as state) {
+        @if (state.kind === 'loading') {
+          <section class="app-surface settings-hero settings-skeleton">
+            <div class="skeleton-line skeleton-line--sm"></div>
+            <div class="skeleton-line skeleton-line--lg"></div>
+            <div class="skeleton-line skeleton-line--md"></div>
+          </section>
+
+          <section class="app-surface settings-card settings-skeleton">
+            <div class="skeleton-line skeleton-line--md"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+          </section>
+
+          <section class="app-surface settings-card settings-skeleton">
+            <div class="skeleton-line skeleton-line--md"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+          </section>
+        } @else if (state.kind === 'error') {
+          <section class="app-surface settings-card">
+            <div class="card-header">
+              <div>
+                <h1 class="card-title">Your settings</h1>
+                <p class="card-subtitle app-text-muted">{{ state.message }}</p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              class="primary-cta-card"
+              (click)="retry()"
+            >
+              <div class="primary-cta-card__content">
+                <span class="primary-cta-card__kicker">Retry</span>
+                <strong class="primary-cta-card__title">Reload settings</strong>
+                <span class="primary-cta-card__subtitle">
+                  Try fetching your profile and matching preferences again.
+                </span>
+              </div>
+              <span class="primary-cta-card__arrow">→</span>
+            </button>
+          </section>
+        } @else {
+          @let userProfile = state.data.userProfile;
+          @let userPreferences = state.data.userPreferences;
+
+          <section class="app-surface settings-hero">
+            <div class="settings-hero__glow"></div>
+
+            <div class="settings-hero__content">
+              <p class="settings-hero__eyebrow">Account</p>
+              <h1 class="settings-hero__title">
+                {{ userProfile.displayName || 'Your settings' }}
+              </h1>
+              <p class="settings-hero__subtitle">
+                {{ userProfile.email }} · {{ userProfile.status }}
+              </p>
+            </div>
+          </section>
+
+          <section class="app-surface settings-card">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">Profile</h2>
+                <p class="card-subtitle">
+                  {{ userProfile.timezone || userPreferences.timezone }}
+                </p>
+              </div>
+            </div>
+
+            @if (phoneSetupMessage$ | async; as phoneSetupMessage) {
+              <div class="settings-phone-setup-notice" role="status">
+                <ion-icon name="call-outline" aria-hidden="true"></ion-icon>
+                <span>{{ phoneSetupMessage }}</span>
+              </div>
+            }
+
+            <form class="settings-row-list" 
+              [formGroup]="profileForm"
+              (ngSubmit)="saveProfile()"
+               novalidate
+            >
+              <div class="settings-row">
+                <label class="settings-row__label" for="settings-display-name">
+                  Display name
+                </label>
+                <input
+                  id="settings-display-name"
+                  class="settings-row__control"
+                  type="text"
+                  autocomplete="name"
+                  placeholder="Display name"
+                  formControlName="displayName"
+                />
+              </div>
+              <div class="settings-row">
+                <label class="settings-row__label" for="settings-timezone">
+                  Timezone
+                </label>
+                <select
+                  id="settings-timezone"
+                  class="settings-row__control"
+                  aria-label="Timezone"
+                  formControlName="timezone"
+                >
+                  <option value="" disabled>Timezone</option>
+                  @for (timezone of timezoneOptions; track timezone.value) {
+                    <option [value]="timezone.value">
+                      {{ timezone.label }}
+                    </option>
+                  }
+                </select>
+              </div>
+              <div
+                class="settings-row settings-row--phone"
+                [class.settings-row--invalid]="isPhoneInvalid()"
+              >
+                <label class="settings-row__label" for="settings-phone-number">
+                  Phone number
+                </label>
+                <div class="settings-phone-input-row">
+                  <select
+                    class="settings-phone-country"
+                    aria-label="Country calling code"
+                    formControlName="phoneCountry"
+                  >
+                    @for (country of countries; track country.code) {
+                      <option [value]="country.code">
+                        {{ getCompactCountryLabel(country) }}
+                      </option>
+                    }
+                  </select>
+
+                  <input
+                    id="settings-phone-number"
+                    class="settings-row__control settings-phone-number"
+                    type="tel"
+                    inputmode="tel"
+                    autocomplete="tel-national"
+                    placeholder="470 12 34 56"
+                    formControlName="phoneNational"
+                  />
+                </div>
+              </div>
+              @if (isPhoneInvalid()) {
+                <div class="settings-error">
+                  <span>Enter a valid phone number.</span>
+                </div>
+              }
+              <div class="settings-form-actions">
+                <button
+                  class="settings-save-button"
+                  type="submit"
+                  [disabled]="profileForm.pristine || profileForm.invalid || isSavingProfile()"
+                >
+                  @if (isSavingProfile()) {
+                    <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
+                    <span>Saving profile...</span>
+                  } @else {
+                    <span>Save profile</span>
+                  }
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <section class="app-surface settings-card">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">Preferences</h2>
+                <p class="card-subtitle">
+                  {{ userPreferences.allowChat ? 'Chat matching on' : 'Chat matching off' }}
+                  ·
+                  {{ userPreferences.allowCall ? 'Call matching on' : 'Call matching off' }}
+                </p>
+              </div>
+            </div>
+
+            <form class="settings-row-list" [formGroup]="preferencesForm" (ngSubmit)="savePreferences()" novalidate>
+              <div class="settings-row">
+                <label class="settings-row__label" for="settings-allow-chat">
+                  Chat matching
+                </label>
+                <input
+                  id="settings-allow-chat"
+                  class="settings-row__toggle"
+                  type="checkbox"
+                  formControlName="allowChat"
+                />
+              </div>
+              <div class="settings-row">
+                <label class="settings-row__label" for="settings-allow-call">
+                  Call matching
+                </label>
+                <input
+                  id="settings-allow-call"
+                  class="settings-row__toggle"
+                  type="checkbox"
+                  formControlName="allowCall"
+                />
+              </div>
+              <div class="settings-row">
+                <label class="settings-row__label" for="settings-quiet-hours-start">
+                  Quiet hours start
+                </label>
+                <input
+                  id="settings-quiet-hours-start"
+                  class="settings-row__control"
+                  type="time"
+                  formControlName="quietHoursStart"
+                />
+              </div>
+              <div class="settings-row">
+                <label class="settings-row__label" for="settings-quiet-hours-end">
+                  Quiet hours end
+                </label>
+                <input
+                  id="settings-quiet-hours-end"
+                  class="settings-row__control"
+                  type="time"
+                  formControlName="quietHoursEnd"
+                />
+              </div>
+              <div class="settings-row">
+                <label class="settings-row__label" for="settings-push-notifications">
+                  Push notifications
+                </label>
+                <input
+                  id="settings-push-notifications"
+                  class="settings-row__toggle"
+                  type="checkbox"
+                  formControlName="pushNotificationsEnabled"
+                />
+              </div>
+              @if (isPushPermissionBlocked()) {
+                <p class="settings-permission-note" role="status">
+                  Notifications are blocked in device settings.
+                </p>
+              }
+              <div class="settings-row">
+                <label class="settings-row__label" for="settings-suggestion-notifications">
+                  Suggestion notifications
+                </label>
+                <input
+                  id="settings-suggestion-notifications"
+                  class="settings-row__toggle"
+                  type="checkbox"
+                  formControlName="suggestionNotificationsEnabled"
+                />
+              </div>
+              <div class="settings-form-actions">
+                <button
+                  class="settings-save-button"
+                  type="submit"
+                  [disabled]="preferencesForm.pristine || preferencesForm.invalid || isSavingPreferences()"
+                >
+                  @if (isSavingPreferences()) {
+                    <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
+                    <span>Saving preferences...</span>
+                  } @else {
+                    <span>Save preferences</span>
+                  }
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <footer class="settings-footer">
+            <button
+              class="logout-button"
+              type="button"
+              [disabled]="isLoggingOut()"
+              (click)="logout()"
+            >
+              @if (isLoggingOut()) {
+                <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
+                <span>Logging out...</span>
+              } @else {
+                <span>Logout</span>
+              }
+            </button>
+            <p class="settings-version">Version {{ appVersion }}</p>
+          </footer>
+        }
+      }
+    </div>
+  </div>
+
+</ion-content>

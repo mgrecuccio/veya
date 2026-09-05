@@ -1,0 +1,9 @@
+<button
+  class="app-cta-button"
+  [class.app-cta-button--full]="expand === 'full'"
+  [disabled]="disabled"
+  type="button"
+  (click)="buttonClick.emit($event)"
+>
+  <ng-content></ng-content>
+</button>
