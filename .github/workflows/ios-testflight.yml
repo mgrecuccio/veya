@@ -39,10 +39,13 @@ jobs:
         run: |
           certificate_path="$RUNNER_TEMP/ios_distribution.p12"
           provisioning_profile_path="$RUNNER_TEMP/Veya_App_Store.mobileprovision"
+          provisioning_profile_plist_path="$RUNNER_TEMP/Veya_App_Store.plist"
           keychain_path="$RUNNER_TEMP/app-signing.keychain-db"
 
           echo "${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_BASE64 }}" | base64 --decode > "$certificate_path"
           echo "${{ secrets.IOS_APP_STORE_PROVISIONING_PROFILE_BASE64 }}" | base64 --decode > "$provisioning_profile_path"
+          test -s "$certificate_path"
+          test -s "$provisioning_profile_path"
 
           security create-keychain -p "${{ secrets.IOS_KEYCHAIN_PASSWORD }}" "$keychain_path"
           security set-keychain-settings -lut 21600 "$keychain_path"
@@ -52,7 +55,8 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple: -s -k "${{ secrets.IOS_KEYCHAIN_PASSWORD }}" "$keychain_path"
 
           mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
-          profile_uuid="$(security cms -D -i "$provisioning_profile_path" | /usr/libexec/PlistBuddy -c 'Print UUID' /dev/stdin)"
+          security cms -D -i "$provisioning_profile_path" > "$provisioning_profile_plist_path"
+          profile_uuid="$(/usr/libexec/PlistBuddy -c 'Print UUID' "$provisioning_profile_plist_path")"
           cp "$provisioning_profile_path" "$HOME/Library/MobileDevice/Provisioning Profiles/$profile_uuid.mobileprovision"
 
       - name: Archive app
