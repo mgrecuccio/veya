@@ -5,6 +5,8 @@ def releaseKeystorePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
 def releaseKeyAlias = System.getenv("ANDROID_KEY_ALIAS")
 def releaseKeyPassword = System.getenv("ANDROID_KEY_PASSWORD")
 def releaseSigningConfigured = releaseKeystorePath && releaseKeystorePassword && releaseKeyAlias && releaseKeyPassword
+def appVersionCode = (project.findProperty('appVersionCode') ?: '2').toString().toInteger()
+def appVersionName = (project.findProperty('appVersionName') ?: '1.0.0').toString()
 
 android {
     namespace = "com.mgrtech.veya"
@@ -13,8 +15,8 @@ android {
         applicationId "com.mgrtech.veya"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode (project.findProperty('appVersionCode') ?: 2) as Integer
-        versionName (project.findProperty('appVersionName') ?: '1.0.0')
+        versionCode appVersionCode
+        versionName appVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
