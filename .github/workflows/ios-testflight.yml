@@ -29,18 +29,31 @@ jobs:
       - name: Sync iOS project
         run: npx cap sync ios
 
-      - name: Configure automatic signing for CI
-        run: |
-          perl -0pi -e 's/CODE_SIGN_STYLE = Manual;/CODE_SIGN_STYLE = Automatic;/g' ios/App/App.xcodeproj/project.pbxproj
-          perl -0pi -e 's/DEVELOPMENT_TEAM = "";/DEVELOPMENT_TEAM = 3ZYYQQB6L8;/g' ios/App/App.xcodeproj/project.pbxproj
-          perl -0pi -e 's/\n\s*"CODE_SIGN_IDENTITY\[sdk=iphoneos\*\]" = "iPhone Distribution";//g' ios/App/App.xcodeproj/project.pbxproj
-          perl -0pi -e 's/\n\s*"PROVISIONING_PROFILE_SPECIFIER\[sdk=iphoneos\*\]" = "Veya App Store";//g' ios/App/App.xcodeproj/project.pbxproj
-
       - name: Create App Store Connect API key
         run: |
           app_store_connect_api_key_path="$RUNNER_TEMP/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}.p8"
           echo "${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}" | base64 --decode > "$app_store_connect_api_key_path"
           echo "APP_STORE_CONNECT_API_KEY_PATH=$app_store_connect_api_key_path" >> "$GITHUB_ENV"
+
+      - name: Install iOS signing assets
+        run: |
+          certificate_path="$RUNNER_TEMP/ios_distribution.p12"
+          provisioning_profile_path="$RUNNER_TEMP/Veya_App_Store.mobileprovision"
+          keychain_path="$RUNNER_TEMP/app-signing.keychain-db"
+
+          echo "${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_BASE64 }}" | base64 --decode > "$certificate_path"
+          echo "${{ secrets.IOS_APP_STORE_PROVISIONING_PROFILE_BASE64 }}" | base64 --decode > "$provisioning_profile_path"
+
+          security create-keychain -p "${{ secrets.IOS_KEYCHAIN_PASSWORD }}" "$keychain_path"
+          security set-keychain-settings -lut 21600 "$keychain_path"
+          security unlock-keychain -p "${{ secrets.IOS_KEYCHAIN_PASSWORD }}" "$keychain_path"
+          security import "$certificate_path" -P "${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_PASSWORD }}" -A -t cert -f pkcs12 -k "$keychain_path"
+          security list-keychain -d user -s "$keychain_path"
+          security set-key-partition-list -S apple-tool:,apple: -s -k "${{ secrets.IOS_KEYCHAIN_PASSWORD }}" "$keychain_path"
+
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          profile_uuid="$(security cms -D -i "$provisioning_profile_path" | /usr/libexec/PlistBuddy -c 'Print UUID' /dev/stdin)"
+          cp "$provisioning_profile_path" "$HOME/Library/MobileDevice/Provisioning Profiles/$profile_uuid.mobileprovision"
 
       - name: Archive app
         run: |
@@ -50,13 +63,10 @@ jobs:
             -configuration Release \
             -destination generic/platform=iOS \
             -archivePath build/Veya.xcarchive \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$APP_STORE_CONNECT_API_KEY_PATH" \
-            -authenticationKeyID "${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}" \
-            -authenticationKeyIssuerID "${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" \
             DEVELOPMENT_TEAM=3ZYYQQB6L8 \
-            CODE_SIGN_STYLE=Automatic \
-            CODE_SIGN_IDENTITY="Apple Development"
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            PROVISIONING_PROFILE_SPECIFIER="Veya App Store"
 
       - name: Create export options
         run: |
@@ -70,7 +80,12 @@ jobs:
             <key>teamID</key>
             <string>3ZYYQQB6L8</string>
             <key>signingStyle</key>
-            <string>automatic</string>
+            <string>manual</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>com.mgrtech.veya</key>
+              <string>Veya App Store</string>
+            </dict>
             <key>stripSwiftSymbols</key>
             <true/>
             <key>uploadBitcode</key>
@@ -86,11 +101,7 @@ jobs:
           xcodebuild -exportArchive \
             -archivePath build/Veya.xcarchive \
             -exportPath build/export \
-            -exportOptionsPlist ExportOptions.plist \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$APP_STORE_CONNECT_API_KEY_PATH" \
-            -authenticationKeyID "${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}" \
-            -authenticationKeyIssuerID "${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}"
+            -exportOptionsPlist ExportOptions.plist
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
