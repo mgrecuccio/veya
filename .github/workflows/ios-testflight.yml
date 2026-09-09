@@ -49,7 +49,10 @@ jobs:
             -authenticationKeyIssuerID "${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" \
             DEVELOPMENT_TEAM=3ZYYQQB6L8 \
             CODE_SIGN_STYLE=Automatic \
-            PROVISIONING_PROFILE_SPECIFIER=
+            CODE_SIGN_IDENTITY="Apple Development" \
+            "CODE_SIGN_IDENTITY[sdk=iphoneos*]=Apple Development" \
+            PROVISIONING_PROFILE_SPECIFIER= \
+            "PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]="
 
       - name: Create export options
         run: |
