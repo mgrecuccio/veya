@@ -29,6 +29,13 @@ jobs:
       - name: Sync iOS project
         run: npx cap sync ios
 
+      - name: Configure automatic signing for CI
+        run: |
+          perl -0pi -e 's/CODE_SIGN_STYLE = Manual;/CODE_SIGN_STYLE = Automatic;/g' ios/App/App.xcodeproj/project.pbxproj
+          perl -0pi -e 's/DEVELOPMENT_TEAM = "";/DEVELOPMENT_TEAM = 3ZYYQQB6L8;/g' ios/App/App.xcodeproj/project.pbxproj
+          perl -0pi -e 's/\n\s*"CODE_SIGN_IDENTITY\[sdk=iphoneos\*\]" = "iPhone Distribution";//g' ios/App/App.xcodeproj/project.pbxproj
+          perl -0pi -e 's/\n\s*"PROVISIONING_PROFILE_SPECIFIER\[sdk=iphoneos\*\]" = "Veya App Store";//g' ios/App/App.xcodeproj/project.pbxproj
+
       - name: Create App Store Connect API key
         run: |
           app_store_connect_api_key_path="$RUNNER_TEMP/AuthKey_${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}.p8"
@@ -49,10 +56,7 @@ jobs:
             -authenticationKeyIssuerID "${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" \
             DEVELOPMENT_TEAM=3ZYYQQB6L8 \
             CODE_SIGN_STYLE=Automatic \
-            CODE_SIGN_IDENTITY="Apple Development" \
-            "CODE_SIGN_IDENTITY[sdk=iphoneos*]=Apple Development" \
-            PROVISIONING_PROFILE_SPECIFIER= \
-            "PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]="
+            CODE_SIGN_IDENTITY="Apple Development"
 
       - name: Create export options
         run: |
