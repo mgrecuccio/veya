@@ -107,6 +107,15 @@ npx cap sync android
 
 Without `google-services.json`, Android push token registration cannot work. The app will keep the in-app notification preference, but it will skip native token registration for that build.
 
+For iOS:
+
+1. Register the Firebase iOS app with bundle identifier `com.mgrtech.veya` and upload the Apple APNs authentication key in Firebase.
+2. Add the real Firebase configuration at `ios/App/App/GoogleService-Info.plist`. The committed example contains placeholders only.
+3. Enable Push Notifications for the App ID and Xcode target, then use a provisioning profile for the intended environment.
+4. Build the web application and run `npx cap sync ios` before archiving.
+
+The native iOS bridge associates the APNs token with Firebase Messaging and forwards only the resulting FCM registration token to the existing Capacitor token stream. Do not hard-code a production `aps-environment`; verify the entitlement in the signed archive.
+
 ## Getting Started
 
 ### 1. Install dependencies

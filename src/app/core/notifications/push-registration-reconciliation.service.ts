@@ -4,6 +4,7 @@ import type { PluginListenerHandle } from '@capacitor/core';
 import { EMPTY, Subject, firstValueFrom, of } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, mapTo, switchMap, take, takeUntil, tap } from 'rxjs/operators';
 import { NotificationDevicesService } from '../api/services/notification-devices.service';
+import { DeviceTokenPlatform } from '../api/request/register-device-token.request';
 import { UserService } from '../api/services/user.service';
 import { AuthService } from '../auth/auth.service';
 import { CapacitorPushPlatformService, PushDeviceToken, PushPermissionState } from './capacitor-push-platform.service';
@@ -75,11 +76,17 @@ export class PushRegistrationReconciliationService implements OnDestroy {
     return permission;
   }
 
+  getDevicePlatform(): DeviceTokenPlatform {
+    return this.pushPlatform.getDevicePlatform();
+  }
+
   async reconcile(options: PushReconciliationOptions = {}): Promise<void> {
     if (!this.authService.getAccessToken()) {
       this.registrationStatus.set('idle');
       return;
     }
+
+    let stage = 'backend-registration';
 
     try {
       const preferences = await firstValueFrom(this.userService.getPreferences().pipe(take(1)));
@@ -90,12 +97,14 @@ export class PushRegistrationReconciliationService implements OnDestroy {
         return;
       }
 
+      stage = 'permission-check';
       let permission = await this.pushPlatform.checkPermission();
 
       if (
         options.requestPermission &&
         (permission === 'prompt' || permission === 'prompt-with-rationale')
       ) {
+        stage = 'permission-request';
         permission = await this.pushPlatform.requestPermission();
       }
 
@@ -117,9 +126,15 @@ export class PushRegistrationReconciliationService implements OnDestroy {
       }
 
       this.registrationStatus.set('registering');
+      stage = 'apns-registration';
       await this.pushPlatform.registerWithPlatform();
     } catch (error) {
-      console.warn('[PushRegistrationReconciliationService] Push reconciliation failed', error);
+      console.warn('[PushRegistrationReconciliationService] Push reconciliation failed', {
+        stage,
+        platform: this.pushPlatform.getDevicePlatform(),
+        status: 'error',
+        error,
+      });
       this.registrationStatus.set('error');
     }
   }
@@ -137,7 +152,11 @@ export class PushRegistrationReconciliationService implements OnDestroy {
         tap(() => this.pushPlatform.clearLastToken()),
         mapTo(void 0),
         catchError((error) => {
-          console.warn('[PushRegistrationReconciliationService] Device token disable failed', error);
+          console.warn('[PushRegistrationReconciliationService] Device token disable failed', {
+            stage: 'backend-registration',
+            status: 'disable-error',
+            error,
+          });
           return of(void 0);
         }),
       ),
@@ -164,13 +183,21 @@ export class PushRegistrationReconciliationService implements OnDestroy {
         platform: deviceToken.platform,
       })),
       catchError((error) => {
-        console.warn('[PushRegistrationReconciliationService] Device token registration failed', error);
+        console.warn('[PushRegistrationReconciliationService] Device token registration failed', {
+          stage: 'backend-registration',
+          platform: deviceToken.platform,
+          status: 'error',
+          error,
+        });
         this.registrationStatus.set('error');
         return EMPTY;
       }),
       takeUntil(this.destroy$),
     ).subscribe({
-      next: () => this.registrationStatus.set('registered'),
+      next: () => {
+        this.pushPlatform.rememberRegisteredToken(deviceToken.token);
+        this.registrationStatus.set('registered');
+      },
     });
   }
 }

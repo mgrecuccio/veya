@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonicModule } from '@ionic/angular';
@@ -10,6 +10,7 @@ import { authenticatedSessionReload } from 'src/app/core/auth/authenticated-sess
 import { getApiErrorMessage } from 'src/app/core/api/api-error.util';
 import { MatchesService } from 'src/app/core/api/services/matches.service';
 import { PushRegistrationReconciliationService } from 'src/app/core/notifications/push-registration-reconciliation.service';
+import { DEVICE_TOKEN_PLATFORM } from 'src/app/core/api/request/register-device-token.request';
 import { PhoneNumberSetupService } from 'src/app/shared/phone/phone-number-setup.service';
 import { AppToastColor, AppToastService } from 'src/app/shared/toast/app-toast.service';
 import { APP_VERSION } from 'src/environments/app-version';
@@ -91,7 +92,22 @@ export class SettingsPage {
     readonly isSavingProfile = signal(false);
     readonly isSavingPreferences = signal(false);
     readonly isLoggingOut = signal(false);
-    readonly isPushPermissionBlocked = signal(false);
+    readonly isEnablingPushOnDevice = signal(false);
+    readonly accountPushPreferenceEnabled = signal(false);
+    readonly pushPermissionState = computed(() => this.pushRegistration.permissionState());
+    readonly showPushDeviceEnablement = computed(() => {
+      const permission = this.pushPermissionState();
+      return this.accountPushPreferenceEnabled()
+        && (permission === 'prompt' || permission === 'prompt-with-rationale');
+    });
+    readonly isPushPermissionBlocked = computed(() =>
+      this.accountPushPreferenceEnabled() && this.pushPermissionState() === 'denied',
+    );
+    readonly isPushRegistrationFailed = computed(() =>
+      this.accountPushPreferenceEnabled()
+        && this.pushPermissionState() === 'granted'
+        && this.pushRegistration.registrationStatus() === 'error',
+    );
     profileError: string | null = null;
     preferencesError: string | null = null;
 
@@ -261,8 +277,10 @@ export class SettingsPage {
       }).subscribe({
         next: (preferences) => {
           this.isSavingPreferences.set(false);
+          this.accountPushPreferenceEnabled.set(preferences.pushNotificationsEnabled);
           void this.pushRegistration.reconcile({
-            requestPermission: preferences.pushNotificationsEnabled,
+            requestPermission: preferences.pushNotificationsEnabled
+              && this.pushRegistration.getDevicePlatform() !== DEVICE_TOKEN_PLATFORM.IOS,
           });
           void this.refreshNotificationPermissionDisplay(
             preferences.pushNotificationsEnabled,
@@ -278,6 +296,34 @@ export class SettingsPage {
           );
         }
       });
+    }
+
+    async enablePushOnThisDevice(): Promise<void> {
+      if (this.isEnablingPushOnDevice() || !this.showPushDeviceEnablement()) {
+        return;
+      }
+
+      this.isEnablingPushOnDevice.set(true);
+
+      try {
+        await this.pushRegistration.reconcile({ requestPermission: true });
+
+        if (this.pushPermissionState() === 'granted') {
+          this.showToast('Notifications enabled on this device.', 'success');
+        } else if (this.pushPermissionState() === 'denied') {
+          this.showToast(
+            'Notifications are blocked. Enable them in iOS Settings to continue.',
+            'danger',
+          );
+        } else if (this.pushRegistration.registrationStatus() === 'error') {
+          this.showToast(
+            'We couldn’t register this device. Please try again.',
+            'danger',
+          );
+        }
+      } finally {
+        this.isEnablingPushOnDevice.set(false);
+      }
     }
 
     logout(): void {
@@ -403,6 +449,9 @@ export class SettingsPage {
         pushNotificationsEnabled: data.userPreferences.pushNotificationsEnabled,
         suggestionNotificationsEnabled: data.userPreferences.suggestionNotificationsEnabled,
       });
+      this.accountPushPreferenceEnabled.set(
+        data.userPreferences.pushNotificationsEnabled,
+      );
 
       this.profileForm.markAsPristine();
       this.preferencesForm.markAsPristine();
@@ -411,9 +460,15 @@ export class SettingsPage {
     private async refreshNotificationPermissionDisplay(
       pushNotificationsEnabled: boolean,
     ): Promise<void> {
-      const permission = await this.pushRegistration.refreshPermissionState();
-      this.isPushPermissionBlocked.set(
-        pushNotificationsEnabled && permission === 'denied',
-      );
+      try {
+        await this.pushRegistration.refreshPermissionState();
+        this.accountPushPreferenceEnabled.set(pushNotificationsEnabled);
+      } catch (error) {
+        console.warn('[SettingsPage] Notification permission refresh failed', {
+          stage: 'permission-check',
+          status: 'error',
+          error,
+        });
+      }
     }
 }
