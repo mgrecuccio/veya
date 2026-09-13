@@ -13,6 +13,7 @@ import { UserService } from 'src/app/core/api/services/user.service';
 import { AuthService } from 'src/app/core/auth/auth.service';
 import { authenticatedSessionReload } from 'src/app/core/auth/authenticated-session-reload.util';
 import { PushNotificationRefreshService } from 'src/app/core/notifications/push-notification-refresh.service';
+import { ExternalUrlLauncherService } from 'src/app/core/platform/external-url-launcher.service';
 import {
   PHONE_REQUIRED_FOR_ACCEPTANCE,
   PHONE_REQUIRED_FOR_PROPOSAL_CREATION,
@@ -86,6 +87,7 @@ export class MatchesPage {
   private readonly authService = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly pushNotificationRefreshService = inject(PushNotificationRefreshService);
+  private readonly externalUrlLauncher = inject(ExternalUrlLauncherService);
   private readonly reload$ = new Subject<void>();
   private readonly suggestionsReload$ = new Subject<void>();
   private readonly incomingReload$ = new Subject<void>();
@@ -311,22 +313,15 @@ export class MatchesPage {
 
     this.matchesService.createContactLink(match.id).subscribe({
       next: (contactLink) => {
-        this.contactLinkBusyId.set(null);
         const url = contactLink.url.trim();
 
         if (!url) {
+          this.contactLinkBusyId.set(null);
           this.showToast('WhatsApp is not available for this match right now.');
           return;
         }
 
-        const openedWindow = window.open(url, '_blank');
-
-        if (!openedWindow) {
-          this.showToast('We could not open WhatsApp. Make sure it is installed and try again.');
-          return;
-        }
-
-        openedWindow.opener = null;
+        void this.openContactLink(url);
       },
       error: (error: unknown) => {
         this.contactLinkBusyId.set(null);
@@ -335,6 +330,20 @@ export class MatchesPage {
         );
       },
     });
+  }
+
+  private async openContactLink(url: string): Promise<void> {
+    try {
+      const opened = await this.externalUrlLauncher.open(url);
+
+      if (!opened) {
+        throw new Error('The contact link did not open.');
+      }
+    } catch {
+      this.showToast('We could not open WhatsApp. Make sure it is installed and try again.');
+    } finally {
+      this.contactLinkBusyId.set(null);
+    }
   }
 
   private mapSuggestedMatch(suggestion: SuggestedMatchView): SuggestedMatchVm {

@@ -7,6 +7,7 @@ import { SuggestedMatchView } from 'src/app/core/api/model/suggested-match-view.
 import { MatchesService } from 'src/app/core/api/services/matches.service';
 import { UserService } from 'src/app/core/api/services/user.service';
 import { AuthService } from 'src/app/core/auth/auth.service';
+import { ExternalUrlLauncherService } from 'src/app/core/platform/external-url-launcher.service';
 import { PhoneNumberSetupService } from 'src/app/shared/phone/phone-number-setup.service';
 import { AppToastService } from 'src/app/shared/toast/app-toast.service';
 import { MatchesPage } from './matches.page';
@@ -18,6 +19,7 @@ describe('MatchesPage', () => {
   let userService: jasmine.SpyObj<UserService>;
   let phoneNumberSetupService: PhoneNumberSetupService;
   let appToastService: jasmine.SpyObj<AppToastService>;
+  let externalUrlLauncher: jasmine.SpyObj<ExternalUrlLauncherService>;
   let router: Router;
 
   beforeEach(async () => {
@@ -48,6 +50,13 @@ describe('MatchesPage', () => {
           ),
         },
         {
+          provide: ExternalUrlLauncherService,
+          useValue: jasmine.createSpyObj<ExternalUrlLauncherService>(
+            'ExternalUrlLauncherService',
+            ['open'],
+          ),
+        },
+        {
           provide: UserService,
           useValue: jasmine.createSpyObj<UserService>(
             'UserService',
@@ -69,6 +78,9 @@ describe('MatchesPage', () => {
     userService = TestBed.inject(UserService) as jasmine.SpyObj<UserService>;
     phoneNumberSetupService = TestBed.inject(PhoneNumberSetupService);
     appToastService = TestBed.inject(AppToastService) as jasmine.SpyObj<AppToastService>;
+    externalUrlLauncher = TestBed.inject(
+      ExternalUrlLauncherService,
+    ) as jasmine.SpyObj<ExternalUrlLauncherService>;
     router = TestBed.inject(Router);
     matchesService.getSuggestions.and.returnValue(of([]));
     matchesService.getIncoming.and.returnValue(of([]));
@@ -82,6 +94,7 @@ describe('MatchesPage', () => {
       status: 'ACTIVE',
     }));
     appToastService.show.and.returnValue(Promise.resolve());
+    externalUrlLauncher.open.and.resolveTo(true);
     spyOn(router, 'navigateByUrl').and.returnValue(Promise.resolve(true));
   });
 
@@ -711,8 +724,6 @@ describe('MatchesPage', () => {
       url: 'https://backend.example/contact-link/42',
       expiresAt: '2026-06-12T12:00:00Z',
     }));
-    const openSpy = spyOn(window, 'open').and.returnValue(window);
-
     fixture.detectChanges();
 
     const matchButton = fixture.nativeElement.querySelector('.match-contact-button') as HTMLButtonElement;
@@ -725,9 +736,8 @@ describe('MatchesPage', () => {
 
     expect(component.selectedMatch()).toBeNull();
     expect(matchesService.createContactLink).toHaveBeenCalledOnceWith(42);
-    expect(openSpy).toHaveBeenCalledOnceWith(
+    expect(externalUrlLauncher.open).toHaveBeenCalledOnceWith(
       'https://backend.example/contact-link/42',
-      '_blank',
     );
   });
 
@@ -738,8 +748,6 @@ describe('MatchesPage', () => {
       url: 'https://backend.example/contact-link/42',
       expiresAt: '2026-06-12T12:00:00Z',
     }));
-    const openSpy = spyOn(window, 'open').and.returnValue(window);
-
     component.openWhatsApp({
       id: match.id,
       displayName: match.initiatorDisplayName,
@@ -748,9 +756,8 @@ describe('MatchesPage', () => {
     });
 
     expect(matchesService.createContactLink).toHaveBeenCalledOnceWith(42);
-    expect(openSpy).toHaveBeenCalledOnceWith(
+    expect(externalUrlLauncher.open).toHaveBeenCalledOnceWith(
       'https://backend.example/contact-link/42',
-      '_blank',
     );
     expect(appToastService.show).not.toHaveBeenCalled();
   });
@@ -761,7 +768,7 @@ describe('MatchesPage', () => {
       url: 'https://backend.example/contact-link/42',
       expiresAt: '2026-06-12T12:00:00Z',
     }));
-    spyOn(window, 'open').and.returnValue(null);
+    externalUrlLauncher.open.and.resolveTo(false);
 
     component.openWhatsApp({
       id: 42,
@@ -787,8 +794,6 @@ describe('MatchesPage', () => {
         },
       })),
     );
-    const openSpy = spyOn(window, 'open');
-
     component.openWhatsApp({
       id: 42,
       displayName: 'Alex Morgan',
@@ -797,7 +802,7 @@ describe('MatchesPage', () => {
     });
     flushMicrotasks();
 
-    expect(openSpy).not.toHaveBeenCalled();
+    expect(externalUrlLauncher.open).not.toHaveBeenCalled();
     expect(appToastService.show).toHaveBeenCalledWith(
       'Add your phone number before contacting this match.',
       'danger',
