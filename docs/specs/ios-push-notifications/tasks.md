@@ -1,6 +1,6 @@
 # iOS Push Notifications Tasks
 
-Status: Implementation complete; signed-device and TestFlight acceptance pending
+Status: Done
 
 ## 1. Permission State And Device Enablement
 
