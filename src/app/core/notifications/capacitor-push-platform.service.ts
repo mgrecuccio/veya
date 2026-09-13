@@ -48,7 +48,6 @@ export class CapacitorPushPlatformService {
             platform: this.getDevicePlatform(),
           };
 
-          this.setLastToken(value);
           this.tokenSubject.next(token);
         });
       }),
@@ -106,6 +105,10 @@ export class CapacitorPushPlatformService {
     window.localStorage.removeItem(LAST_PUSH_TOKEN_KEY);
   }
 
+  rememberRegisteredToken(token: string): void {
+    window.localStorage.setItem(LAST_PUSH_TOKEN_KEY, token);
+  }
+
   async removeListeners(): Promise<void> {
     const listeners = this.listeners;
     this.listeners = [];
@@ -135,7 +138,4 @@ export class CapacitorPushPlatformService {
     return this.platform.is('capacitor') && environment.nativePushNotificationsConfigured;
   }
 
-  private setLastToken(token: string): void {
-    window.localStorage.setItem(LAST_PUSH_TOKEN_KEY, token);
-  }
 }

@@ -17,6 +17,7 @@ Each feature/workstream spec uses:
 | `match-detail-whatsapp-handoff/` | 10 | Done | Accepted match detail and backend contact link |
 | `phone-number-setup/` | 11, 12 | Planned | Phone setup redirects and retry behavior |
 | `push-notifications/` | 13, 14, 15 | Planned | Device registration, Firebase receipt, routing |
+| `ios-push-notifications/` | Follow-up to 13, 14, 15 | Planned | Per-device iOS permission enablement, FCM token registration, and TestFlight validation |
 | `contact-invitations/` | 5 | Planned | Reject/cancel contact invitation actions |
 | `error-handling/` | 17 | Done | Backend error code handling |
 | `mvp-smoke/` | 18, 19 | Planned | Test coverage and release smoke checklist |

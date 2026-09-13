@@ -252,8 +252,28 @@
               </div>
               @if (isPushPermissionBlocked()) {
                 <p class="settings-permission-note" role="status">
-                  Notifications are blocked in device settings.
+                  Notifications are blocked on this device. Enable them in iOS Settings.
                 </p>
+              }
+              @if (isPushRegistrationFailed()) {
+                <p class="settings-permission-note" role="alert">
+                  This device couldn’t be registered. Veya will retry when the app resumes.
+                </p>
+              }
+              @if (showPushDeviceEnablement()) {
+                <button
+                  class="settings-save-button settings-device-notification-button"
+                  type="button"
+                  [disabled]="isEnablingPushOnDevice()"
+                  (click)="enablePushOnThisDevice()"
+                >
+                  @if (isEnablingPushOnDevice()) {
+                    <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
+                    <span>Enabling notifications...</span>
+                  } @else {
+                    <span>Enable notifications on this device</span>
+                  }
+                </button>
               }
               <div class="settings-row">
                 <label class="settings-row__label" for="settings-suggestion-notifications">

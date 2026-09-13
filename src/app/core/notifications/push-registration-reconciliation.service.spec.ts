@@ -61,6 +61,8 @@ describe('PushRegistrationReconciliationService', () => {
               'registerWithPlatform',
               'getLastToken',
               'clearLastToken',
+              'rememberRegisteredToken',
+              'getDevicePlatform',
               'removeListeners',
             ],
             { tokens$: tokens$.asObservable() },
@@ -134,7 +136,35 @@ describe('PushRegistrationReconciliationService', () => {
       token: 'fresh-token',
       platform: 'ANDROID',
     });
+    expect(pushPlatform.rememberRegisteredToken).toHaveBeenCalledOnceWith('fresh-token');
     expect(service.registrationStatus()).toBe('registered');
+  });
+
+  it('should register an emitted iOS FCM token as an iOS backend device', () => {
+    service.initialize();
+
+    tokens$.next({
+      token: 'ios-fcm-token',
+      platform: 'IOS',
+    });
+
+    expect(devicesService.registerDevice).toHaveBeenCalledWith({
+      token: 'ios-fcm-token',
+      platform: 'IOS',
+    });
+    expect(pushPlatform.rememberRegisteredToken).toHaveBeenCalledOnceWith('ios-fcm-token');
+  });
+
+  it('should retain the previous token when refreshed-token registration fails', () => {
+    const registration$ = new Subject<void>();
+    devicesService.registerDevice.and.returnValue(registration$);
+    service.initialize();
+
+    tokens$.next({ token: 'rotated-token', platform: 'IOS' });
+    registration$.error(new Error('registration failed'));
+
+    expect(pushPlatform.rememberRegisteredToken).not.toHaveBeenCalled();
+    expect(service.registrationStatus()).toBe('error');
   });
 
   function mockPreferences(

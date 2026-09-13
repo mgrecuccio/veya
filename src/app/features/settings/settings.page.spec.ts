@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, ParamMap, Router } from '@angular/router';
 import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
@@ -20,9 +21,13 @@ describe('SettingsPage', () => {
     let pushRegistration: jasmine.SpyObj<PushRegistrationReconciliationService>;
     let router: jasmine.SpyObj<Router>;
     let queryParamMap$: BehaviorSubject<ParamMap>;
+    let permissionState: ReturnType<typeof signal<'prompt' | 'prompt-with-rationale' | 'granted' | 'denied' | 'unsupported'>>;
+    let registrationStatus: ReturnType<typeof signal<'idle' | 'unsupported' | 'permission-prompt' | 'permission-denied' | 'registering' | 'registered' | 'disabled' | 'error'>>;
 
     beforeEach(async () => {
         queryParamMap$ = new BehaviorSubject(convertToParamMap({}));
+        permissionState = signal('granted');
+        registrationStatus = signal('idle');
 
         await TestBed.configureTestingModule({
             imports: [SettingsPage],
@@ -74,7 +79,13 @@ describe('SettingsPage', () => {
                     provide: PushRegistrationReconciliationService,
                     useValue: jasmine.createSpyObj<PushRegistrationReconciliationService>(
                         'PushRegistrationReconciliationService',
-                        ['refreshPermissionState', 'reconcile', 'disableCurrentDevice'],
+                        [
+                            'refreshPermissionState',
+                            'reconcile',
+                            'disableCurrentDevice',
+                            'getDevicePlatform',
+                        ],
+                        { permissionState, registrationStatus },
                     ),
                 },
             ],
@@ -93,6 +104,7 @@ describe('SettingsPage', () => {
         pushRegistration.refreshPermissionState.and.returnValue(Promise.resolve('granted'));
         pushRegistration.reconcile.and.returnValue(Promise.resolve());
         pushRegistration.disableCurrentDevice.and.returnValue(Promise.resolve());
+        pushRegistration.getDevicePlatform.and.returnValue('IOS');
         authService.logoutAndRevoke.and.returnValue(of(void 0));
         matchesService.createMatch.and.returnValue(of({
             id: 77,
@@ -497,6 +509,30 @@ describe('SettingsPage', () => {
         sub.unsubscribe();
     }));
 
+    it('should keep Android save-triggered permission behavior unchanged', () => {
+        const data = mockPageData();
+        dataService.savePreferences.and.returnValue(of(data.userPreferences));
+        pushRegistration.getDevicePlatform.and.returnValue('ANDROID');
+        component.preferencesForm.patchValue({ pushNotificationsEnabled: true });
+        component.preferencesForm.markAsDirty();
+
+        component.savePreferences();
+
+        expect(pushRegistration.reconcile).toHaveBeenCalledOnceWith({ requestPermission: true });
+    });
+
+    it('should wait for the explicit device action before requesting iOS permission', () => {
+        const data = mockPageData();
+        dataService.savePreferences.and.returnValue(of(data.userPreferences));
+        pushRegistration.getDevicePlatform.and.returnValue('IOS');
+        component.preferencesForm.patchValue({ pushNotificationsEnabled: true });
+        component.preferencesForm.markAsDirty();
+
+        component.savePreferences();
+
+        expect(pushRegistration.reconcile).toHaveBeenCalledOnceWith({ requestPermission: false });
+    });
+
     it('should show preferences saving state while the save request is pending', fakeAsync(() => {
         const data = mockPageData();
         const save$ = new Subject<SettingsPageData['userPreferences']>();
@@ -612,6 +648,64 @@ describe('SettingsPage', () => {
             color: 'danger',
         });
     }));
+
+    it('should show device enablement for an enabled account preference with prompt permission', () => {
+        permissionState.set('prompt');
+        dataService.getPageData.and.returnValue(of(mockPageData()));
+
+        fixture.detectChanges();
+
+        const button = fixture.nativeElement.querySelector(
+            '.settings-device-notification-button',
+        ) as HTMLButtonElement;
+        expect(button).not.toBeNull();
+        expect(button.textContent).toContain('Enable notifications on this device');
+        expect(component.preferencesForm.pristine).toBeTrue();
+    });
+
+    it('should request device permission once while enablement is pending', fakeAsync(() => {
+        permissionState.set('prompt');
+        dataService.getPageData.and.returnValue(of(mockPageData()));
+        let resolveReconciliation!: () => void;
+        pushRegistration.reconcile.and.returnValue(new Promise<void>((resolve) => {
+            resolveReconciliation = resolve;
+        }));
+        fixture.detectChanges();
+
+        void component.enablePushOnThisDevice();
+        void component.enablePushOnThisDevice();
+
+        expect(component.isEnablingPushOnDevice()).toBeTrue();
+        expect(pushRegistration.reconcile).toHaveBeenCalledOnceWith({ requestPermission: true });
+
+        resolveReconciliation();
+        tick();
+        expect(component.isEnablingPushOnDevice()).toBeFalse();
+    }));
+
+    it('should preserve the account preference and show iOS Settings guidance when denied', () => {
+        permissionState.set('denied');
+        dataService.getPageData.and.returnValue(of(mockPageData()));
+
+        fixture.detectChanges();
+
+        const note = fixture.nativeElement.querySelector(
+            '.settings-permission-note',
+        ) as HTMLElement;
+        expect(note.textContent).toContain('Enable them in iOS Settings');
+        expect(component.preferencesForm.controls.pushNotificationsEnabled.value).toBeTrue();
+        expect(fixture.nativeElement.querySelector('.settings-device-notification-button')).toBeNull();
+    });
+
+    it('should hide device enablement when permission is granted or unsupported', () => {
+        dataService.getPageData.and.returnValue(of(mockPageData()));
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.settings-device-notification-button')).toBeNull();
+
+        permissionState.set('unsupported');
+        fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('.settings-device-notification-button')).toBeNull();
+    });
 
     it('should emit loading then error when page load fails', (done) => {
         dataService.getPageData.and.returnValue(
