@@ -19,6 +19,8 @@ Each feature/workstream spec uses:
 | `push-notifications/` | 13, 14, 15 | Planned | Device registration, Firebase receipt, routing |
 | `ios-push-notifications/` | Follow-up to 13, 14, 15 | Planned | Per-device iOS permission enablement, FCM token registration, and TestFlight validation |
 | `contact-invitations/` | 5 | Planned | Reject/cancel contact invitation actions |
+| `phone-contact-invitations/` | Follow-up to 5 | Planned | Replace email invitations with phone entry and a privacy-preserving native single-contact picker |
+| `external-sms-contact-invitations/` | Follow-up to `phone-contact-invitations` | Planned | Invite non-members through a user-confirmed native SMS/share flow and track signup-pending invitations |
 | `error-handling/` | 17 | Done | Backend error code handling |
 | `mvp-smoke/` | 18, 19 | Planned | Test coverage and release smoke checklist |
 
