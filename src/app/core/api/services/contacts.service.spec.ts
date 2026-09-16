@@ -97,7 +97,7 @@ describe('ContactService', () => {
 
     it('should send and invitation', ()=> {
         let mockInvitationRequest = {
-            email: 'test@email.com',
+            phoneNumber: '+32470123456',
             nickName: 'nickName',
         }
 

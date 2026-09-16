@@ -111,12 +111,14 @@ export function splitE164PhoneNumber(
   };
 }
 
-export function createPhoneCountries(): PhoneCountry[] {
+export function createPhoneCountries(
+  countryCodes: CountryCode[] = SUPPORTED_PHONE_COUNTRIES,
+): PhoneCountry[] {
   const displayNames = new Intl.DisplayNames(['en'], {
     type: 'region',
   });
 
-  return SUPPORTED_PHONE_COUNTRIES
+  return countryCodes
     .map((code) => ({
       code,
       name: displayNames.of(code) ?? code,

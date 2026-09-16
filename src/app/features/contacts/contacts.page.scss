@@ -168,6 +168,22 @@
   gap: 10px;
 }
 
+.invite-picker-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.invite-divider {
+  text-align: center;
+  color: var(--app-color-text-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 .invite-row {
   display: flex;
   flex-direction: column;
@@ -202,6 +218,12 @@
 .invite-input:focus {
   border-color: rgba(var(--app-color-primary-rgb), 0.42);
   box-shadow: 0 0 0 3px rgba(var(--app-color-primary-rgb), 0.1);
+}
+
+.invite-phone-input-row {
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr);
+  gap: 8px;
 }
 
 .field-error {

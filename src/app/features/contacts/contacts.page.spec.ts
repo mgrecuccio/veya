@@ -6,6 +6,7 @@ import { ContactsPageDataService } from "./data/contacts-page-data.service";
 import { of, Subject, throwError } from "rxjs";
 import { AuthService } from "src/app/core/auth/auth.service";
 import { AppToastService } from "src/app/shared/toast/app-toast.service";
+import { NativeContactPickerService } from "src/app/core/platform/native-contact-picker.service";
 
 
 describe('ContactsPage', () => {
@@ -13,8 +14,15 @@ describe('ContactsPage', () => {
     let component: ContactsPage;
     let dataService: jasmine.SpyObj<ContactsPageDataService>;
     let appToastService: jasmine.SpyObj<AppToastService>;
+    let nativeContactPicker: jasmine.SpyObj<NativeContactPickerService>;
 
     beforeEach(async () => {
+        nativeContactPicker = jasmine.createSpyObj<NativeContactPickerService>(
+            'NativeContactPickerService',
+            ['isAvailable', 'pickContact'],
+        );
+        nativeContactPicker.isAvailable.and.returnValue(true);
+
         await TestBed.configureTestingModule({
             imports: [ContactsPage],
             providers: [
@@ -48,6 +56,10 @@ describe('ContactsPage', () => {
                         'AppToastService',
                         ['show'],
                     ),
+                },
+                {
+                    provide: NativeContactPickerService,
+                    useValue: nativeContactPicker,
                 },
             ],
         }).compileComponents();
@@ -189,8 +201,10 @@ describe('ContactsPage', () => {
     });
 
     it('should close the panel and reset the form', () => {
+        const defaultCountry = component.inviteForm.controls.phoneCountry.value;
         component.inviteForm.setValue({
-            email: 'test@email.com',
+            phoneCountry: 'BE',
+            phoneNational: '0470 12 34 56',
             nickName: 'nickName',
         });
 
@@ -199,14 +213,16 @@ describe('ContactsPage', () => {
 
         expect(component.inviteExpanded()).toBeFalse();
         expect(component.inviteForm.getRawValue()).toEqual({
-            email: '',
+            phoneCountry: defaultCountry,
+            phoneNational: '',
             nickName: '',
         });
     });
 
     it('should not submit the invite when form is invalid', fakeAsync(() => {
         component.inviteForm.setValue({
-            email: '',
+            phoneCountry: 'BE',
+            phoneNational: '',
             nickName: '',
         });
 
@@ -214,6 +230,20 @@ describe('ContactsPage', () => {
         flushMicrotasks();
 
         expect(dataService.sendInvitation).not.toHaveBeenCalled();
+    }));
+
+    it('should not submit an invalid phone number', fakeAsync(() => {
+        component.inviteForm.setValue({
+            phoneCountry: 'BE',
+            phoneNational: '123',
+            nickName: '',
+        });
+
+        component.submitInvite();
+        flushMicrotasks();
+
+        expect(dataService.sendInvitation).not.toHaveBeenCalled();
+        expect(component.inviteForm.hasError('invalidPhoneNumber')).toBeTrue();
     }));
 
     it('should handle invite submit success', fakeAsync(() => {
@@ -226,11 +256,17 @@ describe('ContactsPage', () => {
 
         component.inviteExpanded.set(true);
         component.inviteForm.setValue({
-            email: 'test@email.com',
+            phoneCountry: 'BE',
+            phoneNational: '0470 12 34 56',
             nickName: 'Nick',
         });
 
         component.submitInvite();
+
+        expect(dataService.sendInvitation).toHaveBeenCalledWith({
+            phoneNumber: '+32470123456',
+            nickName: 'Nick',
+        });
 
         expect(component.inviteSubmitting()).toBeFalse();
         expect(component.inviteExpanded()).toBeFalse();
@@ -250,13 +286,15 @@ describe('ContactsPage', () => {
             throwError(() => new HttpErrorResponse({
                 status: 404,
                 error: {
-                    message: 'No account exists for that email address yet. You can invite only existing users.',
+                    code: 'CONTACT_INVITEE_NOT_FOUND',
+                    message: 'No account exists for that phone number yet.',
                 },
             })),
         );
 
         component.inviteForm.setValue({
-            email: 'missing@email.com',
+            phoneCountry: 'BE',
+            phoneNational: '0470 12 34 56',
             nickName: '',
         });
 
@@ -266,9 +304,117 @@ describe('ContactsPage', () => {
         expect(component.inviteSubmitting()).toBeFalse();
         expect(component.toastState()).toEqual({
             isOpen: true,
-            message: 'No account exists for that email address yet. You can invite only existing users.',
+            message: 'That person isn’t on Veya yet.',
             color: 'danger',
         });
+    }));
+
+    it('should populate the form from a picked contact without submitting', fakeAsync(() => {
+        nativeContactPicker.pickContact.and.resolveTo({
+            kind: 'selected',
+            contact: {
+                displayName: 'Alex Friend',
+                phoneNumbers: [{ label: 'mobile', value: '+32 470 12 34 56' }],
+            },
+        });
+
+        component.chooseFromContacts();
+        flushMicrotasks();
+
+        expect(component.inviteForm.getRawValue()).toEqual({
+            phoneCountry: 'BE',
+            phoneNational: '470123456',
+            nickName: 'Alex Friend',
+        });
+        expect(dataService.sendInvitation).not.toHaveBeenCalled();
+    }));
+
+    it('should let the user choose among unique picked phone numbers', fakeAsync(() => {
+        component.inviteForm.controls.phoneCountry.setValue('BE');
+        nativeContactPicker.pickContact.and.resolveTo({
+            kind: 'selected',
+            contact: {
+                displayName: 'Alex',
+                phoneNumbers: [
+                    { label: 'mobile', value: '+32 470 12 34 56' },
+                    { label: 'duplicate', value: '0470 12 34 56' },
+                    { label: 'home', value: '+32 2 555 12 12' },
+                ],
+            },
+        });
+
+        component.chooseFromContacts();
+        flushMicrotasks();
+
+        expect(component.phoneNumberChoices()).toHaveSize(2);
+        component.selectPickedPhoneNumber(component.phoneNumberChoices()[1]);
+
+        expect(component.inviteForm.controls.phoneNational.value).toBe('25551212');
+        expect(component.inviteForm.controls.nickName.value).toBe('Alex');
+        expect(component.phoneNumberChoices()).toEqual([]);
+    }));
+
+    it('should preserve existing input when the picker is cancelled', fakeAsync(() => {
+        nativeContactPicker.pickContact.and.resolveTo({ kind: 'cancelled' });
+        component.inviteForm.setValue({
+            phoneCountry: 'BE',
+            phoneNational: '0470 12 34 56',
+            nickName: 'Existing',
+        });
+
+        component.chooseFromContacts();
+        flushMicrotasks();
+
+        expect(component.inviteForm.getRawValue()).toEqual({
+            phoneCountry: 'BE',
+            phoneNational: '0470 12 34 56',
+            nickName: 'Existing',
+        });
+        expect(appToastService.show).not.toHaveBeenCalled();
+    }));
+
+    it('should keep an existing nickname after contact selection', fakeAsync(() => {
+        nativeContactPicker.pickContact.and.resolveTo({
+            kind: 'selected',
+            contact: {
+                displayName: 'Phone Name',
+                phoneNumbers: [{ value: '+32470123456' }],
+            },
+        });
+        component.inviteForm.controls.nickName.setValue('My nickname');
+
+        component.chooseFromContacts();
+        flushMicrotasks();
+
+        expect(component.inviteForm.controls.nickName.value).toBe('My nickname');
+    }));
+
+    it('should keep manual entry available when a picked contact has no number', fakeAsync(() => {
+        nativeContactPicker.pickContact.and.resolveTo({
+            kind: 'selected',
+            contact: { displayName: 'Alex', phoneNumbers: [] },
+        });
+
+        component.chooseFromContacts();
+        flushMicrotasks();
+
+        expect(component.inviteForm.controls.phoneNational.value).toBe('');
+        expect(component.toastState().message).toBe(
+            'That contact has no phone number. Enter one manually instead.',
+        );
+    }));
+
+    it('should keep manual entry available when the native picker fails', fakeAsync(() => {
+        nativeContactPicker.pickContact.and.rejectWith(new Error('Native failure'));
+        component.inviteForm.controls.phoneNational.setValue('0470 12 34 56');
+
+        component.chooseFromContacts();
+        flushMicrotasks();
+
+        expect(component.inviteForm.controls.phoneNational.value).toBe('0470 12 34 56');
+        expect(component.toastState().message).toBe(
+            'We couldn’t open your contacts. Enter the phone number instead.',
+        );
     }));
 
     it('should set busy id and refresh after accepting invitation', fakeAsync(() => {

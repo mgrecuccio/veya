@@ -1,4 +1,4 @@
 export interface SendInvitationRequest {
-    email: string,
-    nickName?: string,
+    phoneNumber: string;
+    nickName?: string;
 }
