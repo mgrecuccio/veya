@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, of, Subject, throwError } from 'rxjs';
 import { catchError, finalize, map, shareReplay, tap } from 'rxjs/operators';
 
 import { LoginRequest } from '../models/login-request.model';
@@ -43,6 +43,8 @@ export class AuthService {
   );
 
   readonly authState$ = this.authStateSubject.asObservable();
+  private readonly authTokensUpdatedSubject = new Subject<AuthTokens>();
+  readonly authTokensUpdated$ = this.authTokensUpdatedSubject.asObservable();
   readonly isAuthenticated$ = this.authState$.pipe(
     map((tokens) => !!tokens?.accessToken)
   );
@@ -138,6 +140,7 @@ export class AuthService {
   private persistAuth(tokens: AuthTokens): void {
     this.tokenStorage.setTokens(tokens);
     this.authStateSubject.next(tokens);
+    this.authTokensUpdatedSubject.next(tokens);
   }
 
   private mapAuthError(

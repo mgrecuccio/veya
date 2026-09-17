@@ -344,7 +344,7 @@ export class SettingsPage {
       try {
         if (this.biometricEnabled()) {
           await this.biometricLogin.disable();
-          this.showToast('Biometric login disabled.', 'success');
+          this.showToast('Biometric protection disabled.', 'success');
         } else {
           const refreshToken = this.authService.getRefreshToken();
           if (!refreshToken) {
@@ -352,13 +352,13 @@ export class SettingsPage {
           }
 
           await this.biometricLogin.enable(refreshToken);
-          this.showToast(`${this.biometricLabel()} login enabled.`, 'success');
+          this.showToast(`${this.biometricLabel()} protection enabled.`, 'success');
         }
       } catch (error) {
         this.showToast(
           error instanceof Error
             ? error.message
-            : 'We couldn’t update biometric login.',
+            : 'We couldn’t update biometric protection.',
           'danger',
         );
       } finally {

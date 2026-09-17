@@ -82,7 +82,8 @@
                 <div>
                   <h2 class="card-title">Security</h2>
                   <p class="card-subtitle">
-                    Use {{ biometricLabel() }} to unlock your account on this device.
+                    Protect Veya from unwanted access with {{ biometricLabel() }}.
+                    The app locks after 30 seconds in the background and when reopened.
                   </p>
                 </div>
               </div>
@@ -97,9 +98,9 @@
                   <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
                   <span>Updating...</span>
                 } @else if (biometricEnabled()) {
-                  <span>Disable {{ biometricLabel() }} login</span>
+                  <span>Disable {{ biometricLabel() }} protection</span>
                 } @else {
-                  <span>Enable {{ biometricLabel() }} login</span>
+                  <span>Enable {{ biometricLabel() }} protection</span>
                 }
               </button>
             </section>
