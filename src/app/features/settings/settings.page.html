@@ -76,6 +76,35 @@
             </div>
           </section>
 
+          @if (biometricAvailable()) {
+            <section class="app-surface settings-card">
+              <div class="card-header">
+                <div>
+                  <h2 class="card-title">Security</h2>
+                  <p class="card-subtitle">
+                    Use {{ biometricLabel() }} to unlock your account on this device.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                class="settings-save-button"
+                [disabled]="biometricBusy()"
+                (click)="toggleBiometricLogin()"
+              >
+                @if (biometricBusy()) {
+                  <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
+                  <span>Updating...</span>
+                } @else if (biometricEnabled()) {
+                  <span>Disable {{ biometricLabel() }} login</span>
+                } @else {
+                  <span>Enable {{ biometricLabel() }} login</span>
+                }
+              </button>
+            </section>
+          }
+
           <section class="app-surface settings-card">
             <div class="card-header">
               <div>

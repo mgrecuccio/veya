@@ -1,25 +1,40 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, flushMicrotasks, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
 import { LoginPage } from './login.page';
 import { AuthService, AuthError } from 'src/app/core/auth/auth.service';
 import { Router } from '@angular/router';
+import { BiometricLoginService } from 'src/app/core/auth/biometric-login.service';
 
 describe('LoginPage', () => {
     let fixture: ComponentFixture<LoginPage>;
     let component: LoginPage;
     let authServiceSpy: jasmine.SpyObj<AuthService>;
+    let biometricLoginSpy: jasmine.SpyObj<BiometricLoginService>;
     let router: Router;
 
     beforeEach(async () => {
         authServiceSpy = jasmine.createSpyObj<AuthService>('AuthService', ['login']);
+        biometricLoginSpy = jasmine.createSpyObj<BiometricLoginService>(
+            'BiometricLoginService',
+            ['getAvailability', 'enable', 'saveRefreshToken', 'login']
+        );
+        biometricLoginSpy.getAvailability.and.resolveTo({
+            available: false,
+            enabled: false,
+            label: 'Biometrics',
+        });
+        biometricLoginSpy.enable.and.resolveTo();
+        biometricLoginSpy.saveRefreshToken.and.resolveTo();
+        biometricLoginSpy.login.and.resolveTo();
 
         await TestBed.configureTestingModule({
         imports: [LoginPage],
             providers: [
                 provideRouter([]),
                 { provide: AuthService, useValue: authServiceSpy },
+                { provide: BiometricLoginService, useValue: biometricLoginSpy },
             ],
         }).compileComponents();
 
@@ -82,7 +97,7 @@ describe('LoginPage', () => {
         });
     });
 
-    it('should navigate to /home on successful login', async () => {
+    it('should navigate to /home on successful login', fakeAsync(() => {
         authServiceSpy.login.and.returnValue(
         of({
             accessToken: 'access-token',
@@ -98,9 +113,10 @@ describe('LoginPage', () => {
         });
 
         component.submit();
+        flushMicrotasks();
 
         expect(router.navigateByUrl).toHaveBeenCalledWith('/app/home', { replaceUrl: true });
-    });
+    }));
 
     it('should keep back navigation when navigating to register', () => {
         component.goToRegister();
@@ -160,7 +176,7 @@ describe('LoginPage', () => {
         expect(component.isSubmitting).toBeFalse();
     });
 
-    it('should set isSubmitting back to false after success', () => {
+    it('should set isSubmitting back to false after success', fakeAsync(() => {
         authServiceSpy.login.and.returnValue(
         of({
             accessToken: 'access-token',
@@ -176,9 +192,42 @@ describe('LoginPage', () => {
         });
 
         component.submit();
+        flushMicrotasks();
 
         expect(component.isSubmitting).toBeFalse();
-    });
+    }));
+
+    it('should enable biometric login with the returned refresh token when selected', fakeAsync(() => {
+        authServiceSpy.login.and.returnValue(
+            of({
+                accessToken: 'access-token',
+                refreshToken: 'refresh-token',
+                tokenType: 'Bearer',
+                expiresInSeconds: 3600,
+            })
+        );
+        component.biometricAvailable = true;
+        component.form.patchValue({
+            phoneNumber: '+32468009911',
+            password: 'password123',
+            useBiometrics: true,
+        });
+
+        component.submit();
+        flushMicrotasks();
+
+        expect(biometricLoginSpy.enable).toHaveBeenCalledOnceWith('refresh-token');
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/app/home', { replaceUrl: true });
+    }));
+
+    it('should log in with biometrics and navigate home', fakeAsync(() => {
+        component.loginWithBiometrics();
+        flushMicrotasks();
+
+        expect(biometricLoginSpy.login).toHaveBeenCalled();
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/app/home', { replaceUrl: true });
+        expect(component.isSubmitting).toBeFalse();
+    }));
 
     it('should expose phone number getter', () => {
         expect(component.phoneNumber).toBe(component.form.controls.phoneNumber);
