@@ -93,6 +93,13 @@
             </button>
           </div>
 
+          @if (biometricAvailable && !biometricEnabled) {
+            <label class="auth-biometric-opt-in">
+              <input type="checkbox" formControlName="useBiometrics" />
+              <span>Use {{ biometricLabel }} next time</span>
+            </label>
+          }
+
           <div class="auth-submit">
             <app-primary-button
               type="submit"
@@ -105,6 +112,17 @@
               }
             </app-primary-button>
           </div>
+
+          @if (biometricAvailable && biometricEnabled) {
+            <button
+              type="button"
+              class="auth-biometric-button"
+              [disabled]="isSubmitting"
+              (click)="loginWithBiometrics()"
+            >
+              Log in with {{ biometricLabel }}
+            </button>
+          }
         </form>
 
         <div class="auth-footer">

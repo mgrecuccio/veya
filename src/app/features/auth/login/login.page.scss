@@ -13,3 +13,34 @@
 .auth-card {
   margin-top: 6px;
 }
+
+.auth-biometric-opt-in {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--app-color-text-muted);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.auth-biometric-opt-in input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--app-color-primary);
+}
+
+.auth-biometric-button {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid rgba(var(--app-color-primary-rgb), 0.24);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--app-color-primary);
+  font: inherit;
+  font-weight: 800;
+}
+
+.auth-biometric-button:disabled {
+  opacity: 0.55;
+}

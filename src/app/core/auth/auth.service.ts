@@ -78,6 +78,10 @@ export class AuthService {
       } as AuthError));
     }
 
+    return this.refreshWithToken(refreshToken);
+  }
+
+  refreshWithToken(refreshToken: string): Observable<AuthTokens> {
     if (this.refreshRequest$) {
       return this.refreshRequest$;
     }
@@ -99,6 +103,11 @@ export class AuthService {
       );
 
     return this.refreshRequest$;
+  }
+
+  lock(): void {
+    this.tokenStorage.clearTokens();
+    this.authStateSubject.next(null);
   }
 
   logout(): void {
