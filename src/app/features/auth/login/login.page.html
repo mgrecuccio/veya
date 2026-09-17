@@ -108,10 +108,17 @@
           </div>
 
           @if (biometricAvailable && !biometricEnabled) {
-            <label class="auth-biometric-opt-in">
-              <input type="checkbox" formControlName="useBiometrics" />
-              <span>Use {{ biometricLabel }} next time</span>
-            </label>
+            <div class="auth-biometric-choice">
+              <label class="auth-biometric-opt-in">
+                <input type="checkbox" formControlName="useBiometrics" />
+                <span>Protect Veya with {{ biometricLabel }}</span>
+              </label>
+              <p class="auth-biometric-disclaimer">
+                When enabled, Veya locks after 30 seconds in the background and
+                when reopened, helping prevent unwanted access. Logging out turns
+                this protection off.
+              </p>
+            </div>
           }
 
           <div class="auth-submit">
@@ -134,7 +141,7 @@
               [disabled]="isSubmitting"
               (click)="loginWithBiometrics()"
             >
-              Log in with {{ biometricLabel }}
+              Unlock with {{ biometricLabel }}
             </button>
           }
         </form>

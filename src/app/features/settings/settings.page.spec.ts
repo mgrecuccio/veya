@@ -7,6 +7,7 @@ import { AppToastService } from 'src/app/shared/toast/app-toast.service';
 import { SettingsPageData, SettingsPageDataService } from './data/settings-page-data.service';
 import { SettingsPage } from './settings.page';
 import { PushRegistrationReconciliationService } from 'src/app/core/notifications/push-registration-reconciliation.service';
+import { BiometricLoginService } from 'src/app/core/auth/biometric-login.service';
 
 describe('SettingsPage', () => {
     let fixture: ComponentFixture<SettingsPage>;
@@ -15,6 +16,7 @@ describe('SettingsPage', () => {
     let authService: jasmine.SpyObj<AuthService>;
     let appToastService: jasmine.SpyObj<AppToastService>;
     let pushRegistration: jasmine.SpyObj<PushRegistrationReconciliationService>;
+    let biometricLogin: jasmine.SpyObj<BiometricLoginService>;
     let router: jasmine.SpyObj<Router>;
     let permissionState: ReturnType<typeof signal<'prompt' | 'prompt-with-rationale' | 'granted' | 'denied' | 'unsupported'>>;
     let registrationStatus: ReturnType<typeof signal<'idle' | 'unsupported' | 'permission-prompt' | 'permission-denied' | 'registering' | 'registered' | 'disabled' | 'error'>>;
@@ -69,24 +71,40 @@ describe('SettingsPage', () => {
                         { permissionState, registrationStatus },
                     ),
                 },
+                {
+                    provide: BiometricLoginService,
+                    useValue: jasmine.createSpyObj<BiometricLoginService>(
+                        'BiometricLoginService',
+                        ['getAvailability', 'enable', 'disable'],
+                    ),
+                },
             ],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(SettingsPage);
-        component = fixture.componentInstance;
         dataService = TestBed.inject(SettingsPageDataService) as jasmine.SpyObj<SettingsPageDataService>;
         authService = TestBed.inject(AuthService) as jasmine.SpyObj<AuthService>;
         appToastService = TestBed.inject(AppToastService) as jasmine.SpyObj<AppToastService>;
         pushRegistration = TestBed.inject(PushRegistrationReconciliationService) as jasmine.SpyObj<PushRegistrationReconciliationService>;
+        biometricLogin = TestBed.inject(BiometricLoginService) as jasmine.SpyObj<BiometricLoginService>;
         router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
 
         pushRegistration.refreshPermissionState.and.returnValue(Promise.resolve('granted'));
         pushRegistration.reconcile.and.returnValue(Promise.resolve());
         pushRegistration.disableCurrentDevice.and.returnValue(Promise.resolve());
         pushRegistration.getDevicePlatform.and.returnValue('IOS');
+        biometricLogin.getAvailability.and.resolveTo({
+            available: false,
+            enabled: false,
+            label: 'Biometrics',
+        });
+        biometricLogin.enable.and.resolveTo();
+        biometricLogin.disable.and.resolveTo();
         authService.logoutAndRevoke.and.returnValue(of(void 0));
         appToastService.show.and.returnValue(Promise.resolve());
         router.navigateByUrl.and.returnValue(Promise.resolve(true));
+
+        fixture = TestBed.createComponent(SettingsPage);
+        component = fixture.componentInstance;
     });
 
     function mockPageData(): SettingsPageData {
