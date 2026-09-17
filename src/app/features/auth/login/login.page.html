@@ -107,15 +107,6 @@
             </button>
           </div>
 
-          @if (biometricAvailable && !biometricEnabled) {
-            <div class="auth-biometric-choice">
-              <label class="auth-biometric-opt-in">
-                <input type="checkbox" formControlName="useBiometrics" />
-                <span>Protect Veya with {{ biometricLabel }}</span>
-              </label>
-            </div>
-          }
-
           <div class="auth-submit">
             <app-primary-button
               type="submit"
@@ -128,17 +119,6 @@
               }
             </app-primary-button>
           </div>
-
-          @if (biometricAvailable && biometricEnabled) {
-            <button
-              type="button"
-              class="auth-biometric-button"
-              [disabled]="isSubmitting"
-              (click)="loginWithBiometrics()"
-            >
-              Unlock with {{ biometricLabel }}
-            </button>
-          }
         </form>
 
         <div class="auth-footer">

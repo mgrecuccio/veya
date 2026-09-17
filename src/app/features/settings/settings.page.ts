@@ -12,7 +12,6 @@ import { PushRegistrationReconciliationService } from 'src/app/core/notification
 import { DEVICE_TOKEN_PLATFORM } from 'src/app/core/api/request/register-device-token.request';
 import { AppToastColor, AppToastService } from 'src/app/shared/toast/app-toast.service';
 import { APP_VERSION } from 'src/environments/app-version';
-import { BiometricLoginService } from 'src/app/core/auth/biometric-login.service';
 import {
   createPhoneCountries,
   getDefaultPhoneCountry,
@@ -77,7 +76,6 @@ export class SettingsPage {
     private readonly fb = inject(FormBuilder).nonNullable;
     private readonly settingsPageDataService = inject(SettingsPageDataService);
     private readonly authService = inject(AuthService);
-    private readonly biometricLogin = inject(BiometricLoginService);
     private readonly router = inject(Router);
     private readonly appToastService = inject(AppToastService);
     private readonly pushRegistration = inject(PushRegistrationReconciliationService);
@@ -90,10 +88,6 @@ export class SettingsPage {
     readonly isSavingPreferences = signal(false);
     readonly isLoggingOut = signal(false);
     readonly isEnablingPushOnDevice = signal(false);
-    readonly biometricAvailable = signal(false);
-    readonly biometricEnabled = signal(false);
-    readonly biometricBusy = signal(false);
-    readonly biometricLabel = signal('Biometrics');
     readonly accountPushPreferenceEnabled = signal(false);
     readonly pushPermissionState = computed(() => this.pushRegistration.permissionState());
     readonly showPushDeviceEnablement = computed(() => {
@@ -142,10 +136,6 @@ export class SettingsPage {
         pushNotificationsEnabled: [false],
         suggestionNotificationsEnabled: [false],
     });
-
-    constructor() {
-      void this.refreshBiometricState();
-    }
 
     readonly vmState$: Observable<SettingsPageVmState> = merge(
       this.reload$,
@@ -321,7 +311,6 @@ export class SettingsPage {
       }
 
       this.isLoggingOut.set(true);
-      void this.biometricLogin.disable();
       void this.pushRegistration.disableCurrentDevice().finally(() => {
         this.authService.logoutAndRevoke().subscribe({
           next: () => {
@@ -332,39 +321,6 @@ export class SettingsPage {
           },
         });
       });
-    }
-
-    async toggleBiometricLogin(): Promise<void> {
-      if (this.biometricBusy()) {
-        return;
-      }
-
-      this.biometricBusy.set(true);
-
-      try {
-        if (this.biometricEnabled()) {
-          await this.biometricLogin.disable();
-          this.showToast('Biometric protection disabled.', 'success');
-        } else {
-          const refreshToken = this.authService.getRefreshToken();
-          if (!refreshToken) {
-            throw new Error('Log in again before enabling biometric login.');
-          }
-
-          await this.biometricLogin.enable(refreshToken);
-          this.showToast(`${this.biometricLabel()} protection enabled.`, 'success');
-        }
-      } catch (error) {
-        this.showToast(
-          error instanceof Error
-            ? error.message
-            : 'We couldn’t update biometric protection.',
-          'danger',
-        );
-      } finally {
-        this.biometricBusy.set(false);
-        await this.refreshBiometricState();
-      }
     }
 
     goBack(): void {
@@ -455,10 +411,4 @@ export class SettingsPage {
       }
     }
 
-    private async refreshBiometricState(): Promise<void> {
-      const availability = await this.biometricLogin.getAvailability();
-      this.biometricAvailable.set(availability.available);
-      this.biometricEnabled.set(availability.enabled);
-      this.biometricLabel.set(availability.label);
-    }
 }

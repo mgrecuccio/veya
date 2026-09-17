@@ -15,10 +15,7 @@ import { PushNotificationRoutingService } from './core/notifications/push-notifi
 import { PushRegistrationReconciliationService } from './core/notifications/push-registration-reconciliation.service';
 import { addIcons } from 'ionicons';
 import { Subscription } from 'rxjs';
-import { firstValueFrom } from 'rxjs';
 import { filter } from 'rxjs/operators';
-import { BiometricLoginService } from './core/auth/biometric-login.service';
-import { AuthService } from './core/auth/auth.service';
 import {
   add,
   calendar,
@@ -46,38 +43,6 @@ import {
   template: `
     <ion-app>
       <ion-router-outlet></ion-router-outlet>
-      @if (biometricLogin.isLocked()) {
-        <div class="app-lock" role="dialog" aria-modal="true" aria-labelledby="app-lock-title">
-          <section class="app-lock__card">
-            <div class="app-lock__mark" aria-hidden="true">V</div>
-            <p class="app-lock__eyebrow">Privacy protection</p>
-            <h1 id="app-lock-title" class="app-lock__title">Veya is locked</h1>
-            <p class="app-lock__copy">
-              Use {{ biometricLogin.activeBiometricLabel() }} to protect your account
-              from unwanted access.
-            </p>
-            @if (biometricLogin.unlockError()) {
-              <p class="app-lock__error">{{ biometricLogin.unlockError() }}</p>
-            }
-            <button
-              type="button"
-              class="app-lock__primary"
-              [disabled]="biometricLogin.isUnlocking()"
-              (click)="unlockApp()"
-            >
-              {{ biometricLogin.isUnlocking() ? 'Unlocking...' : 'Unlock with ' + biometricLogin.activeBiometricLabel() }}
-            </button>
-            <button
-              type="button"
-              class="app-lock__secondary"
-              [disabled]="biometricLogin.isUnlocking()"
-              (click)="usePasswordInstead()"
-            >
-              Use phone number and password
-            </button>
-          </section>
-        </div>
-      }
       @if (appToastService.toast(); as toast) {
         <div
           class="app-toast-overlay"
@@ -92,18 +57,15 @@ import {
       }
     </ion-app>
   `,
-  styleUrls: ['./app.component.scss'],
 })
 export class AppComponent implements OnDestroy {
   @ViewChild(IonRouterOutlet) private readonly routerOutlet?: IonRouterOutlet;
 
   private readonly location = inject(Location);
   private readonly router = inject(Router);
-  private readonly authService = inject(AuthService);
   private readonly platform = inject(Platform);
   private readonly zone = inject(NgZone);
   readonly appToastService = inject(AppToastService);
-  readonly biometricLogin = inject(BiometricLoginService);
   private readonly pushRegistration = inject(PushRegistrationReconciliationService);
   private readonly pushNotificationRouting = inject(PushNotificationRoutingService);
 
@@ -139,20 +101,6 @@ export class AppComponent implements OnDestroy {
     this.registerContentScrollRefresh();
     this.pushRegistration.initialize();
     this.pushNotificationRouting.initialize();
-  }
-
-  async unlockApp(): Promise<void> {
-    try {
-      await this.biometricLogin.unlockApp();
-    } catch {
-      // The lock screen remains visible and displays the retry actions.
-    }
-  }
-
-  async usePasswordInstead(): Promise<void> {
-    await this.biometricLogin.disable();
-    await firstValueFrom(this.authService.logoutAndRevoke());
-    await this.router.navigateByUrl('/auth/login', { replaceUrl: true });
   }
 
   ngOnDestroy(): void {

@@ -76,36 +76,6 @@
             </div>
           </section>
 
-          @if (biometricAvailable()) {
-            <section class="app-surface settings-card">
-              <div class="card-header">
-                <div>
-                  <h2 class="card-title">Security</h2>
-                  <p class="card-subtitle">
-                    Protect Veya from unwanted access with {{ biometricLabel() }}.
-                    The app locks after 30 seconds in the background and when reopened.
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                class="settings-save-button"
-                [disabled]="biometricBusy()"
-                (click)="toggleBiometricLogin()"
-              >
-                @if (biometricBusy()) {
-                  <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
-                  <span>Updating...</span>
-                } @else if (biometricEnabled()) {
-                  <span>Disable {{ biometricLabel() }} protection</span>
-                } @else {
-                  <span>Enable {{ biometricLabel() }} protection</span>
-                }
-              </button>
-            </section>
-          }
-
           <section class="app-surface settings-card">
             <div class="card-header">
               <div>

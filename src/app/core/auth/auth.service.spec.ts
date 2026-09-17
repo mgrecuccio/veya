@@ -131,29 +131,6 @@ describe('AuthService', () => {
         req.flush(refreshedTokens);
     });
 
-    it('should refresh with an explicitly provided token and persist new tokens', () => {
-        const refreshedTokens: AuthTokens = {
-            accessToken: 'biometric-access-token',
-            refreshToken: 'rotated-biometric-refresh-token',
-            tokenType: 'Bearer',
-            expiresInSeconds: 3600,
-        };
-
-        service.refreshWithToken('secure-biometric-refresh-token').subscribe((response) => {
-            expect(response).toEqual(refreshedTokens);
-            expect(tokenStorage.getAccessToken()).toBe(refreshedTokens.accessToken);
-            expect(tokenStorage.getRefreshToken()).toBe(refreshedTokens.refreshToken);
-        });
-
-        const req = httpMock.expectOne('http://localhost:8080/api/v1/auth/refresh');
-        expect(req.request.method).toBe('POST');
-        expect(req.request.body).toEqual({
-            refreshToken: 'secure-biometric-refresh-token',
-        });
-
-        req.flush(refreshedTokens);
-    });
-
     it('should map login 401 to INVALID_CREDENTIALS', () => {
         const payload: LoginRequest = {
         phoneNumber: '+32468009911',
@@ -309,21 +286,6 @@ describe('AuthService', () => {
         service.logout();
 
         expect(authStates[authStates.length - 1]).toBeFalse();
-        sub.unsubscribe();
-    });
-
-    it('should lock the session without making a backend request', () => {
-        const authStates: boolean[] = [];
-        const sub = service.isAuthenticated$.subscribe((value) => authStates.push(value));
-        tokenStorage.setTokens(mockTokens);
-        service['authStateSubject'].next(mockTokens);
-
-        service.lock();
-
-        expect(tokenStorage.getAccessToken()).toBeNull();
-        expect(tokenStorage.getRefreshToken()).toBeNull();
-        expect(authStates[authStates.length - 1]).toBeFalse();
-        httpMock.expectNone('http://localhost:8080/api/v1/auth/logout');
         sub.unsubscribe();
     });
 

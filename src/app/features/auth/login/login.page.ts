@@ -17,6 +17,7 @@ import { IonContent, IonicModule, NavController } from '@ionic/angular';
 import { AppPrimaryButtonComponent } from '../../../shared/ui/app-primary-button/app-primary-button.component';
 import { LoginRequest } from 'src/app/core/models/login-request.model';
 import { AuthError, AuthService } from 'src/app/core/auth/auth.service';
+import { finalize } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   createPhoneCountries,
@@ -25,8 +26,6 @@ import {
   PhoneCountry,
   requiredPhoneValidator,
 } from 'src/app/shared/phone/phone-number.util';
-import { BiometricLoginService } from 'src/app/core/auth/biometric-login.service';
-import { AuthTokens } from 'src/app/core/models/auth-tokens.model';
 
 @Component({
   selector: 'app-login',
@@ -47,15 +46,11 @@ export class LoginPage {
   private readonly router = inject(Router);
   private readonly navController = inject(NavController);
   private readonly authService = inject(AuthService);
-  private readonly biometricLogin = inject(BiometricLoginService);
   private readonly destroyRef = inject(DestroyRef);
 
   isSubmitting = false;
   serverError: string | null = null;
   authFocusOffset = 0;
-  biometricAvailable = false;
-  biometricEnabled = false;
-  biometricLabel = 'Biometrics';
   readonly countries: PhoneCountry[] = createPhoneCountries();
 
   readonly form = this.fb.nonNullable.group(
@@ -63,16 +58,11 @@ export class LoginPage {
       phoneCountry: [getDefaultPhoneCountry()],
       phoneNational: [''],
       password: ['', [Validators.required, Validators.minLength(8)]],
-      useBiometrics: [false],
     },
     {
       validators: [requiredPhoneValidator()],
     },
   );
-
-  constructor() {
-    void this.loadBiometricAvailability();
-  }
 
   get phoneCountry() {
     return this.form.controls.phoneCountry;
@@ -162,16 +152,15 @@ export class LoginPage {
 
     this.isSubmitting = true;
     this.authService.login(payload).pipe(
-      takeUntilDestroyed(this.destroyRef)
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => {
+        this.isSubmitting = false;
+      })
     ).subscribe({
-      next: (tokens) => {
-        void this.completeLogin(tokens).finally(() => {
-          this.isSubmitting = false;
-        });
+      next: () => {
+        void this.router.navigateByUrl('/app/home', { replaceUrl: true });
       },
       error: (error: AuthError) => {
-        this.isSubmitting = false;
-
         if (error.code === 'INVALID_CREDENTIALS') {
           this.form.setErrors({
             ...(this.form.errors ?? {}),
@@ -183,25 +172,6 @@ export class LoginPage {
         this.serverError = error.message;
       },
     });
-  }
-
-  async loginWithBiometrics(): Promise<void> {
-    if (this.isSubmitting) {
-      return;
-    }
-
-    this.isSubmitting = true;
-    this.serverError = null;
-
-    try {
-      await this.biometricLogin.login();
-      await this.router.navigateByUrl('/app/home', { replaceUrl: true });
-    } catch {
-      this.serverError =
-        'Biometric login was cancelled or failed. Log in with your phone number instead.';
-    } finally {
-      this.isSubmitting = false;
-    }
   }
 
   forgotPassword(): void {
@@ -224,28 +194,6 @@ export class LoginPage {
 
     const { invalidCredentials, ...rest } = errors;
     this.form.setErrors(Object.keys(rest).length ? rest : null);
-  }
-
-  private async loadBiometricAvailability(): Promise<void> {
-    const availability = await this.biometricLogin.getAvailability();
-    this.biometricAvailable = availability.available;
-    this.biometricEnabled = availability.enabled;
-    this.biometricLabel = availability.label;
-  }
-
-  private async completeLogin(tokens: AuthTokens): Promise<void> {
-    try {
-      if (this.form.controls.useBiometrics.value && !this.biometricEnabled) {
-        await this.biometricLogin.enable(tokens.refreshToken);
-      } else if (this.biometricEnabled) {
-        await this.biometricLogin.saveRefreshToken(tokens.refreshToken);
-      }
-    } catch {
-      // The password login succeeded, so biometric setup failure must not
-      // prevent access to the account.
-    }
-
-    await this.router.navigateByUrl('/app/home', { replaceUrl: true });
   }
 
   private async scrollTargetIntoView(target: HTMLElement): Promise<void> {
