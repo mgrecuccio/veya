@@ -53,7 +53,7 @@ describe('LoginPage', () => {
 
     it('should not submit if form is invalid', () => {
         component.form.patchValue({
-            phoneNumber: '',
+            phoneNational: '',
             password: '',
         });
 
@@ -62,15 +62,16 @@ describe('LoginPage', () => {
         expect(authServiceSpy.login).not.toHaveBeenCalled();
     });
 
-    it('should require an E.164 phone number', () => {
+    it('should reject an invalid national phone number', () => {
         component.form.patchValue({
-            phoneNumber: '0468 00 99 11',
+            phoneCountry: 'BE',
+            phoneNational: '123',
             password: 'password123',
         });
 
         component.submit();
 
-        expect(component.phoneNumber.errors?.['pattern']).toBeTruthy();
+        expect(component.form.hasError('invalidPhoneNumber')).toBeTrue();
         expect(authServiceSpy.login).not.toHaveBeenCalled();
     });
 
@@ -85,7 +86,8 @@ describe('LoginPage', () => {
         );
 
         component.form.patchValue({
-            phoneNumber: '+32468009911',
+            phoneCountry: 'BE',
+            phoneNational: '0468 00 99 11',
             password: 'password123',
         });
 
@@ -108,7 +110,8 @@ describe('LoginPage', () => {
         );
 
         component.form.patchValue({
-            phoneNumber: '+32468009911',
+            phoneCountry: 'BE',
+            phoneNational: '0468 00 99 11',
             password: 'password123',
         });
 
@@ -144,7 +147,8 @@ describe('LoginPage', () => {
     );
 
     component.form.patchValue({
-        phoneNumber: '+32468009911',
+        phoneCountry: 'BE',
+        phoneNational: '0468 00 99 11',
         password: 'wrong-password',
     });
 
@@ -166,7 +170,8 @@ describe('LoginPage', () => {
         );
 
         component.form.patchValue({
-            phoneNumber: '+32468009911',
+            phoneCountry: 'BE',
+            phoneNational: '0468 00 99 11',
             password: 'password123',
         });
 
@@ -187,7 +192,8 @@ describe('LoginPage', () => {
         );
 
         component.form.patchValue({
-            phoneNumber: '+32468009911',
+            phoneCountry: 'BE',
+            phoneNational: '0468 00 99 11',
             password: 'password123',
         });
 
@@ -208,7 +214,8 @@ describe('LoginPage', () => {
         );
         component.biometricAvailable = true;
         component.form.patchValue({
-            phoneNumber: '+32468009911',
+            phoneCountry: 'BE',
+            phoneNational: '0468 00 99 11',
             password: 'password123',
             useBiometrics: true,
         });
@@ -229,8 +236,9 @@ describe('LoginPage', () => {
         expect(component.isSubmitting).toBeFalse();
     }));
 
-    it('should expose phone number getter', () => {
-        expect(component.phoneNumber).toBe(component.form.controls.phoneNumber);
+    it('should expose phone country and national number getters', () => {
+        expect(component.phoneCountry).toBe(component.form.controls.phoneCountry);
+        expect(component.phoneNational).toBe(component.form.controls.phoneNational);
     });
 
     it('should expose password getter', () => {
@@ -238,16 +246,22 @@ describe('LoginPage', () => {
     });
 
     it('should return true from isInvalid when control is invalid and touched', () => {
-        component.form.controls.phoneNumber.markAsTouched();
-        component.form.controls.phoneNumber.setValue('');
+        component.form.controls.password.markAsTouched();
+        component.form.controls.password.setValue('');
 
-        expect(component.isInvalid('phoneNumber')).toBeTrue();
+        expect(component.isInvalid('password')).toBeTrue();
     });
 
     it('should return false from isInvalid when control is valid', () => {
-        component.form.controls.phoneNumber.setValue('+32468009911');
-        component.form.controls.phoneNumber.markAsTouched();
+        component.form.controls.password.setValue('password123');
+        component.form.controls.password.markAsTouched();
 
-        expect(component.isInvalid('phoneNumber')).toBeFalse();
+        expect(component.isInvalid('password')).toBeFalse();
+    });
+
+    it('should use the same supported country subset as settings', () => {
+        expect(component.countries.map((country) => country.code).sort()).toEqual([
+            'BE', 'DE', 'ES', 'FR', 'GB', 'IT', 'NL', 'US'
+        ]);
     });
 });

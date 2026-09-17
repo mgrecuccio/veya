@@ -25,23 +25,37 @@
         <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
           <div class="auth-field">
             <label class="auth-label" for="login-phone-number">Phone number</label>
-            <input
-              id="login-phone-number"
-              class="auth-input-item auth-input"
-              [class.auth-input-item--invalid]="isInvalid('phoneNumber')"
-              type="tel"
-              inputmode="tel"
-              autocomplete="tel"
-              placeholder="+32468009911"
-              formControlName="phoneNumber"
-            />
+            <div class="phone-input-row">
+              <select
+                class="auth-input-item auth-select phone-country-item"
+                aria-label="Country calling code"
+                formControlName="phoneCountry"
+              >
+                @for (country of countries; track country.code) {
+                  <option [value]="country.code">
+                    {{ country.flag }} {{ country.dialCode }}
+                  </option>
+                }
+              </select>
 
-            @if (isInvalid('phoneNumber')) {
+              <input
+                id="login-phone-number"
+                class="auth-input-item auth-input phone-number-item"
+                [class.auth-input-item--invalid]="isPhoneInvalid()"
+                type="tel"
+                inputmode="tel"
+                autocomplete="tel-national"
+                placeholder="470 12 34 56"
+                formControlName="phoneNational"
+              />
+            </div>
+
+            @if (isPhoneInvalid()) {
               <div class="auth-error">
-                @if (phoneNumber.errors?.['required']) {
+                @if (form.hasError('requiredPhoneNumber')) {
                   <span>Phone number is required.</span>
-                } @else if (phoneNumber.errors?.['pattern']) {
-                  <span>Enter a phone number in E.164 format, such as +32468009911.</span>
+                } @else {
+                  <span>Enter a valid phone number.</span>
                 }
               </div>
             }

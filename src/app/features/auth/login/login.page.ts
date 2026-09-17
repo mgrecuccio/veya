@@ -18,7 +18,13 @@ import { AppPrimaryButtonComponent } from '../../../shared/ui/app-primary-button
 import { LoginRequest } from 'src/app/core/models/login-request.model';
 import { AuthError, AuthService } from 'src/app/core/auth/auth.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { E164_REGEX } from 'src/app/shared/phone/phone-number.util';
+import {
+  createPhoneCountries,
+  getDefaultPhoneCountry,
+  getNormalizedPhoneNumber,
+  PhoneCountry,
+  requiredPhoneValidator,
+} from 'src/app/shared/phone/phone-number.util';
 import { BiometricLoginService } from 'src/app/core/auth/biometric-login.service';
 import { AuthTokens } from 'src/app/core/models/auth-tokens.model';
 
@@ -50,26 +56,48 @@ export class LoginPage {
   biometricAvailable = false;
   biometricEnabled = false;
   biometricLabel = 'Biometrics';
+  readonly countries: PhoneCountry[] = createPhoneCountries();
 
-  readonly form = this.fb.nonNullable.group({
-    phoneNumber: ['', [Validators.required, Validators.pattern(E164_REGEX)]],
-    password: ['', [Validators.required, Validators.minLength(8)]],
-    useBiometrics: [false],
-  });
+  readonly form = this.fb.nonNullable.group(
+    {
+      phoneCountry: [getDefaultPhoneCountry()],
+      phoneNational: [''],
+      password: ['', [Validators.required, Validators.minLength(8)]],
+      useBiometrics: [false],
+    },
+    {
+      validators: [requiredPhoneValidator()],
+    },
+  );
 
   constructor() {
     void this.loadBiometricAvailability();
   }
 
-  get phoneNumber() {
-    return this.form.controls.phoneNumber;
+  get phoneCountry() {
+    return this.form.controls.phoneCountry;
+  }
+
+  get phoneNational() {
+    return this.form.controls.phoneNational;
   }
 
   get password() {
     return this.form.controls.password;
   }
 
-  isInvalid(controlName: 'phoneNumber' | 'password'): boolean {
+  isPhoneInvalid(): boolean {
+    const hasInteraction =
+      this.phoneNational.touched || this.phoneNational.dirty;
+
+    return (
+      hasInteraction &&
+      (this.form.hasError('requiredPhoneNumber') ||
+        this.form.hasError('invalidPhoneNumber'))
+    );
+  }
+
+  isInvalid(controlName: 'password'): boolean {
     const control = this.form.controls[controlName];
     return control.invalid && (control.touched || control.dirty);
   }
@@ -122,8 +150,13 @@ export class LoginPage {
     this.serverError = null;
     this.clearInvalidCredentialsError();
 
+    const phoneNumber = getNormalizedPhoneNumber(
+      this.phoneCountry.value,
+      this.phoneNational.value,
+    );
+
     const payload: LoginRequest = {
-      phoneNumber: this.form.controls.phoneNumber.value.trim(),
+      phoneNumber: phoneNumber!,
       password: this.form.controls.password.value ?? '',
     };
 
