@@ -116,7 +116,7 @@
                   <span class="primary-cta-card__kicker">New invitation</span>
                   <strong class="primary-cta-card__title">Invite a contact</strong>
                   <span class="primary-cta-card__subtitle">
-                    Send a private invitation by email.
+                    Choose a phone contact or enter their number.
                   </span>
                 </div>
 
@@ -128,21 +128,48 @@
                 [formGroup]="inviteForm"
                 (ngSubmit)="submitInvite()"
               >
+                @if (contactPickerAvailable) {
+                  <button
+                    type="button"
+                    class="invite-picker-button light-action-button"
+                    aria-label="Choose someone from device contacts"
+                    (click)="chooseFromContacts()"
+                    [disabled]="contactPickerBusy() || inviteSubmitting()"
+                  >
+                    <ion-icon name="person-add-outline" aria-hidden="true"></ion-icon>
+                    <span>{{ contactPickerBusy() ? 'Opening contacts…' : 'Choose from contacts' }}</span>
+                  </button>
+                }
+
                 <div class="invite-row">
-                  <label class="field-label" for="email">Email</label>
-                  <input
-                    id="email"
-                    class="invite-input"
-                    type="email"
-                    formControlName="email"
-                    inputmode="email"
-                    autocomplete="email"
-                    placeholder="friend@example.com"
-                  />
+                  <label class="field-label" for="invite-phone-number">Phone number</label>
+                  <div class="invite-phone-input-row">
+                    <select
+                      class="invite-input invite-country-select"
+                      aria-label="Country calling code"
+                      formControlName="phoneCountry"
+                    >
+                      @for (country of countries; track country.code) {
+                        <option [value]="country.code">
+                          {{ getCompactCountryLabel(country) }}
+                        </option>
+                      }
+                    </select>
+
+                    <input
+                      id="invite-phone-number"
+                      class="invite-input"
+                      type="tel"
+                      formControlName="phoneNational"
+                      inputmode="tel"
+                      autocomplete="tel-national"
+                      placeholder="470 12 34 56"
+                    />
+                  </div>
                 </div>
 
-                @if (inviteForm.controls.email.touched && inviteForm.controls.email.invalid) {
-                  <p class="field-error">Please enter a valid email address.</p>
+                @if (isInvitePhoneInvalid()) {
+                  <p class="field-error" role="alert">Please enter a valid phone number.</p>
                 }
 
                 <div class="invite-row">
@@ -438,4 +465,40 @@
       </section>
     </div>
   }
+}
+
+@if (phoneNumberChoices().length > 0) {
+  <div class="contact-actions-overlay" (click)="closePhoneNumberChoices()">
+    <section
+      class="contact-actions-sheet"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Choose a phone number"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="contact-actions-sheet__handle"></div>
+      <div class="contact-actions-sheet__header">Choose a phone number</div>
+
+      @for (choice of phoneNumberChoices(); track choice.id) {
+        <button
+          type="button"
+          class="contact-actions-sheet__button phone-choice-button"
+          (click)="selectPickedPhoneNumber(choice)"
+        >
+          <span>{{ choice.displayValue }}</span>
+          @if (choice.label) {
+            <small>{{ choice.label }}</small>
+          }
+        </button>
+      }
+
+      <button
+        type="button"
+        class="contact-actions-sheet__button contact-actions-sheet__button--cancel"
+        (click)="closePhoneNumberChoices()"
+      >
+        Cancel
+      </button>
+    </section>
+  </div>
 }

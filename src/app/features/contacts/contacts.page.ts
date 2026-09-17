@@ -5,10 +5,24 @@ import { RouterModule } from "@angular/router";
 import { IonicModule } from '@ionic/angular';
 import { ContactsPageData, ContactsPageDataService } from "./data/contacts-page-data.service";
 import { catchError, map, merge, Observable, of, shareReplay, startWith, Subject, switchMap } from "rxjs";
-import { getApiErrorMessage } from "src/app/core/api/api-error.util";
+import { extractApiError, getApiErrorMessage } from "src/app/core/api/api-error.util";
 import { AuthService } from "src/app/core/auth/auth.service";
 import { authenticatedSessionReload } from "src/app/core/auth/authenticated-session-reload.util";
+import {
+  NativeContactPickerService,
+  PickedContact,
+  PickedPhoneNumber,
+} from "src/app/core/platform/native-contact-picker.service";
+import {
+  createPhoneCountries,
+  getDefaultPhoneCountry,
+  getNormalizedPhoneNumber,
+  optionalPhoneValidator,
+  PhoneCountry,
+  splitE164PhoneNumber,
+} from "src/app/shared/phone/phone-number.util";
 import { AppToastColor, AppToastService } from "src/app/shared/toast/app-toast.service";
+import { getCountries, parsePhoneNumberFromString } from "libphonenumber-js";
 
 type ContactsPageVmState =
     | { kind: 'loading' }
@@ -42,6 +56,11 @@ interface PendingInvitationCardVm {
   createdLabel: string;
 }
 
+interface PhoneNumberChoice extends PickedPhoneNumber {
+  id: string;
+  displayValue: string;
+}
+
 @Component({
     selector: 'app-contacts',
     standalone: true,
@@ -61,12 +80,17 @@ export class ContactsPage {
     private readonly contactsDataService = inject(ContactsPageDataService);
     private readonly appToastService = inject(AppToastService);
     private readonly authService = inject(AuthService);
+    private readonly nativeContactPicker = inject(NativeContactPickerService);
     private readonly reload$ = new Subject<void>();
     private readonly acceptedDisplayNameFallbacks = new Map<number, string>();
     private hasEntered = false;
 
     readonly inviteExpanded = signal(false);
     readonly inviteSubmitting = signal(false);
+    readonly contactPickerBusy = signal(false);
+    readonly contactPickerAvailable = this.nativeContactPicker.isAvailable();
+    readonly phoneNumberChoices = signal<PhoneNumberChoice[]>([]);
+    readonly pickedContactName = signal<string | null>(null);
     readonly rowActionBusyId = signal<number | null>(null);
     readonly contactActionsOpen = signal(false);
     readonly contactActionsContact = signal<ContactCardVm | null>(null);
@@ -82,10 +106,18 @@ export class ContactsPage {
       color: 'success',
     });
 
-    readonly inviteForm = this.fb.nonNullable.group({
-        email: ['', [Validators.required, Validators.email]],
-        nickName:['', [Validators.maxLength(100)]],
-    });
+    readonly countries: PhoneCountry[] = createPhoneCountries(getCountries());
+
+    readonly inviteForm = this.fb.nonNullable.group(
+      {
+        phoneCountry: [getDefaultPhoneCountry()],
+        phoneNational: ['', [Validators.required]],
+        nickName: ['', [Validators.maxLength(100)]],
+      },
+      {
+        validators: [optionalPhoneValidator()],
+      },
+    );
 
     readonly vmState$: Observable<ContactsPageVmState> = merge(
       this.reload$,
@@ -127,9 +159,67 @@ export class ContactsPage {
     closeInvite(): void {
       this.inviteExpanded.set(false);
       this.inviteForm.reset({
-          email: '',
+          phoneCountry: getDefaultPhoneCountry(),
+          phoneNational: '',
           nickName: '',
       });
+      this.closePhoneNumberChoices();
+    }
+
+    getCompactCountryLabel(country: PhoneCountry): string {
+      return `${country.flag} ${country.dialCode}`;
+    }
+
+    isInvitePhoneInvalid(): boolean {
+      const phoneControl = this.inviteForm.controls.phoneNational;
+      const hasInteraction = phoneControl.touched || phoneControl.dirty;
+
+      return hasInteraction && (
+        phoneControl.hasError('required') ||
+        this.inviteForm.hasError('invalidPhoneNumber')
+      );
+    }
+
+    async chooseFromContacts(): Promise<void> {
+      if (
+        !this.contactPickerAvailable ||
+        this.contactPickerBusy() ||
+        this.inviteSubmitting()
+      ) {
+        return;
+      }
+
+      this.contactPickerBusy.set(true);
+
+      try {
+        const result = await this.nativeContactPicker.pickContact();
+
+        if (result.kind === 'selected') {
+          this.handlePickedContact(result.contact);
+        } else if (result.kind === 'unavailable') {
+          this.showToast(
+            'Your contacts are unavailable. Enter the phone number instead.',
+            'danger',
+          );
+        }
+      } catch {
+        this.showToast(
+          'We couldn’t open your contacts. Enter the phone number instead.',
+          'danger',
+        );
+      } finally {
+        this.contactPickerBusy.set(false);
+      }
+    }
+
+    selectPickedPhoneNumber(choice: PhoneNumberChoice): void {
+      this.applyPickedPhoneNumber(choice.value, this.pickedContactName());
+      this.closePhoneNumberChoices();
+    }
+
+    closePhoneNumberChoices(): void {
+      this.phoneNumberChoices.set([]);
+      this.pickedContactName.set(null);
     }
 
     async submitInvite(): Promise<void> {
@@ -140,9 +230,19 @@ export class ContactsPage {
 
       this.inviteSubmitting.set(true);
       const raw = this.inviteForm.getRawValue();
+      const phoneNumber = getNormalizedPhoneNumber(
+        raw.phoneCountry,
+        raw.phoneNational,
+      );
+
+      if (!phoneNumber) {
+        this.inviteSubmitting.set(false);
+        this.inviteForm.markAllAsTouched();
+        return;
+      }
 
       this.contactsDataService.sendInvitation({
-          email: raw.email.trim(),
+          phoneNumber,
           nickName: raw.nickName.trim() || undefined,
       }).subscribe({
         next: () => {
@@ -153,12 +253,105 @@ export class ContactsPage {
         },
         error: (error: any) => {
           this.inviteSubmitting.set(false);
+
+          if (extractApiError(error)?.code === 'CONTACT_INVITEE_NOT_FOUND') {
+            this.showToast('That person isn’t on Veya yet.', 'danger');
+            return;
+          }
+
           this.showToast(
             getApiErrorMessage(error, 'We couldn’t send that invitation right now.'),
             'danger',
           );
         }
       });
+    }
+
+    private handlePickedContact(contact: PickedContact): void {
+      const choices = this.toPhoneNumberChoices(contact.phoneNumbers);
+
+      if (choices.length === 0) {
+        this.showToast(
+          'That contact has no phone number. Enter one manually instead.',
+          'danger',
+        );
+        return;
+      }
+
+      if (choices.length === 1) {
+        this.applyPickedPhoneNumber(choices[0].value, contact.displayName);
+        return;
+      }
+
+      this.pickedContactName.set(contact.displayName?.trim() || null);
+      this.phoneNumberChoices.set(choices);
+    }
+
+    private toPhoneNumberChoices(
+      phoneNumbers: PickedPhoneNumber[],
+    ): PhoneNumberChoice[] {
+      const choices = new Map<string, PhoneNumberChoice>();
+
+      for (const [index, phoneNumber] of phoneNumbers.entries()) {
+        const value = phoneNumber.value?.trim();
+
+        if (!value) {
+          continue;
+        }
+
+        const parsed = parsePhoneNumberFromString(
+          value,
+          this.inviteForm.controls.phoneCountry.value,
+        );
+        const key = parsed?.isValid()
+          ? parsed.number
+          : value.replace(/\D/g, '');
+
+        if (!key || choices.has(key)) {
+          continue;
+        }
+
+        choices.set(key, {
+          id: `${index}-${key}`,
+          label: phoneNumber.label,
+          value,
+          displayValue: parsed?.isValid()
+            ? parsed.formatInternational()
+            : value,
+        });
+      }
+
+      return [...choices.values()];
+    }
+
+    private applyPickedPhoneNumber(
+      value: string,
+      displayName?: string | null,
+    ): void {
+      const parsed = parsePhoneNumberFromString(
+        value,
+        this.inviteForm.controls.phoneCountry.value,
+      );
+
+      if (parsed?.isValid()) {
+        const split = splitE164PhoneNumber(
+          parsed.number,
+          this.inviteForm.controls.phoneCountry.value,
+        );
+        this.inviteForm.patchValue(split);
+      } else {
+        this.inviteForm.controls.phoneNational.setValue(value);
+      }
+
+      this.inviteForm.controls.phoneNational.markAsDirty();
+      this.inviteForm.controls.phoneNational.markAsTouched();
+
+      const currentNickname = this.inviteForm.controls.nickName.value.trim();
+      const pickedNickname = displayName?.trim().slice(0, 100);
+
+      if (!currentNickname && pickedNickname) {
+        this.inviteForm.controls.nickName.setValue(pickedNickname);
+      }
     }
 
     acceptInvitation(invitation: PendingInvitationCardVm): void {
@@ -439,7 +632,6 @@ export class ContactsPage {
       const pendingInvitations = data.pendingInvitations.map((invitation) => {
           const displayLabel =
               this.cleanText(invitation.senderDisplayName) ||
-              this.cleanText(invitation.senderEmail) ||
               'Pending invitation';
 
         return {

@@ -53,7 +53,6 @@ describe('ContactPageDataService', () => {
                 {
                     invitationId: 1,
                     senderUserId: 2,
-                    senderEmail: 'test@email.com',
                     senderDisplayName: 'senderDisplayName',
                     status: 'PENDING',
                     createdAt: '2026-04-19',
@@ -96,7 +95,6 @@ describe('ContactPageDataService', () => {
                 jasmine.objectContaining({
                     invitationId: 1,
                     senderUserId: 2,
-                    senderEmail: 'test@email.com',
                     senderDisplayName: 'senderDisplayName',
                     status: 'PENDING',
                     createdAt: '2026-04-19',
@@ -145,7 +143,7 @@ describe('ContactPageDataService', () => {
 
     it('should delegate sendInvitation to ContactsService', (done) => {
         const input = {
-            email: 'test@email.com',
+            phoneNumber: '+32470123456',
             nickName: 'Nick',
         };
 
