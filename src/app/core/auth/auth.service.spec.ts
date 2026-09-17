@@ -46,7 +46,7 @@ describe('AuthService', () => {
 
     it('should login and persist tokens', () => {
         const payload: LoginRequest = {
-            email: 'test@email.com',
+            phoneNumber: '+32468009911',
             password: 'password123',
         };
 
@@ -69,6 +69,7 @@ describe('AuthService', () => {
             email: 'john@example.com',
             password: 'password123',
             displayName: 'John',
+            phoneNumber: '+32468009911',
             timezone: 'Europe/Brussels',
         };
 
@@ -89,6 +90,7 @@ describe('AuthService', () => {
             email: 'john@example.com',
             password: 'password123',
             displayName: 'John',
+            phoneNumber: '+32468009911',
             timezone: 'Europe/Brussels',
         };
 
@@ -131,7 +133,7 @@ describe('AuthService', () => {
 
     it('should map login 401 to INVALID_CREDENTIALS', () => {
         const payload: LoginRequest = {
-        email: 'john@example.com',
+        phoneNumber: '+32468009911',
         password: 'wrong-password',
         };
 
@@ -139,7 +141,7 @@ describe('AuthService', () => {
             next: () => fail('Expected error'),
             error: (error: AuthError) => {
                 expect(error.code).toBe('INVALID_CREDENTIALS');
-                expect(error.message).toBe('Invalid email or password.');
+                expect(error.message).toBe('Invalid phone number or password.');
             },
         });
 
@@ -149,7 +151,7 @@ describe('AuthService', () => {
 
     it('should map backend BAD_CREDENTIALS to INVALID_CREDENTIALS', () => {
         const payload: LoginRequest = {
-            email: 'john@example.com',
+            phoneNumber: '+32468009911',
             password: 'wrong-password',
         };
 
@@ -157,7 +159,7 @@ describe('AuthService', () => {
             next: () => fail('Expected error'),
             error: (error: AuthError) => {
                 expect(error.code).toBe('INVALID_CREDENTIALS');
-                expect(error.message).toBe('Invalid email or password.');
+                expect(error.message).toBe('Invalid phone number or password.');
                 expect(error.apiError?.code).toBe('BAD_CREDENTIALS');
             },
         });
@@ -177,6 +179,7 @@ describe('AuthService', () => {
             email: 'john@example.com',
             password: 'password123',
             displayName: 'John',
+            phoneNumber: '+32468009911',
             timezone: 'Europe/Brussels',
         };
 
@@ -197,6 +200,7 @@ describe('AuthService', () => {
             email: 'john@example.com',
             password: 'password123',
             displayName: 'John',
+            phoneNumber: '+32468009911',
             timezone: 'Europe/Brussels',
         };
 
@@ -249,7 +253,7 @@ describe('AuthService', () => {
 
     it('should map network error to NETWORK', () => {
         const payload: LoginRequest = {
-            email: 'john@example.com',
+            phoneNumber: '+32468009911',
             password: 'password123',
         };
 

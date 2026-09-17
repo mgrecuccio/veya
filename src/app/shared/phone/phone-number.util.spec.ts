@@ -3,7 +3,7 @@ import {
   createPhoneCountries,
   countryCodeToFlag,
   getNormalizedPhoneNumber,
-  optionalPhoneValidator,
+  requiredPhoneValidator,
   splitE164PhoneNumber,
 } from './phone-number.util';
 
@@ -17,30 +17,27 @@ describe('phone-number.util', () => {
     expect(getNormalizedPhoneNumber('BE', '123')).toBeUndefined();
   });
 
-  it('validates optional phone controls', () => {
-    const validator = optionalPhoneValidator();
-    const form = new FormGroup({
-      phoneCountry: new FormControl('BE'),
-      phoneNational: new FormControl('0470 12 34 56'),
-    });
-
-    expect(validator(form)).toBeNull();
-
-    form.controls.phoneNational.setValue('');
-    expect(validator(form)).toBeNull();
-
-    form.controls.phoneNational.setValue('123');
-    expect(validator(form)).toEqual({ invalidPhoneNumber: true });
-  });
-
   it('requires a country when a phone number is present', () => {
-    const validator = optionalPhoneValidator();
+    const validator = requiredPhoneValidator();
     const form = new FormGroup({
       phoneCountry: new FormControl(null),
       phoneNational: new FormControl('0470 12 34 56'),
     });
 
     expect(validator(form)).toEqual({ invalidPhoneNumber: true });
+  });
+
+  it('validates required phone controls', () => {
+    const validator = requiredPhoneValidator();
+    const form = new FormGroup({
+      phoneCountry: new FormControl('BE'),
+      phoneNational: new FormControl(''),
+    });
+
+    expect(validator(form)).toEqual({ requiredPhoneNumber: true });
+
+    form.controls.phoneNational.setValue('0470 12 34 56');
+    expect(validator(form)).toBeNull();
   });
 
   it('splits an E.164 phone number into country and national number', () => {

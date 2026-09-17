@@ -73,7 +73,6 @@
           <div class="auth-field">
             <label class="auth-label" for="register-phone">
               Phone number
-              <span class="auth-label-optional">(optional)</span>
             </label>
 
             <div class="phone-input-row">
@@ -103,7 +102,11 @@
 
             @if (isPhoneInvalid()) {
               <div class="auth-error">
-                <span>Enter a valid phone number.</span>
+                @if (form.hasError('requiredPhoneNumber')) {
+                  <span>Phone number is required.</span>
+                } @else {
+                  <span>Enter a valid phone number.</span>
+                }
               </div>
             }
           </div>

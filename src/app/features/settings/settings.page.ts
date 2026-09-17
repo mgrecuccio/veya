@@ -1,24 +1,22 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { IonicModule } from '@ionic/angular';
 import { catchError, map, merge, Observable, of, shareReplay, startWith, Subject, switchMap, tap } from 'rxjs';
 import { SettingsPageData, SettingsPageDataService } from './data/settings-page-data.service';
 import { AuthService } from 'src/app/core/auth/auth.service';
 import { authenticatedSessionReload } from 'src/app/core/auth/authenticated-session-reload.util';
 import { getApiErrorMessage } from 'src/app/core/api/api-error.util';
-import { MatchesService } from 'src/app/core/api/services/matches.service';
 import { PushRegistrationReconciliationService } from 'src/app/core/notifications/push-registration-reconciliation.service';
 import { DEVICE_TOKEN_PLATFORM } from 'src/app/core/api/request/register-device-token.request';
-import { PhoneNumberSetupService } from 'src/app/shared/phone/phone-number-setup.service';
 import { AppToastColor, AppToastService } from 'src/app/shared/toast/app-toast.service';
 import { APP_VERSION } from 'src/environments/app-version';
 import {
   createPhoneCountries,
   getDefaultPhoneCountry,
   getNormalizedPhoneNumber,
-  optionalPhoneValidator,
+  requiredPhoneValidator,
   PhoneCountry,
   splitE164PhoneNumber,
 } from 'src/app/shared/phone/phone-number.util';
@@ -78,9 +76,6 @@ export class SettingsPage {
     private readonly fb = inject(FormBuilder).nonNullable;
     private readonly settingsPageDataService = inject(SettingsPageDataService);
     private readonly authService = inject(AuthService);
-    private readonly matchesService = inject(MatchesService);
-    private readonly phoneNumberSetupService = inject(PhoneNumberSetupService);
-    private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
     private readonly appToastService = inject(AppToastService);
     private readonly pushRegistration = inject(PushRegistrationReconciliationService);
@@ -119,7 +114,7 @@ export class SettingsPage {
         phoneNational: [''],
       },
       {
-        validators: [optionalPhoneValidator()],
+        validators: [requiredPhoneValidator()],
       },
     );
 
@@ -141,23 +136,6 @@ export class SettingsPage {
         pushNotificationsEnabled: [false],
         suggestionNotificationsEnabled: [false],
     });
-
-    readonly phoneSetupMessage$: Observable<string | null> = this.route.queryParamMap.pipe(
-      map((params) => {
-        if (params.get('setup') !== 'phone') {
-          return null;
-        }
-
-        switch (params.get('action')) {
-          case 'proposal':
-            return 'Add your phone number to send this match proposal.';
-          case 'acceptance':
-            return 'Add your phone number to accept this match request.';
-          default:
-            return 'Add your phone number to continue with this match.';
-        }
-      }),
-    );
 
     readonly vmState$: Observable<SettingsPageVmState> = merge(
       this.reload$,
@@ -221,7 +199,8 @@ export class SettingsPage {
 
       return (
         hasInteraction &&
-        this.profileForm.hasError('invalidPhoneNumber')
+        (this.profileForm.hasError('requiredPhoneNumber') ||
+          this.profileForm.hasError('invalidPhoneNumber'))
       );
     }
 
@@ -241,12 +220,12 @@ export class SettingsPage {
       this.settingsPageDataService.saveProfile({
           displayName: this.blankToNull(raw.displayName),
           timezone: this.blankToNull(raw.timezone),
-          phoneNumber: phoneNumber ?? null,
+          phoneNumber: phoneNumber!,
       }).subscribe({
         next: () => {
           this.isSavingProfile.set(false);
           this.retry();
-          this.retryPendingPhoneAction();
+          this.showToast('Profile saved.', 'success');
         },
         error: (error: any) => {
           this.isSavingProfile.set(false);
@@ -363,46 +342,6 @@ export class SettingsPage {
       });
 
       void this.appToastService.show(message, color, 'app-toast settings-page-toast');
-    }
-
-    private retryPendingPhoneAction(): void {
-      const pendingAction = this.phoneNumberSetupService.consumePendingAction();
-
-      if (!pendingAction) {
-        this.showToast('Profile saved.', 'success');
-        return;
-      }
-
-      const retry$ =
-        pendingAction.kind === 'proposal'
-          ? this.matchesService.createMatch({
-              candidateUserId: pendingAction.candidateUserId,
-              channelType: pendingAction.channelType,
-            })
-          : this.matchesService.acceptMatch(pendingAction.proposalId);
-
-      retry$.subscribe({
-        next: () => {
-          this.showToast(
-            pendingAction.kind === 'proposal'
-              ? 'Phone number saved. Proposal sent.'
-              : 'Phone number saved. Proposal accepted.',
-            'success',
-          );
-          void this.router.navigateByUrl(pendingAction.returnUrl);
-        },
-        error: (error: unknown) => {
-          this.showToast(
-            getApiErrorMessage(
-              error,
-              pendingAction.kind === 'proposal'
-                ? 'Your phone number was saved, but we couldn’t send the proposal.'
-                : 'Your phone number was saved, but we couldn’t accept the proposal.',
-            ),
-            'danger',
-          );
-        },
-      });
     }
 
     private blankToNull(value: string | null | undefined): string | null {

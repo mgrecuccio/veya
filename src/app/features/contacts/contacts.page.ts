@@ -17,7 +17,7 @@ import {
   createPhoneCountries,
   getDefaultPhoneCountry,
   getNormalizedPhoneNumber,
-  optionalPhoneValidator,
+  requiredPhoneValidator,
   PhoneCountry,
   splitE164PhoneNumber,
 } from "src/app/shared/phone/phone-number.util";
@@ -115,7 +115,7 @@ export class ContactsPage {
         nickName: ['', [Validators.maxLength(100)]],
       },
       {
-        validators: [optionalPhoneValidator()],
+        validators: [requiredPhoneValidator()],
       },
     );
 

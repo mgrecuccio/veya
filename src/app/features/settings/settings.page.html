@@ -86,13 +86,6 @@
               </div>
             </div>
 
-            @if (phoneSetupMessage$ | async; as phoneSetupMessage) {
-              <div class="settings-phone-setup-notice" role="status">
-                <ion-icon name="call-outline" aria-hidden="true"></ion-icon>
-                <span>{{ phoneSetupMessage }}</span>
-              </div>
-            }
-
             <form class="settings-row-list" 
               [formGroup]="profileForm"
               (ngSubmit)="saveProfile()"
@@ -162,7 +155,11 @@
               </div>
               @if (isPhoneInvalid()) {
                 <div class="settings-error">
-                  <span>Enter a valid phone number.</span>
+                  @if (profileForm.hasError('requiredPhoneNumber')) {
+                    <span>Phone number is required.</span>
+                  } @else {
+                    <span>Enter a valid phone number.</span>
+                  }
                 </div>
               }
               <div class="settings-form-actions">

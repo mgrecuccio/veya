@@ -151,7 +151,7 @@ export class AuthService {
     ) {
       return {
         code: 'INVALID_CREDENTIALS',
-        message: 'Invalid email or password.',
+        message: 'Invalid phone number or password.',
         apiError: authApiError,
       };
     }

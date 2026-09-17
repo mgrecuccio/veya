@@ -38,12 +38,24 @@ describe('LoginPage', () => {
 
     it('should not submit if form is invalid', () => {
         component.form.patchValue({
-            email: '',
+            phoneNumber: '',
             password: '',
         });
 
         component.submit();
 
+        expect(authServiceSpy.login).not.toHaveBeenCalled();
+    });
+
+    it('should require an E.164 phone number', () => {
+        component.form.patchValue({
+            phoneNumber: '0468 00 99 11',
+            password: 'password123',
+        });
+
+        component.submit();
+
+        expect(component.phoneNumber.errors?.['pattern']).toBeTruthy();
         expect(authServiceSpy.login).not.toHaveBeenCalled();
     });
 
@@ -58,14 +70,14 @@ describe('LoginPage', () => {
         );
 
         component.form.patchValue({
-            email: 'john@example.com',
+            phoneNumber: '+32468009911',
             password: 'password123',
         });
 
         component.submit();
 
         expect(authServiceSpy.login).toHaveBeenCalledWith({
-            email: 'john@example.com',
+            phoneNumber: '+32468009911',
             password: 'password123',
         });
     });
@@ -81,7 +93,7 @@ describe('LoginPage', () => {
         );
 
         component.form.patchValue({
-            email: 'john@example.com',
+            phoneNumber: '+32468009911',
             password: 'password123',
         });
 
@@ -108,7 +120,7 @@ describe('LoginPage', () => {
     it('should set invalidCredentials form error on login failure', () => {
     const error: AuthError = {
         code: 'INVALID_CREDENTIALS',
-        message: 'Invalid email or password.',
+        message: 'Invalid phone number or password.',
     };
 
     authServiceSpy.login.and.returnValue(
@@ -116,7 +128,7 @@ describe('LoginPage', () => {
     );
 
     component.form.patchValue({
-        email: 'john@example.com',
+        phoneNumber: '+32468009911',
         password: 'wrong-password',
     });
 
@@ -138,7 +150,7 @@ describe('LoginPage', () => {
         );
 
         component.form.patchValue({
-            email: 'john@example.com',
+            phoneNumber: '+32468009911',
             password: 'password123',
         });
 
@@ -159,7 +171,7 @@ describe('LoginPage', () => {
         );
 
         component.form.patchValue({
-            email: 'john@example.com',
+            phoneNumber: '+32468009911',
             password: 'password123',
         });
 
@@ -168,8 +180,8 @@ describe('LoginPage', () => {
         expect(component.isSubmitting).toBeFalse();
     });
 
-    it('should expose email getter', () => {
-        expect(component.email).toBe(component.form.controls.email);
+    it('should expose phone number getter', () => {
+        expect(component.phoneNumber).toBe(component.form.controls.phoneNumber);
     });
 
     it('should expose password getter', () => {
@@ -177,16 +189,16 @@ describe('LoginPage', () => {
     });
 
     it('should return true from isInvalid when control is invalid and touched', () => {
-        component.form.controls.email.markAsTouched();
-        component.form.controls.email.setValue('');
+        component.form.controls.phoneNumber.markAsTouched();
+        component.form.controls.phoneNumber.setValue('');
 
-        expect(component.isInvalid('email')).toBeTrue();
+        expect(component.isInvalid('phoneNumber')).toBeTrue();
     });
 
     it('should return false from isInvalid when control is valid', () => {
-        component.form.controls.email.setValue('john@example.com');
-        component.form.controls.email.markAsTouched();
+        component.form.controls.phoneNumber.setValue('+32468009911');
+        component.form.controls.phoneNumber.markAsTouched();
 
-        expect(component.isInvalid('email')).toBeFalse();
+        expect(component.isInvalid('phoneNumber')).toBeFalse();
     });
 });
