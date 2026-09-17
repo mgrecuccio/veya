@@ -24,24 +24,24 @@
 
         <form class="auth-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
           <div class="auth-field">
-            <label class="auth-label" for="login-email">Email</label>
+            <label class="auth-label" for="login-phone-number">Phone number</label>
             <input
-              id="login-email"
+              id="login-phone-number"
               class="auth-input-item auth-input"
-              [class.auth-input-item--invalid]="isInvalid('email')"
-              type="email"
-              inputmode="email"
-              autocomplete="email"
-              placeholder="you@example.com"
-              formControlName="email"
+              [class.auth-input-item--invalid]="isInvalid('phoneNumber')"
+              type="tel"
+              inputmode="tel"
+              autocomplete="tel"
+              placeholder="+32468009911"
+              formControlName="phoneNumber"
             />
 
-            @if (isInvalid('email')) {
+            @if (isInvalid('phoneNumber')) {
               <div class="auth-error">
-                @if (email.errors?.['required']) {
-                  <span>Email is required.</span>
-                } @else if (email.errors?.['email']) {
-                  <span>Enter a valid email address.</span>
+                @if (phoneNumber.errors?.['required']) {
+                  <span>Phone number is required.</span>
+                } @else if (phoneNumber.errors?.['pattern']) {
+                  <span>Enter a phone number in E.164 format, such as +32468009911.</span>
                 }
               </div>
             }
@@ -72,7 +72,7 @@
 
           @if (form.errors?.['invalidCredentials']) {
             <div class="auth-error auth-error--form">
-              <span>Invalid email or password.</span>
+              <span>Invalid phone number or password.</span>
             </div>
           }
 

@@ -27,7 +27,7 @@ import {
   createPhoneCountries,
   getDefaultPhoneCountry,
   getNormalizedPhoneNumber,
-  optionalPhoneValidator,
+  requiredPhoneValidator,
   PhoneCountry,
 } from 'src/app/shared/phone/phone-number.util';
 
@@ -102,7 +102,7 @@ export class RegisterPage {
     {
       validators: [
         matchFieldsValidator('password', 'confirmPassword'),
-        optionalPhoneValidator()
+        requiredPhoneValidator()
       ]
     }
   );
@@ -147,7 +147,8 @@ export class RegisterPage {
 
     return (
       hasInteraction &&
-      this.form.hasError('invalidPhoneNumber')
+      (this.form.hasError('requiredPhoneNumber') ||
+        this.form.hasError('invalidPhoneNumber'))
     );
   } 
 
@@ -217,7 +218,7 @@ export class RegisterPage {
       displayName: this.form.controls.name.value.trim(),
       timezone:
         Intl.DateTimeFormat().resolvedOptions().timeZone ?? 'UTC',
-      ...(phoneNumber ? { phoneNumber } : {})
+      phoneNumber: phoneNumber!
     };
 
     this.isSubmitting = true;

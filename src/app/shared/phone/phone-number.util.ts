@@ -39,17 +39,16 @@ export function countryCodeToFlag(countryCode: CountryCode): string {
     .join('');
 }
 
-export function optionalPhoneValidator(): ValidatorFn {
+export function requiredPhoneValidator(): ValidatorFn {
   return (group: AbstractControl): ValidationErrors | null => {
     const country = group.get('phoneCountry')?.value as
       | CountryCode
       | undefined;
-
     const nationalNumber =
       group.get('phoneNational')?.value?.trim() ?? '';
 
     if (!nationalNumber) {
-      return null;
+      return { requiredPhoneNumber: true };
     }
 
     if (!country) {

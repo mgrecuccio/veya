@@ -36,6 +36,8 @@ describe('RegisterPage', () => {
     component.form.patchValue({
       name: 'John Doe',
       email: 'john@example.com',
+      phoneCountry: 'BE',
+      phoneNational: '0468 00 99 11',
       password: 'password123',
       confirmPassword: 'password123',
     });
@@ -82,6 +84,7 @@ describe('RegisterPage', () => {
       email: 'john@example.com',
       password: 'password123',
       displayName: 'John Doe',
+      phoneNumber: '+32468009911',
       timezone: 'Europe/Brussels',
     });
   });
@@ -158,6 +161,8 @@ describe('RegisterPage', () => {
     component.form.patchValue({
       name: 'John Doe',
       email: 'john@example.com',
+      phoneCountry: 'BE',
+      phoneNational: '0468 00 99 11',
       password: 'password123',
       confirmPassword: 'different123',
     });
@@ -238,16 +243,7 @@ describe('RegisterPage', () => {
     expect(authServiceSpy.register).not.toHaveBeenCalled();
   });
 
-  it('should allow the phone number to be empty', () => {
-    authServiceSpy.register.and.returnValue(
-      of({
-        accessToken: 'access-token',
-        refreshToken: 'refresh-token',
-        tokenType: 'Bearer',
-        expiresInSeconds: 3600,
-      })
-    );
-
+  it('should require a phone number', () => {
     fillValidForm();
 
     component.form.patchValue({
@@ -257,10 +253,8 @@ describe('RegisterPage', () => {
 
     component.submit();
 
-    const payload =
-      authServiceSpy.register.calls.mostRecent().args[0];
-
-    expect(payload.phoneNumber).toBeUndefined();
+    expect(component.form.hasError('requiredPhoneNumber')).toBeTrue();
+    expect(authServiceSpy.register).not.toHaveBeenCalled();
   });
 
 });

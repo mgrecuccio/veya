@@ -19,6 +19,7 @@ import { LoginRequest } from 'src/app/core/models/login-request.model';
 import { AuthError, AuthService } from 'src/app/core/auth/auth.service';
 import { finalize } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { E164_REGEX } from 'src/app/shared/phone/phone-number.util';
 
 @Component({
   selector: 'app-login',
@@ -46,19 +47,19 @@ export class LoginPage {
   authFocusOffset = 0;
 
   readonly form = this.fb.nonNullable.group({
-    email: ['', [Validators.required, Validators.email]],
+    phoneNumber: ['', [Validators.required, Validators.pattern(E164_REGEX)]],
     password: ['', [Validators.required, Validators.minLength(8)]]
   });
 
-  get email() {
-    return this.form.controls.email;
+  get phoneNumber() {
+    return this.form.controls.phoneNumber;
   }
 
   get password() {
     return this.form.controls.password;
   }
 
-  isInvalid(controlName: 'email' | 'password'): boolean {
+  isInvalid(controlName: 'phoneNumber' | 'password'): boolean {
     const control = this.form.controls[controlName];
     return control.invalid && (control.touched || control.dirty);
   }
@@ -112,7 +113,7 @@ export class LoginPage {
     this.clearInvalidCredentialsError();
 
     const payload: LoginRequest = {
-      email: this.form.controls.email.value?.trim() ?? '',
+      phoneNumber: this.form.controls.phoneNumber.value.trim(),
       password: this.form.controls.password.value ?? '',
     };
 
