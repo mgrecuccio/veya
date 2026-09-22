@@ -76,6 +76,17 @@ export class PushRegistrationReconciliationService implements OnDestroy {
     return permission;
   }
 
+  async requestPermission(): Promise<PushPermissionState> {
+    let permission = await this.pushPlatform.checkPermission();
+
+    if (permission === 'prompt' || permission === 'prompt-with-rationale') {
+      permission = await this.pushPlatform.requestPermission();
+    }
+
+    this.permissionState.set(permission);
+    return permission;
+  }
+
   getDevicePlatform(): DeviceTokenPlatform {
     return this.pushPlatform.getDevicePlatform();
   }

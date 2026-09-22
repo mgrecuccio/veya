@@ -103,6 +103,17 @@ describe('PushRegistrationReconciliationService', () => {
     expect(pushPlatform.registerWithPlatform).toHaveBeenCalled();
   });
 
+  it('should request a promptable permission without reconciling the backend preference', async () => {
+    pushPlatform.checkPermission.and.returnValue(Promise.resolve('prompt'));
+
+    const permission = await service.requestPermission();
+
+    expect(pushPlatform.requestPermission).toHaveBeenCalledOnceWith();
+    expect(userService.getPreferences).not.toHaveBeenCalled();
+    expect(permission).toBe('granted');
+    expect(service.permissionState()).toBe('granted');
+  });
+
   it('should not register when OS permission is denied', async () => {
     pushPlatform.checkPermission.and.returnValue(Promise.resolve('denied'));
 

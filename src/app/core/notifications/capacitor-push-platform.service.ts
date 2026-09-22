@@ -10,6 +10,7 @@ import { Platform } from '@ionic/angular/standalone';
 import { Subject } from 'rxjs';
 import { environment } from 'src/environments/environment';
 import { DEVICE_TOKEN_PLATFORM, DeviceTokenPlatform } from '../api/request/register-device-token.request';
+import { NativeNotificationSettingsService } from '../platform/native-notification-settings.service';
 
 export type PushPermissionState = PermissionStatus['receive'] | 'unsupported';
 
@@ -24,6 +25,7 @@ const LAST_PUSH_TOKEN_KEY = 'veya:lastPushToken';
 export class CapacitorPushPlatformService {
   private readonly platform = inject(Platform);
   private readonly zone = inject(NgZone);
+  private readonly notificationSettings = inject(NativeNotificationSettingsService);
   private readonly tokenSubject = new Subject<PushDeviceToken>();
   private readonly foregroundNotificationSubject = new Subject<PushNotificationSchema>();
   private readonly actionSubject = new Subject<ActionPerformed>();
@@ -69,7 +71,7 @@ export class CapacitorPushPlatformService {
     }
 
     const permission = await PushNotifications.checkPermissions();
-    return permission.receive;
+    return this.normalizeAndroidPermission(permission.receive);
   }
 
   async requestPermission(): Promise<PushPermissionState> {
@@ -78,7 +80,7 @@ export class CapacitorPushPlatformService {
     }
 
     const permission = await PushNotifications.requestPermissions();
-    return permission.receive;
+    return this.normalizeAndroidPermission(permission.receive);
   }
 
   async registerWithPlatform(): Promise<void> {
@@ -136,6 +138,17 @@ export class CapacitorPushPlatformService {
 
   private isNativePushAvailable(): boolean {
     return this.platform.is('capacitor') && environment.nativePushNotificationsConfigured;
+  }
+
+  private async normalizeAndroidPermission(
+    permission: PermissionStatus['receive'],
+  ): Promise<PermissionStatus['receive']> {
+    if (!this.platform.is('android') || permission !== 'granted') {
+      return permission;
+    }
+
+    const notificationsEnabled = await this.notificationSettings.areEnabled();
+    return notificationsEnabled === false ? 'denied' : permission;
   }
 
 }
