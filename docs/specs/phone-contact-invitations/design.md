@@ -2,7 +2,7 @@
 
 ## Scope Boundary
 
-This work changes how an invitation to an existing Veya user is addressed. It replaces email with a normalized phone number and adds a native convenience for selecting exactly one contact.
+An invitation to an existing Veya user is addressed by normalized phone number, with a native convenience for selecting exactly one contact.
 
 The selected number still has to belong to an existing Veya account. Handling a non-member through SMS/share is intentionally deferred so this change does not require a new external-invitation lifecycle.
 
@@ -90,7 +90,7 @@ The backend repeats parsing, validation, and canonicalization before matching.
 
 ## Form And State
 
-Replace the `email` form control with:
+The invitation form contains:
 
 - `phoneCountry`
 - `phoneNational`
@@ -109,13 +109,7 @@ The nickname may be prefilled from the selected contact's display name, trimmed 
 
 ## API And Models
 
-Change `SendInvitationRequest` from:
-
-```ts
-{ email: string; nickName?: string }
-```
-
-to:
+`SendInvitationRequest` uses the following shape:
 
 ```ts
 { phoneNumber: string; nickName?: string }
@@ -123,7 +117,7 @@ to:
 
 Keep `ContactsService.sendInvitation()` and the endpoint path unchanged. Update its tests to assert the exact phone-based payload.
 
-The pending invitation response currently contains `senderEmail`. The backend should add or retain a non-sensitive `senderDisplayName` for incoming invitation presentation. Once the backend no longer returns `senderEmail`, remove that field from `PendingContactInvitationView` and remove the email display fallback from the Contacts page. A raw sender phone number must not replace email as display copy.
+The pending invitation response contains `senderPhoneNumber` and may contain `senderDisplayName`. The Contacts page uses the display name first and falls back to the phone number when it needs an identifier.
 
 ## Error Handling
 
@@ -140,7 +134,7 @@ Do not branch on localized error-message text.
 
 ## Accessibility And Copy
 
-- Replace all email-specific labels, placeholders, input modes, autocomplete attributes, and validation text.
+- Use phone-specific labels, placeholders, input modes, autocomplete attributes, and validation text.
 - Use `type="tel"`, `inputmode="tel"`, and `autocomplete="tel-national"` for the manual number field.
 - Give the contact-picker control an accessible name that describes opening the device contact picker.
 - The multiple-number sheet must be keyboard/focus accessible and identify each number by label plus a readable formatted number.
@@ -152,7 +146,7 @@ Unit-test the native boundary through an injected fake; browser tests must not i
 
 Focused coverage:
 
-- `ContactsService` posts `phoneNumber` and never `email`.
+- `ContactsService` posts `phoneNumber`.
 - manual valid/invalid number normalization;
 - selected contact with zero, one, and multiple phone numbers;
 - duplicate selected numbers after normalization;
@@ -161,7 +155,7 @@ Focused coverage:
 - unavailable/failed picker leaves manual entry usable;
 - submit success resets and refreshes;
 - submit failure, including `CONTACT_INVITEE_NOT_FOUND`, preserves form values;
-- email-specific invitation copy and controls are absent.
+- all invitation copy and controls describe phone-number entry.
 
 Native smoke checks on a physical device:
 

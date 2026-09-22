@@ -73,7 +73,7 @@ describe('authInterceptor', () => {
         tokenStorage.setTokens(mockTokens);
 
         http.post('http://localhost:8080/api/v1/auth/login', {
-            email: 'john@example.com',
+            phoneNumber: '+32468009911',
             password: 'password123',
         }).subscribe();
 

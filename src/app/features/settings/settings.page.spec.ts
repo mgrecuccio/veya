@@ -119,7 +119,6 @@ describe('SettingsPage', () => {
                 id: 1,
                 displayName: 'Marco',
                 timezone: 'Europe/Brussels',
-                email: 'marco@example.com',
                 phoneNumber: '+32470000000',
                 status: 'ACTIVE',
             },

@@ -93,7 +93,6 @@ export class RegisterPage {
   readonly form = this.fb.nonNullable.group(
     {
       name: ['', [Validators.required]],
-      email: ['', [Validators.required, Validators.email]],
       phoneCountry: [this.getDefaultPhoneCountry()],
       phoneNational: [''],
       password: ['', [Validators.required, Validators.minLength(8)]],
@@ -109,10 +108,6 @@ export class RegisterPage {
 
   get name() {
     return this.form.controls.name;
-  }
-
-  get email() {
-    return this.form.controls.email;
   }
 
   get phoneCountry() {
@@ -148,12 +143,13 @@ export class RegisterPage {
     return (
       hasInteraction &&
       (this.form.hasError('requiredPhoneNumber') ||
-        this.form.hasError('invalidPhoneNumber'))
+        this.form.hasError('invalidPhoneNumber') ||
+        this.phoneNational.hasError('phoneNumberAlreadyExists'))
     );
   } 
 
   isInvalid(
-    controlName: 'name' | 'email' | 'password' | 'confirmPassword'
+    controlName: 'name' | 'password' | 'confirmPassword'
   ): boolean {
     const control = this.form.controls[controlName];
     return control.invalid && (control.touched || control.dirty);
@@ -205,7 +201,7 @@ export class RegisterPage {
     }
 
     this.serverError = null;
-    this.clearEmailAlreadyExistsError();
+    this.clearPhoneNumberAlreadyExistsError();
 
     const phoneNumber = getNormalizedPhoneNumber(
       this.phoneCountry.value,
@@ -213,7 +209,6 @@ export class RegisterPage {
     );
 
     const payload: RegisterRequest = {
-      email: this.form.controls.email.value.trim(),
       password: this.form.controls.password.value,
       displayName: this.form.controls.name.value.trim(),
       timezone:
@@ -233,10 +228,10 @@ export class RegisterPage {
         void this.router.navigateByUrl('/app/home', { replaceUrl: true });
       },
       error: (error: AuthError) => {
-        if (error.code === 'EMAIL_ALREADY_EXISTS') {
-          this.form.controls.email.setErrors({
-            ...(this.form.controls.email.errors ?? {}),
-            emailAlreadyExists: true
+        if (error.code === 'PHONE_NUMBER_ALREADY_EXISTS') {
+          this.phoneNational.setErrors({
+            ...(this.phoneNational.errors ?? {}),
+            phoneNumberAlreadyExists: true
           });
           return;
         }
@@ -246,15 +241,15 @@ export class RegisterPage {
     });
   }
 
-  private clearEmailAlreadyExistsError(): void {
-    const errors = this.form.controls.email.errors;
+  private clearPhoneNumberAlreadyExistsError(): void {
+    const errors = this.phoneNational.errors;
     
-    if (!errors?.['emailAlreadyExists']) {
+    if (!errors?.['phoneNumberAlreadyExists']) {
       return;
     }
 
-    const { emailAlreadyExists, ...rest } = errors;
-    this.form.controls.email.setErrors(Object.keys(rest).length ? rest : null);
+    const { phoneNumberAlreadyExists, ...rest } = errors;
+    this.phoneNational.setErrors(Object.keys(rest).length ? rest : null);
   }
 
   goToLogin(): void {

@@ -632,6 +632,7 @@ export class ContactsPage {
       const pendingInvitations = data.pendingInvitations.map((invitation) => {
           const displayLabel =
               this.cleanText(invitation.senderDisplayName) ||
+              this.cleanText(invitation.senderPhoneNumber) ||
               'Pending invitation';
 
         return {

@@ -54,13 +54,13 @@ describe('api-error.util', () => {
                 status: 404,
                 error: {
                     code: 'CONTACT_INVITEE_NOT_FOUND',
-                    message: 'No account exists for that email address yet.',
+                    message: 'No account exists for that phone number yet.',
                 },
             }),
             'Fallback.',
         );
 
-        expect(result).toBe('No account exists for that email address yet.');
+        expect(result).toBe('No account exists for that phone number yet.');
     });
 
     it('gets a backend detail from ProblemDetail ApiError payloads', () => {
@@ -71,7 +71,7 @@ describe('api-error.util', () => {
                     status: 404,
                     code: 'USER_NOT_FOUND',
                     title: 'Not Found',
-                    detail: 'No account exists for that email address yet. You can invite only existing users.',
+                    detail: 'No account exists for that phone number yet. You can invite only existing users.',
                     path: '/api/v1/contacts/invitations',
                     type: 'about:blank',
                 },
@@ -79,7 +79,7 @@ describe('api-error.util', () => {
             'Fallback.',
         );
 
-        expect(result).toBe('No account exists for that email address yet. You can invite only existing users.');
+        expect(result).toBe('No account exists for that phone number yet. You can invite only existing users.');
     });
 
     it('gets a backend message from unstructured payloads', () => {

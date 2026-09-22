@@ -35,7 +35,6 @@ describe('RegisterPage', () => {
   function fillValidForm(): void {
     component.form.patchValue({
       name: 'John Doe',
-      email: 'john@example.com',
       phoneCountry: 'BE',
       phoneNational: '0468 00 99 11',
       password: 'password123',
@@ -50,7 +49,7 @@ describe('RegisterPage', () => {
   it('should not submit if form is invalid', () => {
     component.form.patchValue({
       name: '',
-      email: '',
+      phoneNational: '',
       password: '',
       confirmPassword: '',
     });
@@ -81,7 +80,6 @@ describe('RegisterPage', () => {
     component.submit();
 
     expect(authServiceSpy.register).toHaveBeenCalledWith({
-      email: 'john@example.com',
       password: 'password123',
       displayName: 'John Doe',
       phoneNumber: '+32468009911',
@@ -121,10 +119,10 @@ describe('RegisterPage', () => {
     expect(url.toString()).toBe('/auth/onboarding');
   });
 
-  it('should set emailAlreadyExists error on register conflict', () => {
+  it('should set phoneNumberAlreadyExists error on register conflict', () => {
     const error: AuthError = {
-      code: 'EMAIL_ALREADY_EXISTS',
-      message: 'An account with this email already exists.',
+      code: 'PHONE_NUMBER_ALREADY_EXISTS',
+      message: 'An account with this phone number already exists.',
     };
 
     authServiceSpy.register.and.returnValue(
@@ -135,7 +133,7 @@ describe('RegisterPage', () => {
 
     component.submit();
 
-    expect(component.form.controls.email.errors?.['emailAlreadyExists']).toBeTrue();
+    expect(component.phoneNational.errors?.['phoneNumberAlreadyExists']).toBeTrue();
     expect(component.isSubmitting).toBeFalse();
   });
 
@@ -160,7 +158,6 @@ describe('RegisterPage', () => {
   it('should not call register when passwords do not match', () => {
     component.form.patchValue({
       name: 'John Doe',
-      email: 'john@example.com',
       phoneCountry: 'BE',
       phoneNational: '0468 00 99 11',
       password: 'password123',
@@ -174,10 +171,6 @@ describe('RegisterPage', () => {
 
   it('should expose name getter', () => {
     expect(component.name).toBe(component.form.controls.name);
-  });
-
-  it('should expose email getter', () => {
-    expect(component.email).toBe(component.form.controls.email);
   });
 
   it('should expose password getter', () => {
