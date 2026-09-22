@@ -152,6 +152,32 @@ describe('ContactsPage', () => {
         });
     });
 
+    it('should use sender phone number when a pending invitation has no display name', (done) => {
+        dataService.getPageData.and.returnValue(
+            of({
+                contacts: [],
+                blockedContacts: [],
+                pendingInvitations: [
+                    {
+                        invitationId: 10,
+                        senderUserId: 42,
+                        senderDisplayName: null,
+                        senderPhoneNumber: '+32468009911',
+                        status: 'PENDING',
+                        createdAt: '2026-09-20T10:00:00.000Z',
+                    },
+                ],
+            })
+        );
+
+        component.vmState$.subscribe((state) => {
+            if (state.kind === 'success') {
+                expect(state.data.pendingInvitations[0].displayLabel).toBe('+32468009911');
+                done();
+            }
+        });
+    });
+
     it('should not render original display name after nickname is edited', () => {
         dataService.getPageData.and.returnValue(
             of({

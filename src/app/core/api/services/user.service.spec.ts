@@ -35,9 +35,8 @@ describe('UserService', () => {
             id: 1,
             displayName: 'Nina',
             timezone: 'UTC',
-            email: 'test@email.com',
             status: 'ACTIVE',
-            phoneNumber: '0032009933',
+            phoneNumber: '+32468009911',
         };
 
         service.getMe().subscribe(user => {
@@ -60,7 +59,7 @@ describe('UserService', () => {
             id: 1,
             displayName: 'Nina Updated',
             timezone: 'Europe/Rome',
-            email: 'test@email.com',
+            phoneNumber: '+393331112222',
             status: 'ACTIVE',
         };
 

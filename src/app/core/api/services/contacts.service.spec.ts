@@ -74,6 +74,7 @@ describe('ContactService', () => {
                 invitationId: 1,
                 senderUserId: 2,
                 senderDisplayName: 'Nina',
+                senderPhoneNumber: '+32468009911',
                 status: 'PENDING',
                 createdAt: '2026-04-10T09:00:00.000Z',
             },
@@ -86,6 +87,7 @@ describe('ContactService', () => {
             expect(invitation.invitationId).toBe(1);
             expect(invitation.senderUserId).toBe(2);
             expect(invitation.senderDisplayName).toBe('Nina');
+            expect(invitation.senderPhoneNumber).toBe('+32468009911');
             expect(invitation.status).toBe('PENDING');
             expect(invitation.createdAt).toBe('2026-04-10T09:00:00.000Z');
         });

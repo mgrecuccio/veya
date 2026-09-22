@@ -71,7 +71,7 @@
                 {{ userProfile.displayName || 'Your settings' }}
               </h1>
               <p class="settings-hero__subtitle">
-                {{ userProfile.email }} · {{ userProfile.status }}
+                {{ userProfile.phoneNumber }} · {{ userProfile.status }}
               </p>
             </div>
           </section>
@@ -148,7 +148,7 @@
                     type="tel"
                     inputmode="tel"
                     autocomplete="tel-national"
-                    placeholder="470 12 34 56"
+                    placeholder="+32468009911"
                     formControlName="phoneNational"
                   />
                 </div>
@@ -158,7 +158,7 @@
                   @if (profileForm.hasError('requiredPhoneNumber')) {
                     <span>Phone number is required.</span>
                   } @else {
-                    <span>Enter a valid phone number.</span>
+                    <span>Enter a valid phone number (for example, +32468009911).</span>
                   }
                 </div>
               }

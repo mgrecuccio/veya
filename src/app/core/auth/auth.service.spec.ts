@@ -66,28 +66,6 @@ describe('AuthService', () => {
 
     it('should register and persist tokens', () => {
         const payload: RegisterRequest = {
-            email: 'john@example.com',
-            password: 'password123',
-            displayName: 'John',
-            phoneNumber: '+32468009911',
-            timezone: 'Europe/Brussels',
-        };
-
-        service.register(payload).subscribe((response) => {
-            expect(response).toEqual(mockTokens);
-            expect(tokenStorage.getAccessToken()).toBe(mockTokens.accessToken);
-        });
-
-        const req = httpMock.expectOne('http://localhost:8080/api/v1/auth/register');
-        expect(req.request.method).toBe('POST');
-        expect(req.request.body).toEqual(payload);
-
-        req.flush(mockTokens);
-    });
-
-    it('should register and persist tokens', () => {
-        const payload: RegisterRequest = {
-            email: 'john@example.com',
             password: 'password123',
             displayName: 'John',
             phoneNumber: '+32468009911',
@@ -174,9 +152,8 @@ describe('AuthService', () => {
         );
     });
 
-    it('should map register 409 to EMAIL_ALREADY_EXISTS', () => {
+    it('should map register 409 to PHONE_NUMBER_ALREADY_EXISTS', () => {
         const payload: RegisterRequest = {
-            email: 'john@example.com',
             password: 'password123',
             displayName: 'John',
             phoneNumber: '+32468009911',
@@ -186,8 +163,8 @@ describe('AuthService', () => {
         service.register(payload).subscribe({
             next: () => fail('Expected error'),
             error: (error: AuthError) => {
-                expect(error.code).toBe('EMAIL_ALREADY_EXISTS');
-                expect(error.message).toBe('An account with this email already exists.');
+                expect(error.code).toBe('PHONE_NUMBER_ALREADY_EXISTS');
+                expect(error.message).toBe('An account with this phone number already exists.');
             },
         });
 
@@ -195,37 +172,8 @@ describe('AuthService', () => {
         req.flush({}, { status: 409, statusText: 'Conflict' });
     });
 
-    it('should map backend EMAIL_ALREADY_USED to EMAIL_ALREADY_EXISTS', () => {
-        const payload: RegisterRequest = {
-            email: 'john@example.com',
-            password: 'password123',
-            displayName: 'John',
-            phoneNumber: '+32468009911',
-            timezone: 'Europe/Brussels',
-        };
-
-        service.register(payload).subscribe({
-            next: () => fail('Expected error'),
-            error: (error: AuthError) => {
-                expect(error.code).toBe('EMAIL_ALREADY_EXISTS');
-                expect(error.message).toBe('An account with this email already exists.');
-                expect(error.apiError?.code).toBe('EMAIL_ALREADY_USED');
-            },
-        });
-
-        const req = httpMock.expectOne('http://localhost:8080/api/v1/auth/register');
-        req.flush(
-            {
-                code: 'EMAIL_ALREADY_USED',
-                message: 'Email already used',
-            },
-            { status: 409, statusText: 'Conflict' },
-        );
-    });
-
     it('should map backend PHONE_NUMBER_ALREADY_USED to PHONE_NUMBER_ALREADY_EXISTS', () => {
         const payload: RegisterRequest = {
-            email: 'john@example.com',
             password: 'password123',
             displayName: 'John',
             phoneNumber: '+393331112222',

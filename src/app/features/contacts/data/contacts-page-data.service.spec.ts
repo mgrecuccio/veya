@@ -54,6 +54,7 @@ describe('ContactPageDataService', () => {
                     invitationId: 1,
                     senderUserId: 2,
                     senderDisplayName: 'senderDisplayName',
+                    senderPhoneNumber: '+32468009911',
                     status: 'PENDING',
                     createdAt: '2026-04-19',
                 }
@@ -96,6 +97,7 @@ describe('ContactPageDataService', () => {
                     invitationId: 1,
                     senderUserId: 2,
                     senderDisplayName: 'senderDisplayName',
+                    senderPhoneNumber: '+32468009911',
                     status: 'PENDING',
                     createdAt: '2026-04-19',
                 }),

@@ -2,7 +2,7 @@
 
 ## Goal
 
-Replace contact invitations by email with invitations by phone number. A user can choose one person through the device's native contact picker or enter a phone number manually, without Veya importing or scanning the full address book.
+Address contact invitations by phone number. A user can choose one person through the device's native contact picker or enter a phone number manually, without Veya importing or scanning the full address book.
 
 ## User Stories
 
@@ -13,7 +13,7 @@ Replace contact invitations by email with invitations by phone number. A user ca
 
 ## User-Visible Behavior
 
-- The Contacts page no longer asks for an email address when creating an invitation.
+- The Contacts page asks for a phone number when creating an invitation.
 - Opening the invitation form presents two paths:
   - `Choose from contacts` on a supported native platform.
   - Manual phone-number entry, which is always available.
@@ -60,7 +60,7 @@ export interface SendInvitationRequest {
 
 ## Acceptance Criteria
 
-- No invitation UI, request DTO, copy, or test fixture uses email as the invitation identifier.
+- Every invitation UI, request DTO, copy, and test fixture uses a phone number as the invitation identifier.
 - A supported native build can open a system-owned picker for one contact without first loading the full address book.
 - Veya processes only the contact returned by the picker.
 - A contact with one usable number fills the invitation form directly.

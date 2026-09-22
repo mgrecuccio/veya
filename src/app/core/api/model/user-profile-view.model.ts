@@ -1,6 +1,6 @@
 export interface UserProfileView {
     id: number;
-    email: string;
+    phoneNumber: string;
     displayName?: string | null;
     status: string;
     timezone?: string | null;

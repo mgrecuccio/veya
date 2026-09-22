@@ -52,8 +52,7 @@ describe('HomeDashboardService', () => {
         id: 1,
         displayName: 'Maya',
         timezone: 'UTC',
-        email: 'test@email.com',
-        phoneNumber: '0032889944',
+        phoneNumber: '+32468009911',
         status: 'ACTIVE'
       }),
     );
@@ -186,6 +185,7 @@ describe('HomeDashboardService', () => {
           invitationId: 1,
           senderUserId: 2,
           senderDisplayName: 'Nina',
+          senderPhoneNumber: '+32468009911',
           status: 'PENDING',
           createdAt: '2026-04-09T12:00:00.000Z',
         },
@@ -207,8 +207,7 @@ describe('HomeDashboardService', () => {
         id: 1,
         displayName: null,
         timezone: 'UTC',
-        email: 'test@email.com',
-        phoneNumber: '0032889944',
+        phoneNumber: '+32468009911',
         status: 'ACTIVE'
       }),
     );

@@ -14,7 +14,6 @@ import { extractApiError } from '../api/api-error.util';
 export interface AuthError {
   code:
     | 'INVALID_CREDENTIALS'
-    | 'EMAIL_ALREADY_EXISTS'
     | 'PHONE_NUMBER_ALREADY_EXISTS'
     | 'UNAUTHORIZED'
     | 'NETWORK'
@@ -158,24 +157,13 @@ export class AuthService {
 
     if (
       operation === 'register' &&
-      apiError?.code === 'PHONE_NUMBER_ALREADY_USED'
+      (apiError?.code === 'PHONE_NUMBER_ALREADY_USED' ||
+        apiError?.code === 'PHONE_NUMBER_ALREADY_EXISTS' ||
+        (!apiError && error.status === 409))
     ) {
       return {
         code: 'PHONE_NUMBER_ALREADY_EXISTS',
         message: 'An account with this phone number already exists.',
-        apiError: authApiError,
-      };
-    }
-
-    if (
-      operation === 'register' &&
-      (apiError?.code === 'EMAIL_ALREADY_USED' ||
-        apiError?.code === 'EMAIL_ALREADY_EXISTS' ||
-        (!apiError && error.status === 409))
-    ) {
-      return {
-        code: 'EMAIL_ALREADY_EXISTS',
-        message: 'An account with this email already exists.',
         apiError: authApiError,
       };
     }
