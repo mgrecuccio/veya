@@ -19,7 +19,7 @@ export class UserService {
     }
 
     updateMe(payload: UpdateProfileRequest): Observable<UserProfileView> {
-        return this.http.put<UserPrivateProfileView>(`${this.apiBaseUrl}/api/v1/users/me`, payload);
+        return this.http.put<UserProfileView>(`${this.apiBaseUrl}/api/v1/users/me`, payload);
     }
 
     getPreferences(): Observable<UserMatchingPreferencesView> {

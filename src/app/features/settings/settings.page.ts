@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AlertController, IonicModule } from '@ionic/angular';
 import { catchError, map, merge, Observable, of, shareReplay, startWith, Subject, switchMap, tap } from 'rxjs';
@@ -12,6 +12,7 @@ import { PushRegistrationReconciliationService } from 'src/app/core/notification
 import { AppToastColor, AppToastService } from 'src/app/shared/toast/app-toast.service';
 import { NativeNotificationSettingsService } from 'src/app/core/platform/native-notification-settings.service';
 import { APP_VERSION } from 'src/environments/app-version';
+import { PhoneVerificationStateService } from 'src/app/core/auth/phone-verification-state.service';
 import {
   createPhoneCountries,
   getDefaultPhoneCountry,
@@ -80,7 +81,9 @@ export class SettingsPage {
     private readonly alertController = inject(AlertController);
     private readonly notificationSettings = inject(NativeNotificationSettingsService);
     private readonly pushRegistration = inject(PushRegistrationReconciliationService);
+    private readonly phoneVerificationState = inject(PhoneVerificationStateService);
     private readonly reload$ = new Subject<void>();
+    private savedPhoneNumber: string | null = null;
 
     readonly countries: PhoneCountry[] = createPhoneCountries();
     readonly timezoneOptions = TIMEZONE_OPTIONS;
@@ -93,8 +96,8 @@ export class SettingsPage {
 
     readonly profileForm = this.fb.group(
       {
-        displayName: [''],
-        timezone: [''],
+        displayName: ['', [Validators.required, Validators.pattern(/\S/)]],
+        timezone: ['', [Validators.required]],
         phoneCountry: [getDefaultPhoneCountry()],
         phoneNational: [''],
       },
@@ -186,6 +189,13 @@ export class SettingsPage {
       );
     }
 
+    isRequiredProfileFieldInvalid(
+      controlName: 'displayName' | 'timezone',
+    ): boolean {
+      const control = this.profileForm.controls[controlName];
+      return control.invalid && (control.touched || control.dirty);
+    }
+
     async saveProfile(): Promise<void> {
       if(this.profileForm.invalid || this.isSavingProfile()) {
         this.profileForm.markAllAsTouched();
@@ -200,12 +210,20 @@ export class SettingsPage {
       );
       
       this.settingsPageDataService.saveProfile({
-          displayName: this.blankToNull(raw.displayName),
-          timezone: this.blankToNull(raw.timezone),
+          displayName: raw.displayName.trim(),
+          timezone: raw.timezone.trim(),
           phoneNumber: phoneNumber!,
       }).subscribe({
-        next: () => {
+        next: (profile) => {
           this.isSavingProfile.set(false);
+
+          if (this.savedPhoneNumber !== null && phoneNumber !== this.savedPhoneNumber) {
+            this.phoneVerificationState.start('phone-change');
+            void this.router.navigateByUrl('/auth/verify-phone', { replaceUrl: true });
+            return;
+          }
+
+          this.savedPhoneNumber = profile.phoneNumber;
           this.retry();
           this.showToast('Profile saved.', 'success');
         },
@@ -311,11 +329,6 @@ export class SettingsPage {
       void this.appToastService.show(message, color, 'app-toast settings-page-toast');
     }
 
-    private blankToNull(value: string | null | undefined): string | null {
-      const normalized = value?.trim() ?? '';
-      return normalized || null;
-    }
-
     private toBackendTimeOrNull(value: string | null | undefined): string | null {
       const normalized = value?.trim() ?? '';
 
@@ -339,6 +352,7 @@ export class SettingsPage {
 
     private patchForms(data: SettingsPageData): void {
       const phone = splitE164PhoneNumber(data.userProfile.phoneNumber);
+      this.savedPhoneNumber = data.userProfile.phoneNumber;
 
       this.profileForm.patchValue({
         displayName: data.userProfile.displayName ?? '',

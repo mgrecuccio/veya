@@ -69,6 +69,19 @@ describe('authInterceptor', () => {
         req.flush({ id: 1 });
     });
 
+    it('should attach the registration access token to OTP verification', () => {
+        tokenStorage.setTokens(mockTokens);
+
+        http.post('http://localhost:8080/api/v1/otp', {
+            otpCode: '123456',
+            verificationId: 'verification-id',
+        }).subscribe();
+
+        const req = httpMock.expectOne('http://localhost:8080/api/v1/otp');
+        expect(req.request.headers.get('Authorization')).toBe('Bearer access-token');
+        req.flush({ userId: 42, verified: true });
+    });
+
     it('should not attach Authorization header to auth endpoints', () => {
         tokenStorage.setTokens(mockTokens);
 

@@ -9,6 +9,7 @@ import { SettingsPageData, SettingsPageDataService } from './data/settings-page-
 import { SettingsPage } from './settings.page';
 import { PushRegistrationReconciliationService } from 'src/app/core/notifications/push-registration-reconciliation.service';
 import { NativeNotificationSettingsService } from 'src/app/core/platform/native-notification-settings.service';
+import { PhoneVerificationStateService } from 'src/app/core/auth/phone-verification-state.service';
 
 describe('SettingsPage', () => {
     let fixture: ComponentFixture<SettingsPage>;
@@ -21,6 +22,7 @@ describe('SettingsPage', () => {
     let presentAlert: jasmine.Spy;
     let pushRegistration: jasmine.SpyObj<PushRegistrationReconciliationService>;
     let router: jasmine.SpyObj<Router>;
+    let phoneVerificationState: jasmine.SpyObj<PhoneVerificationStateService>;
     let permissionState: ReturnType<typeof signal<'prompt' | 'prompt-with-rationale' | 'granted' | 'denied' | 'unsupported'>>;
 
     beforeEach(async () => {
@@ -85,6 +87,13 @@ describe('SettingsPage', () => {
                         { permissionState },
                     ),
                 },
+                {
+                    provide: PhoneVerificationStateService,
+                    useValue: jasmine.createSpyObj<PhoneVerificationStateService>(
+                        'PhoneVerificationStateService',
+                        ['start'],
+                    ),
+                },
             ],
         }).compileComponents();
 
@@ -95,6 +104,9 @@ describe('SettingsPage', () => {
         notificationSettings = TestBed.inject(NativeNotificationSettingsService) as jasmine.SpyObj<NativeNotificationSettingsService>;
         pushRegistration = TestBed.inject(PushRegistrationReconciliationService) as jasmine.SpyObj<PushRegistrationReconciliationService>;
         router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
+        phoneVerificationState = TestBed.inject(
+            PhoneVerificationStateService,
+        ) as jasmine.SpyObj<PhoneVerificationStateService>;
 
         pushRegistration.reconcile.and.returnValue(Promise.resolve());
         pushRegistration.requestPermission.and.returnValue(Promise.resolve('granted'));
@@ -307,9 +319,7 @@ describe('SettingsPage', () => {
         expect(component.isSavingProfile()).toBeFalse();
     });
 
-    it('should normalize blank optional profile fields to null', () => {
-        const data = mockPageData();
-        dataService.saveProfile.and.returnValue(of(data.userProfile));
+    it('should require non-blank profile fields', () => {
         component.profileForm.patchValue({
             displayName: '   ',
             timezone: '',
@@ -320,12 +330,34 @@ describe('SettingsPage', () => {
 
         component.saveProfile();
 
-        expect(dataService.saveProfile).toHaveBeenCalledOnceWith({
-            displayName: null,
-            timezone: null,
-            phoneNumber: '+32470000000',
-        });
+        expect(component.profileForm.invalid).toBeTrue();
+        expect(dataService.saveProfile).not.toHaveBeenCalled();
     });
+
+    it('should start phone verification after changing the phone number', fakeAsync(() => {
+        const data = mockPageData();
+        const updatedProfile = {
+            ...data.userProfile,
+            phoneNumber: '+32470123456',
+        };
+        dataService.getPageData.and.returnValue(of(data));
+        dataService.saveProfile.and.returnValue(of(updatedProfile));
+        fixture.detectChanges();
+        component.profileForm.patchValue({
+            displayName: 'Marco Veya',
+            timezone: 'Europe/Brussels',
+            phoneCountry: 'BE',
+            phoneNational: '0470 12 34 56',
+        });
+
+        component.saveProfile();
+        tick();
+
+        expect(phoneVerificationState.start).toHaveBeenCalledOnceWith('phone-change');
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/auth/verify-phone', {
+            replaceUrl: true,
+        });
+    }));
 
     it('should not allow the phone number to be cleared', () => {
         component.profileForm.patchValue({

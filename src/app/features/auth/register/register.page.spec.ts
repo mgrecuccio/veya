@@ -5,12 +5,14 @@ import { of, throwError } from 'rxjs';
 import { RegisterPage } from './register.page';
 import { AuthService, AuthError } from 'src/app/core/auth/auth.service';
 import { Router } from '@angular/router';
+import { PhoneVerificationStateService } from 'src/app/core/auth/phone-verification-state.service';
 
 describe('RegisterPage', () => {
   let fixture: ComponentFixture<RegisterPage>;
   let component: RegisterPage;
   let authServiceSpy: jasmine.SpyObj<AuthService>;
   let router: Router;
+  let verificationState: PhoneVerificationStateService;
 
   beforeEach(async () => {
     authServiceSpy = jasmine.createSpyObj<AuthService>('AuthService', ['register']);
@@ -26,6 +28,7 @@ describe('RegisterPage', () => {
     fixture = TestBed.createComponent(RegisterPage);
     component = fixture.componentInstance;
     router = TestBed.inject(Router);
+    verificationState = TestBed.inject(PhoneVerificationStateService);
 
     spyOn(router, 'navigateByUrl').and.resolveTo(true);
 
@@ -87,7 +90,8 @@ describe('RegisterPage', () => {
     });
   });
 
-  it('should navigate to /home on successful register', () => {
+  it('should navigate to phone verification on successful register', () => {
+    spyOn(verificationState, 'start');
     authServiceSpy.register.and.returnValue(
       of({
         accessToken: 'access-token',
@@ -101,7 +105,8 @@ describe('RegisterPage', () => {
 
     component.submit();
 
-    expect(router.navigateByUrl).toHaveBeenCalledWith('/app/home', { replaceUrl: true });
+    expect(verificationState.start).toHaveBeenCalledOnceWith();
+    expect(router.navigateByUrl).toHaveBeenCalledWith('/auth/verify-phone', { replaceUrl: true });
   });
 
   it('should keep back navigation when navigating to login', () => {

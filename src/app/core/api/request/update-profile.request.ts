@@ -1,5 +1,5 @@
 export interface UpdateProfileRequest {
-    displayName?: string | null;
-    timezone?: string | null;
+    displayName: string;
+    timezone: string;
     phoneNumber: string;
 }

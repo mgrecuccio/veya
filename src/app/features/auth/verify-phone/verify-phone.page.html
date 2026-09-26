@@ -1,0 +1,65 @@
+<ion-content class="app-gradient-content auth-content" [fullscreen]="true">
+  <header class="auth-topbar">
+    <div class="auth-topbar__brand">Veya</div>
+  </header>
+
+  <div class="app-content-shell app-content-shell--auth">
+    <div class="auth-shell">
+      <section class="app-surface auth-card">
+        <div class="auth-header">
+          <h1 class="auth-title">Verify your phone</h1>
+          <p class="auth-subtitle">
+            Enter the 6-digit code sent to the phone number you registered.
+          </p>
+        </div>
+
+        <form class="auth-form" [formGroup]="form" (ngSubmit)="verify()" novalidate>
+          <div class="auth-field">
+            <label class="auth-label" for="verification-code">Verification code</label>
+            <input
+              id="verification-code"
+              class="auth-input-item auth-input otp-input"
+              [class.auth-input-item--invalid]="otpCode.invalid && (otpCode.touched || otpCode.dirty)"
+              type="text"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              maxlength="6"
+              placeholder="123456"
+              formControlName="otpCode"
+            />
+
+            @if (otpCode.invalid && (otpCode.touched || otpCode.dirty)) {
+              <div class="auth-error">Enter the 6-digit code.</div>
+            }
+          </div>
+
+          @if (errorMessage) {
+            <div class="auth-error auth-error--form" role="alert">{{ errorMessage }}</div>
+          }
+
+          @if (infoMessage) {
+            <div class="verification-success" role="status">{{ infoMessage }}</div>
+          }
+
+          <div class="auth-submit">
+            <app-primary-button type="submit" [disabled]="!canVerify">
+              @if (isVerifying) { Verifying... } @else { Verify phone }
+            </app-primary-button>
+          </div>
+        </form>
+
+        <div class="auth-footer">
+          Didn't receive a code?
+          <button
+            type="button"
+            class="auth-footer-link"
+            [disabled]="!canResend"
+            (click)="resend()"
+          >
+            {{ resendLabel }}
+          </button>
+        </div>
+      </section>
+    </div>
+  </div>
+</ion-content>

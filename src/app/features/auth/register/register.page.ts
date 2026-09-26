@@ -21,6 +21,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { AuthService, AuthError } from 'src/app/core/auth/auth.service';
 import { RegisterRequest } from 'src/app/core/models/register-request.model';
+import { PhoneVerificationStateService } from 'src/app/core/auth/phone-verification-state.service';
 
 import { AppPrimaryButtonComponent } from '../../../shared/ui/app-primary-button/app-primary-button.component';
 import {
@@ -82,6 +83,7 @@ export class RegisterPage {
   private readonly router = inject(Router);
   private readonly navController = inject(NavController);
   private readonly authService = inject(AuthService);
+  private readonly verificationState = inject(PhoneVerificationStateService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly countries: PhoneCountry[] = this.createCountries();
@@ -225,7 +227,8 @@ export class RegisterPage {
       })
     ).subscribe({
       next: () => {
-        void this.router.navigateByUrl('/app/home', { replaceUrl: true });
+        this.verificationState.start();
+        void this.router.navigateByUrl('/auth/verify-phone', { replaceUrl: true });
       },
       error: (error: AuthError) => {
         if (error.code === 'PHONE_NUMBER_ALREADY_EXISTS') {

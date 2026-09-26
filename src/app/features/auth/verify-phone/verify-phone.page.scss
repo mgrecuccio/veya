@@ -1,0 +1,30 @@
+@use '../auth-form.shared';
+
+:host {
+  display: block;
+}
+
+.auth-shell {
+  padding-top: 28px;
+}
+
+.otp-input {
+  text-align: center;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.35em;
+}
+
+.verification-success {
+  border-radius: 14px;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.45;
+  background: rgba(56, 161, 105, 0.1);
+  color: #26764c;
+}
+
+.auth-footer-link:disabled {
+  cursor: default;
+  opacity: 0.55;
+}

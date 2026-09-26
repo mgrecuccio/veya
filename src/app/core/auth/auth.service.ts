@@ -10,6 +10,7 @@ import { AuthTokens } from '../models/auth-tokens.model';
 import { environment } from "src/environments/environment";
 import { ApiError } from '../api/model/api-error.model';
 import { extractApiError } from '../api/api-error.util';
+import { PhoneVerificationStateService } from './phone-verification-state.service';
 
 export interface AuthError {
   code:
@@ -33,6 +34,7 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly apiBaseUrl = environment.apiBaseUrl;
   private readonly tokenStorage = inject(TokenStorageService);
+  private readonly phoneVerificationState = inject(PhoneVerificationStateService);
 
 
   private readonly authApiUrl = `${this.apiBaseUrl}/api/v1/auth`;
@@ -102,6 +104,7 @@ export class AuthService {
 
   logout(): void {
     this.tokenStorage.clearTokens();
+    this.phoneVerificationState.clear();
     this.authStateSubject.next(null);
   }
 
