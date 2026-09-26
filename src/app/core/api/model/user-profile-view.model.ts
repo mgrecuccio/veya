@@ -1,7 +1,7 @@
 export interface UserProfileView {
     id: number;
     phoneNumber: string;
-    displayName?: string | null;
+    displayName: string;
     status: string;
-    timezone?: string | null;
+    timezone: string;
 }

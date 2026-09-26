@@ -1,17 +1,23 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AlertController, IonicModule } from '@ionic/angular';
 import { catchError, map, merge, Observable, of, shareReplay, startWith, Subject, switchMap, tap } from 'rxjs';
 import { SettingsPageData, SettingsPageDataService } from './data/settings-page-data.service';
 import { AuthService } from 'src/app/core/auth/auth.service';
 import { authenticatedSessionReload } from 'src/app/core/auth/authenticated-session-reload.util';
-import { getApiErrorMessage } from 'src/app/core/api/api-error.util';
+import {
+  extractApiError,
+  getApiErrorMessage,
+  UserFacingApiError,
+} from 'src/app/core/api/api-error.util';
 import { PushRegistrationReconciliationService } from 'src/app/core/notifications/push-registration-reconciliation.service';
 import { AppToastColor, AppToastService } from 'src/app/shared/toast/app-toast.service';
 import { NativeNotificationSettingsService } from 'src/app/core/platform/native-notification-settings.service';
 import { APP_VERSION } from 'src/environments/app-version';
+import { PhoneVerificationStateService } from 'src/app/core/auth/phone-verification-state.service';
+import { PhoneChangeCooldownService } from 'src/app/core/auth/phone-change-cooldown.service';
 import {
   createPhoneCountries,
   getDefaultPhoneCountry,
@@ -63,6 +69,9 @@ const TIMEZONE_OPTIONS: TimezoneOption[] = [
   { value: 'Asia/Tokyo', label: 'Asia/Tokyo' },
 ];
 
+const PHONE_CHANGE_RATE_LIMIT_MESSAGE =
+  'You can change your phone number once per day. Please try again later.';
+
 @Component({
     selector: 'app-settings',
     standalone: true,
@@ -80,7 +89,11 @@ export class SettingsPage {
     private readonly alertController = inject(AlertController);
     private readonly notificationSettings = inject(NativeNotificationSettingsService);
     private readonly pushRegistration = inject(PushRegistrationReconciliationService);
+    private readonly phoneVerificationState = inject(PhoneVerificationStateService);
+    private readonly phoneChangeCooldown = inject(PhoneChangeCooldownService);
     private readonly reload$ = new Subject<void>();
+    private savedPhoneNumber: string | null = null;
+    private profileUserId: number | null = null;
 
     readonly countries: PhoneCountry[] = createPhoneCountries();
     readonly timezoneOptions = TIMEZONE_OPTIONS;
@@ -88,13 +101,15 @@ export class SettingsPage {
     readonly isSavingProfile = signal(false);
     readonly isSavingPreferences = signal(false);
     readonly isLoggingOut = signal(false);
+    readonly isPhoneChangeLocked = signal(false);
+    readonly phoneChangeMessage = signal<string | null>(null);
     profileError: string | null = null;
     preferencesError: string | null = null;
 
     readonly profileForm = this.fb.group(
       {
-        displayName: [''],
-        timezone: [''],
+        displayName: ['', [Validators.required, Validators.pattern(/\S/)]],
+        timezone: ['', [Validators.required]],
         phoneCountry: [getDefaultPhoneCountry()],
         phoneNational: [''],
       },
@@ -186,31 +201,66 @@ export class SettingsPage {
       );
     }
 
+    isRequiredProfileFieldInvalid(
+      controlName: 'displayName' | 'timezone',
+    ): boolean {
+      const control = this.profileForm.controls[controlName];
+      return control.invalid && (control.touched || control.dirty);
+    }
+
     async saveProfile(): Promise<void> {
       if(this.profileForm.invalid || this.isSavingProfile()) {
         this.profileForm.markAllAsTouched();
         return;
       }
 
-      this.isSavingProfile.set(true);
       const raw = this.profileForm.getRawValue();
       const phoneNumber = getNormalizedPhoneNumber(
         raw.phoneCountry,
         raw.phoneNational,
       );
-      
+      const phoneNumberChanged = this.hasPhoneNumberChanged(phoneNumber!);
+
+      if (phoneNumberChanged && this.isPhoneChangeLocked()) {
+        this.phoneChangeMessage.set(PHONE_CHANGE_RATE_LIMIT_MESSAGE);
+        this.showToast(PHONE_CHANGE_RATE_LIMIT_MESSAGE, 'danger');
+        this.restoreSavedPhoneNumber();
+        return;
+      }
+
+      this.phoneChangeMessage.set(null);
+      this.isSavingProfile.set(true);
+
       this.settingsPageDataService.saveProfile({
-          displayName: this.blankToNull(raw.displayName),
-          timezone: this.blankToNull(raw.timezone),
+          displayName: raw.displayName.trim(),
+          timezone: raw.timezone.trim(),
           phoneNumber: phoneNumber!,
       }).subscribe({
-        next: () => {
+        next: (profile) => {
           this.isSavingProfile.set(false);
+
+          if (phoneNumberChanged) {
+            this.savedPhoneNumber = profile.phoneNumber;
+            this.lockPhoneNumberEditing(profile.id);
+            this.phoneVerificationState.start('phone-change');
+            void this.router.navigateByUrl('/auth/verify-phone', { replaceUrl: true });
+            return;
+          }
+
+          this.savedPhoneNumber = profile.phoneNumber;
           this.retry();
           this.showToast('Profile saved.', 'success');
         },
-        error: (error: any) => {
+        error: (error: unknown) => {
           this.isSavingProfile.set(false);
+
+          if (phoneNumberChanged && this.isPhoneChangeRateLimit(error)) {
+            this.phoneChangeMessage.set(PHONE_CHANGE_RATE_LIMIT_MESSAGE);
+            this.restoreSavedPhoneNumber();
+            this.showToast(PHONE_CHANGE_RATE_LIMIT_MESSAGE, 'danger');
+            return;
+          }
+
           this.showToast(
             getApiErrorMessage(error, 'We couldn’t save your profile right now.'),
             'danger',
@@ -311,11 +361,6 @@ export class SettingsPage {
       void this.appToastService.show(message, color, 'app-toast settings-page-toast');
     }
 
-    private blankToNull(value: string | null | undefined): string | null {
-      const normalized = value?.trim() ?? '';
-      return normalized || null;
-    }
-
     private toBackendTimeOrNull(value: string | null | undefined): string | null {
       const normalized = value?.trim() ?? '';
 
@@ -339,6 +384,8 @@ export class SettingsPage {
 
     private patchForms(data: SettingsPageData): void {
       const phone = splitE164PhoneNumber(data.userProfile.phoneNumber);
+      this.savedPhoneNumber = data.userProfile.phoneNumber;
+      this.profileUserId = data.userProfile.id;
 
       this.profileForm.patchValue({
         displayName: data.userProfile.displayName ?? '',
@@ -357,6 +404,70 @@ export class SettingsPage {
       });
       this.profileForm.markAsPristine();
       this.preferencesForm.markAsPristine();
+      this.applyStoredPhoneChangeLock();
+    }
+
+    private hasPhoneNumberChanged(phoneNumber: string): boolean {
+      if (this.savedPhoneNumber === null) {
+        return false;
+      }
+
+      const savedPhone = splitE164PhoneNumber(this.savedPhoneNumber);
+      const normalizedSavedPhone = getNormalizedPhoneNumber(
+        savedPhone.phoneCountry,
+        savedPhone.phoneNational,
+      );
+
+      return phoneNumber !== (normalizedSavedPhone ?? this.savedPhoneNumber.trim());
+    }
+
+    private isPhoneChangeRateLimit(error: unknown): boolean {
+      const extractedError = extractApiError(error);
+      const userFacingError = error as Partial<UserFacingApiError> | null;
+      const apiError = extractedError ?? userFacingError?.apiError;
+
+      return apiError?.status === 429 && apiError.code === 'TOO_MANY_ATTEMPTS';
+    }
+
+    private applyStoredPhoneChangeLock(): void {
+      const locked = this.profileUserId !== null &&
+        this.phoneChangeCooldown.getLockedUntil(this.profileUserId) !== null;
+
+      this.setPhoneNumberEditingLocked(locked);
+      this.phoneChangeMessage.set(locked ? PHONE_CHANGE_RATE_LIMIT_MESSAGE : null);
+    }
+
+    private lockPhoneNumberEditing(userId: number): void {
+      this.phoneChangeCooldown.lock(userId);
+      this.setPhoneNumberEditingLocked(true);
+      this.phoneChangeMessage.set(PHONE_CHANGE_RATE_LIMIT_MESSAGE);
+    }
+
+    private setPhoneNumberEditingLocked(locked: boolean): void {
+      this.isPhoneChangeLocked.set(locked);
+      const controls = [this.phoneCountry, this.phoneNational];
+
+      controls.forEach((control) => {
+        if (locked) {
+          control.disable({ emitEvent: false });
+        } else {
+          control.enable({ emitEvent: false });
+        }
+      });
+    }
+
+    private restoreSavedPhoneNumber(): void {
+      if (this.savedPhoneNumber === null) {
+        return;
+      }
+
+      const phone = splitE164PhoneNumber(this.savedPhoneNumber);
+      this.profileForm.patchValue({
+        phoneCountry: phone.phoneCountry,
+        phoneNational: phone.phoneNational,
+      });
+      this.phoneCountry.markAsPristine();
+      this.phoneNational.markAsPristine();
     }
 
     private async reconcilePushNotifications(enabled: boolean): Promise<void> {

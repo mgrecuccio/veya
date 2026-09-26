@@ -103,6 +103,9 @@
                   placeholder="Display name"
                   formControlName="displayName"
                 />
+                @if (isRequiredProfileFieldInvalid('displayName')) {
+                  <div class="settings-error">Display name is required.</div>
+                }
               </div>
               <div class="settings-row">
                 <label class="settings-row__label" for="settings-timezone">
@@ -121,6 +124,9 @@
                     </option>
                   }
                 </select>
+                @if (isRequiredProfileFieldInvalid('timezone')) {
+                  <div class="settings-error">Timezone is required.</div>
+                }
               </div>
               <div
                 class="settings-row settings-row--phone"
@@ -160,6 +166,11 @@
                   } @else {
                     <span>Enter a valid phone number (for example, +32468009911).</span>
                   }
+                </div>
+              }
+              @if (phoneChangeMessage()) {
+                <div class="settings-phone-notice" role="status">
+                  {{ phoneChangeMessage() }} You can still update your display name and timezone.
                 </div>
               }
               <div class="settings-form-actions">

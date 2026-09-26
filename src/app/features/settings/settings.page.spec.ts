@@ -9,6 +9,9 @@ import { SettingsPageData, SettingsPageDataService } from './data/settings-page-
 import { SettingsPage } from './settings.page';
 import { PushRegistrationReconciliationService } from 'src/app/core/notifications/push-registration-reconciliation.service';
 import { NativeNotificationSettingsService } from 'src/app/core/platform/native-notification-settings.service';
+import { PhoneVerificationStateService } from 'src/app/core/auth/phone-verification-state.service';
+import { PhoneChangeCooldownService } from 'src/app/core/auth/phone-change-cooldown.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 describe('SettingsPage', () => {
     let fixture: ComponentFixture<SettingsPage>;
@@ -21,6 +24,8 @@ describe('SettingsPage', () => {
     let presentAlert: jasmine.Spy;
     let pushRegistration: jasmine.SpyObj<PushRegistrationReconciliationService>;
     let router: jasmine.SpyObj<Router>;
+    let phoneVerificationState: jasmine.SpyObj<PhoneVerificationStateService>;
+    let phoneChangeCooldown: jasmine.SpyObj<PhoneChangeCooldownService>;
     let permissionState: ReturnType<typeof signal<'prompt' | 'prompt-with-rationale' | 'granted' | 'denied' | 'unsupported'>>;
 
     beforeEach(async () => {
@@ -85,6 +90,20 @@ describe('SettingsPage', () => {
                         { permissionState },
                     ),
                 },
+                {
+                    provide: PhoneVerificationStateService,
+                    useValue: jasmine.createSpyObj<PhoneVerificationStateService>(
+                        'PhoneVerificationStateService',
+                        ['start'],
+                    ),
+                },
+                {
+                    provide: PhoneChangeCooldownService,
+                    useValue: jasmine.createSpyObj<PhoneChangeCooldownService>(
+                        'PhoneChangeCooldownService',
+                        ['getLockedUntil', 'lock'],
+                    ),
+                },
             ],
         }).compileComponents();
 
@@ -95,6 +114,12 @@ describe('SettingsPage', () => {
         notificationSettings = TestBed.inject(NativeNotificationSettingsService) as jasmine.SpyObj<NativeNotificationSettingsService>;
         pushRegistration = TestBed.inject(PushRegistrationReconciliationService) as jasmine.SpyObj<PushRegistrationReconciliationService>;
         router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
+        phoneVerificationState = TestBed.inject(
+            PhoneVerificationStateService,
+        ) as jasmine.SpyObj<PhoneVerificationStateService>;
+        phoneChangeCooldown = TestBed.inject(
+            PhoneChangeCooldownService,
+        ) as jasmine.SpyObj<PhoneChangeCooldownService>;
 
         pushRegistration.reconcile.and.returnValue(Promise.resolve());
         pushRegistration.requestPermission.and.returnValue(Promise.resolve('granted'));
@@ -108,6 +133,8 @@ describe('SettingsPage', () => {
         } as any));
         notificationSettings.open.and.returnValue(Promise.resolve(true));
         router.navigateByUrl.and.returnValue(Promise.resolve(true));
+        phoneChangeCooldown.getLockedUntil.and.returnValue(null);
+        phoneChangeCooldown.lock.and.returnValue(Date.now() + 86_400_000);
 
         fixture = TestBed.createComponent(SettingsPage);
         component = fixture.componentInstance;
@@ -307,9 +334,7 @@ describe('SettingsPage', () => {
         expect(component.isSavingProfile()).toBeFalse();
     });
 
-    it('should normalize blank optional profile fields to null', () => {
-        const data = mockPageData();
-        dataService.saveProfile.and.returnValue(of(data.userProfile));
+    it('should require non-blank profile fields', () => {
         component.profileForm.patchValue({
             displayName: '   ',
             timezone: '',
@@ -320,11 +345,113 @@ describe('SettingsPage', () => {
 
         component.saveProfile();
 
-        expect(dataService.saveProfile).toHaveBeenCalledOnceWith({
-            displayName: null,
-            timezone: null,
-            phoneNumber: '+32470000000',
+        expect(component.profileForm.invalid).toBeTrue();
+        expect(dataService.saveProfile).not.toHaveBeenCalled();
+    });
+
+    it('should start phone verification after changing the phone number', fakeAsync(() => {
+        const data = mockPageData();
+        const updatedProfile = {
+            ...data.userProfile,
+            phoneNumber: '+32470123456',
+        };
+        dataService.getPageData.and.returnValue(of(data));
+        dataService.saveProfile.and.returnValue(of(updatedProfile));
+        fixture.detectChanges();
+        component.profileForm.patchValue({
+            displayName: 'Marco Veya',
+            timezone: 'Europe/Brussels',
+            phoneCountry: 'BE',
+            phoneNational: '0470 12 34 56',
         });
+
+        component.saveProfile();
+        tick();
+
+        expect(phoneVerificationState.start).toHaveBeenCalledOnceWith('phone-change');
+        expect(phoneChangeCooldown.lock).toHaveBeenCalledOnceWith(data.userProfile.id);
+        expect(router.navigateByUrl).toHaveBeenCalledWith('/auth/verify-phone', {
+            replaceUrl: true,
+        });
+    }));
+
+    it('should treat an equivalently formatted phone number as unchanged', fakeAsync(() => {
+        const data = mockPageData();
+        dataService.getPageData.and.returnValue(of(data));
+        dataService.saveProfile.and.returnValue(of({
+            ...data.userProfile,
+            displayName: 'Marco Veya',
+        }));
+        fixture.detectChanges();
+        component.profileForm.patchValue({
+            displayName: 'Marco Veya',
+            phoneNational: '+32 470 00 00 00',
+        });
+
+        component.saveProfile();
+        tick();
+
+        expect(dataService.saveProfile).toHaveBeenCalledWith(jasmine.objectContaining({
+            displayName: 'Marco Veya',
+            phoneNumber: '+32470000000',
+        }));
+        expect(phoneChangeCooldown.lock).not.toHaveBeenCalled();
+        expect(phoneVerificationState.start).not.toHaveBeenCalled();
+        expect(component.toastState().message).toBe('Profile saved.');
+    }));
+
+    it('should explain a backend phone-change rate limit and preserve other edits', () => {
+        const data = mockPageData();
+        dataService.getPageData.and.returnValue(of(data));
+        dataService.saveProfile.and.returnValue(throwError(() => new HttpErrorResponse({
+            status: 429,
+            error: {
+                code: 'TOO_MANY_ATTEMPTS',
+                detail: 'Too many attempts',
+            },
+        })));
+        fixture.detectChanges();
+        component.profileForm.patchValue({
+            displayName: 'Marco Veya',
+            phoneNational: '0470 12 34 56',
+        });
+
+        component.saveProfile();
+
+        expect(component.toastState()).toEqual({
+            isOpen: true,
+            message: 'You can change your phone number once per day. Please try again later.',
+            color: 'danger',
+        });
+        expect(component.profileForm.controls.displayName.value).toBe('Marco Veya');
+        expect(component.phoneNational.value).toBe('470000000');
+        expect(component.profileForm.controls.displayName.enabled).toBeTrue();
+        expect(component.profileForm.controls.timezone.enabled).toBeTrue();
+        expect(phoneVerificationState.start).not.toHaveBeenCalled();
+    });
+
+    it('should lock only phone editing during a known cooldown', () => {
+        const data = mockPageData();
+        phoneChangeCooldown.getLockedUntil.and.returnValue(Date.now() + 60_000);
+        dataService.getPageData.and.returnValue(of(data));
+        dataService.saveProfile.and.returnValue(of({
+            ...data.userProfile,
+            displayName: 'Marco Veya',
+        }));
+        fixture.detectChanges();
+
+        expect(component.phoneCountry.disabled).toBeTrue();
+        expect(component.phoneNational.disabled).toBeTrue();
+        expect(component.profileForm.controls.displayName.enabled).toBeTrue();
+        expect(component.profileForm.controls.timezone.enabled).toBeTrue();
+
+        component.profileForm.controls.displayName.setValue('Marco Veya');
+        component.saveProfile();
+
+        expect(dataService.saveProfile).toHaveBeenCalledWith(jasmine.objectContaining({
+            displayName: 'Marco Veya',
+            phoneNumber: '+32470000000',
+        }));
     });
 
     it('should not allow the phone number to be cleared', () => {
