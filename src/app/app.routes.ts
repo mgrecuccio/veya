@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { anonymousGuard, authGuard } from './core/auth/auth.guard';
+import { anonymousGuard, authGuard, verifiedAuthGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
   {
@@ -27,16 +27,22 @@ export const routes: Routes = [
     canActivate: [anonymousGuard],
   },
   {
+    path: 'auth/verify-phone',
+    loadComponent: () =>
+      import('./features/auth/verify-phone/verify-phone.page').then((m) => m.VerifyPhonePage),
+    canActivate: [authGuard],
+  },
+  {
     path: 'settings',
     loadComponent: () =>
       import('./features/settings/settings.page').then((m) => m.SettingsPage),
-    canActivate: [authGuard],
+    canActivate: [verifiedAuthGuard],
   },
   {
     path: 'app',
     loadComponent: () =>
       import('./features/tabs/tabs.page').then((m) => m.TabsPage),
-    canActivate: [authGuard],
+    canActivate: [verifiedAuthGuard],
     children: [
       {
         path: 'home',
