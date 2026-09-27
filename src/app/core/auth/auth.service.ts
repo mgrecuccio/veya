@@ -11,6 +11,7 @@ import { environment } from "src/environments/environment";
 import { ApiError } from '../api/model/api-error.model';
 import { extractApiError } from '../api/api-error.util';
 import { PhoneVerificationStateService } from './phone-verification-state.service';
+import { ChangePasswordRequest } from '../models/change-password-request.model';
 
 export interface AuthError {
   code:
@@ -64,6 +65,15 @@ export class AuthService {
       tap((tokens) => this.persistAuth(tokens)),
       catchError((error: HttpErrorResponse) =>
         throwError(() => this.mapAuthError(error, 'register'))
+      )
+    );
+  }
+
+  changePassword(payload: ChangePasswordRequest): Observable<void> {
+    return this.http.post<void>(`${this.authApiUrl}/change-password`, payload).pipe(
+      tap(() => this.logout()),
+      catchError((error: HttpErrorResponse) =>
+        throwError(() => this.mapAuthError(error, 'changePassword'))
       )
     );
   }
@@ -135,7 +145,7 @@ export class AuthService {
 
   private mapAuthError(
     error: HttpErrorResponse,
-    operation: 'login' | 'register' | 'refresh'
+    operation: 'login' | 'register' | 'refresh' | 'changePassword'
   ): AuthError {
     const apiError = extractApiError(error);
     const authApiError = apiError ?? undefined;
@@ -154,6 +164,25 @@ export class AuthService {
       return {
         code: 'INVALID_CREDENTIALS',
         message: 'Invalid phone number or password.',
+        apiError: authApiError,
+      };
+    }
+
+    if (
+      operation === 'changePassword' &&
+      apiError?.code === 'BAD_CREDENTIALS'
+    ) {
+      return {
+        code: 'INVALID_CREDENTIALS',
+        message: 'Your current password is incorrect.',
+        apiError: authApiError,
+      };
+    }
+
+    if (operation === 'changePassword' && error.status === 401) {
+      return {
+        code: 'UNAUTHORIZED',
+        message: 'Your session has expired. Please log in again.',
         apiError: authApiError,
       };
     }

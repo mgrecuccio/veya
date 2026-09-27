@@ -1,6 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { Router } from '@angular/router';
 import { AlertController, IonicModule } from '@ionic/angular';
 import { catchError, map, merge, Observable, of, shareReplay, startWith, Subject, switchMap, tap } from 'rxjs';
@@ -61,6 +67,8 @@ interface TimezoneOption {
   label: string;
 }
 
+type PasswordField = 'currentPassword' | 'newPassword' | 'confirmPassword';
+
 const TIMEZONE_OPTIONS: TimezoneOption[] = [
   { value: 'UTC', label: 'UTC' },
   { value: 'Europe/Brussels', label: 'Europe/Brussels' },
@@ -71,6 +79,15 @@ const TIMEZONE_OPTIONS: TimezoneOption[] = [
 
 const PHONE_CHANGE_RATE_LIMIT_MESSAGE =
   'You can change your phone number once per day. Please try again later.';
+
+function matchingPasswordsValidator(
+  group: AbstractControl,
+): ValidationErrors | null {
+  const password = group.get('newPassword')?.value;
+  const confirmation = group.get('confirmPassword')?.value;
+
+  return password === confirmation ? null : { passwordMismatch: true };
+}
 
 @Component({
     selector: 'app-settings',
@@ -101,10 +118,14 @@ export class SettingsPage {
     readonly isSavingProfile = signal(false);
     readonly isSavingPreferences = signal(false);
     readonly isLoggingOut = signal(false);
+    readonly isChangingPassword = signal(false);
+    readonly isPasswordModalOpen = signal(false);
+    readonly visiblePasswordFields = signal<ReadonlySet<PasswordField>>(new Set());
     readonly isPhoneChangeLocked = signal(false);
     readonly phoneChangeMessage = signal<string | null>(null);
     profileError: string | null = null;
     preferencesError: string | null = null;
+    passwordError: string | null = null;
 
     readonly profileForm = this.fb.group(
       {
@@ -136,6 +157,15 @@ export class SettingsPage {
         pushNotificationsEnabled: [false],
         suggestionNotificationsEnabled: [false],
     });
+
+    readonly passwordForm = this.fb.group(
+      {
+        currentPassword: ['', [Validators.required]],
+        newPassword: ['', [Validators.required, Validators.minLength(8)]],
+        confirmPassword: ['', [Validators.required]],
+      },
+      { validators: [matchingPasswordsValidator] },
+    );
 
     readonly vmState$: Observable<SettingsPageVmState> = merge(
       this.reload$,
@@ -320,6 +350,89 @@ export class SettingsPage {
           );
         }
       });
+    }
+
+    changePassword(): void {
+      if (this.passwordForm.invalid || this.isChangingPassword()) {
+        this.passwordForm.markAllAsTouched();
+        return;
+      }
+
+      this.passwordError = null;
+      this.isChangingPassword.set(true);
+      const { currentPassword, newPassword } = this.passwordForm.getRawValue();
+
+      this.authService.changePassword({ currentPassword, newPassword }).subscribe({
+        next: () => {
+          this.isChangingPassword.set(false);
+          this.closePasswordModal();
+          void this.router.navigateByUrl('/auth/login', { replaceUrl: true });
+        },
+        error: (error: unknown) => {
+          this.isChangingPassword.set(false);
+          this.passwordError =
+            error && typeof error === 'object' && 'message' in error &&
+            typeof error.message === 'string'
+              ? error.message
+              : getApiErrorMessage(
+                  error,
+                  'We couldn’t change your password right now.',
+                );
+        },
+      });
+    }
+
+    openPasswordModal(): void {
+      if (this.isPasswordModalOpen()) {
+        return;
+      }
+
+      this.resetPasswordForm();
+      this.isPasswordModalOpen.set(true);
+    }
+
+    closePasswordModal(): void {
+      if (this.isChangingPassword()) {
+        return;
+      }
+
+      this.isPasswordModalOpen.set(false);
+      this.resetPasswordForm();
+    }
+
+    isPasswordFieldInvalid(
+      controlName: PasswordField,
+    ): boolean {
+      const control = this.passwordForm.controls[controlName];
+      return control.invalid && (control.touched || control.dirty);
+    }
+
+    isPasswordVisible(field: PasswordField): boolean {
+      return this.visiblePasswordFields().has(field);
+    }
+
+    togglePasswordVisibility(field: PasswordField): void {
+      this.visiblePasswordFields.update((visibleFields) => {
+        const updatedFields = new Set(visibleFields);
+
+        if (updatedFields.has(field)) {
+          updatedFields.delete(field);
+        } else {
+          updatedFields.add(field);
+        }
+
+        return updatedFields;
+      });
+    }
+
+    private resetPasswordForm(): void {
+      this.passwordForm.reset({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
+      this.passwordError = null;
+      this.visiblePasswordFields.set(new Set());
     }
 
     logout(): void {
