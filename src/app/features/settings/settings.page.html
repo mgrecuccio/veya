@@ -287,6 +287,30 @@
             </form>
           </section>
 
+          <section class="app-surface settings-card">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">Security</h2>
+                <p class="card-subtitle">Manage your account password.</p>
+              </div>
+            </div>
+
+            <button
+              class="primary-cta-card"
+              type="button"
+              (click)="openPasswordModal()"
+            >
+              <div class="primary-cta-card__content">
+                <span class="primary-cta-card__kicker">Password</span>
+                <strong class="primary-cta-card__title">Change password</strong>
+                <span class="primary-cta-card__subtitle">
+                  Update your credentials and sign in again.
+                </span>
+              </div>
+              <span class="primary-cta-card__arrow" aria-hidden="true">→</span>
+            </button>
+          </section>
+
           <footer class="settings-footer">
             <button
               class="logout-button"
@@ -309,3 +333,153 @@
   </div>
 
 </ion-content>
+
+@if (isPasswordModalOpen()) {
+  <div class="contact-actions-overlay" (click)="closePasswordModal()">
+    <section
+      class="contact-actions-sheet password-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="change-password-title"
+      (click)="$event.stopPropagation()"
+    >
+          <header class="password-modal-header">
+            <div>
+              <p class="password-modal-eyebrow">Security</p>
+              <h2 id="change-password-title">Change password</h2>
+              <p>You’ll need to sign in again after changing it.</p>
+            </div>
+            <button
+              class="password-modal-close"
+              type="button"
+              aria-label="Close change password dialog"
+              [disabled]="isChangingPassword()"
+              (click)="closePasswordModal()"
+            >
+              <span aria-hidden="true">×</span>
+            </button>
+          </header>
+
+          <form
+            class="settings-row-list"
+            [formGroup]="passwordForm"
+            (ngSubmit)="changePassword()"
+            novalidate
+          >
+            <div
+              class="settings-row"
+              [class.settings-row--invalid]="isPasswordFieldInvalid('currentPassword')"
+            >
+              <label class="settings-row__label" for="settings-current-password">Current password</label>
+              <div class="settings-password-input">
+                <input
+                  id="settings-current-password"
+                  class="settings-row__control"
+                  [type]="isPasswordVisible('currentPassword') ? 'text' : 'password'"
+                  autocomplete="current-password"
+                  formControlName="currentPassword"
+                />
+                <button
+                  class="password-visibility-button"
+                  type="button"
+                  [attr.aria-label]="isPasswordVisible('currentPassword') ? 'Hide current password' : 'Show current password'"
+                  [attr.aria-pressed]="isPasswordVisible('currentPassword')"
+                  (click)="togglePasswordVisibility('currentPassword')"
+                >
+                  {{ isPasswordVisible('currentPassword') ? 'Hide' : 'Show' }}
+                </button>
+              </div>
+            </div>
+            @if (isPasswordFieldInvalid('currentPassword')) {
+              <div class="settings-error">Current password is required.</div>
+            }
+
+            <div
+              class="settings-row"
+              [class.settings-row--invalid]="isPasswordFieldInvalid('newPassword')"
+            >
+              <label class="settings-row__label" for="settings-new-password">New password</label>
+              <div class="settings-password-input">
+                <input
+                  id="settings-new-password"
+                  class="settings-row__control"
+                  [type]="isPasswordVisible('newPassword') ? 'text' : 'password'"
+                  autocomplete="new-password"
+                  formControlName="newPassword"
+                />
+                <button
+                  class="password-visibility-button"
+                  type="button"
+                  [attr.aria-label]="isPasswordVisible('newPassword') ? 'Hide new password' : 'Show new password'"
+                  [attr.aria-pressed]="isPasswordVisible('newPassword')"
+                  (click)="togglePasswordVisibility('newPassword')"
+                >
+                  {{ isPasswordVisible('newPassword') ? 'Hide' : 'Show' }}
+                </button>
+              </div>
+            </div>
+            @if (isPasswordFieldInvalid('newPassword')) {
+              <div class="settings-error">
+                @if (passwordForm.controls.newPassword.errors?.['required']) {
+                  New password is required.
+                } @else {
+                  Password must be at least 8 characters.
+                }
+              </div>
+            }
+
+            <div
+              class="settings-row"
+              [class.settings-row--invalid]="passwordForm.hasError('passwordMismatch') && passwordForm.controls.confirmPassword.touched"
+            >
+              <label class="settings-row__label" for="settings-confirm-password">Confirm password</label>
+              <div class="settings-password-input">
+                <input
+                  id="settings-confirm-password"
+                  class="settings-row__control"
+                  [type]="isPasswordVisible('confirmPassword') ? 'text' : 'password'"
+                  autocomplete="new-password"
+                  formControlName="confirmPassword"
+                />
+                <button
+                  class="password-visibility-button"
+                  type="button"
+                  [attr.aria-label]="isPasswordVisible('confirmPassword') ? 'Hide password confirmation' : 'Show password confirmation'"
+                  [attr.aria-pressed]="isPasswordVisible('confirmPassword')"
+                  (click)="togglePasswordVisibility('confirmPassword')"
+                >
+                  {{ isPasswordVisible('confirmPassword') ? 'Hide' : 'Show' }}
+                </button>
+              </div>
+            </div>
+            @if (isPasswordFieldInvalid('confirmPassword')) {
+              <div class="settings-error">Please confirm your new password.</div>
+            } @else if (
+              passwordForm.hasError('passwordMismatch') &&
+              passwordForm.controls.confirmPassword.touched
+            ) {
+              <div class="settings-error">Passwords do not match.</div>
+            }
+
+            @if (passwordError) {
+              <div class="settings-error" role="alert">{{ passwordError }}</div>
+            }
+
+            <div class="settings-form-actions">
+              <button
+                class="settings-save-button"
+                type="submit"
+                [disabled]="passwordForm.invalid || isChangingPassword()"
+              >
+                @if (isChangingPassword()) {
+                  <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
+                  <span>Changing password...</span>
+                } @else {
+                  <span>Change password</span>
+                }
+              </button>
+            </div>
+          </form>
+    </section>
+  </div>
+}

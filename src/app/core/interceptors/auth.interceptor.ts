@@ -30,7 +30,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((error: HttpErrorResponse) => {
       if (
         error.status !== 401 ||
-        isAuthEndpoint
+        isAuthEndpoint ||
+        isRejectedChangePassword(error, req.url)
       ) {
         return throwError(() => error);
       }
@@ -52,6 +53,13 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
           return next(retryReq);
         }),
         catchError((refreshError) => {
+          if (
+            refreshError instanceof HttpErrorResponse &&
+            isRejectedChangePassword(refreshError, req.url)
+          ) {
+            return throwError(() => refreshError);
+          }
+
           authService.logout();
           redirectToLogin(router);
           return throwError(() => refreshError);
@@ -60,6 +68,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     })
   );
 };
+
+function isRejectedChangePassword(error: HttpErrorResponse, url: string): boolean {
+  return url.includes('/api/v1/auth/change-password') &&
+    error.error?.code === 'BAD_CREDENTIALS';
+}
 
 function redirectToLogin(router: Router): void {
   void router.navigateByUrl('/auth/login', { replaceUrl: true });

@@ -96,6 +96,63 @@ describe('authInterceptor', () => {
         req.flush(mockTokens);
     });
 
+    it('should attach Authorization and not refresh for rejected current credentials', () => {
+        spyOn(authService, 'logout').and.callThrough();
+        tokenStorage.setTokens(mockTokens);
+
+        http.post('http://localhost:8080/api/v1/auth/change-password', {
+            currentPassword: 'wrong-password',
+            newPassword: 'new-password-456',
+        }).subscribe({
+            next: () => fail('Expected error'),
+            error: (error) => expect(error.status).toBe(401),
+        });
+
+        const req = httpMock.expectOne('http://localhost:8080/api/v1/auth/change-password');
+        expect(req.request.headers.get('Authorization')).toBe('Bearer access-token');
+        req.flush(
+            { code: 'BAD_CREDENTIALS', detail: 'Bad credentials' },
+            { status: 401, statusText: 'Unauthorized' },
+        );
+
+        httpMock.expectNone('http://localhost:8080/api/v1/auth/refresh');
+        expect(authService.logout).not.toHaveBeenCalled();
+        expect(router.navigateByUrl).not.toHaveBeenCalled();
+    });
+
+    it('should preserve the session if a retried password change rejects current credentials', () => {
+        spyOn(authService, 'logout').and.callThrough();
+        tokenStorage.setTokens(mockTokens);
+
+        http.post('http://localhost:8080/api/v1/auth/change-password', {
+            currentPassword: 'wrong-password',
+            newPassword: 'new-password-456',
+        }).subscribe({
+            next: () => fail('Expected error'),
+            error: (error) => expect(error.error.code).toBe('BAD_CREDENTIALS'),
+        });
+
+        const initialReq = httpMock.expectOne('http://localhost:8080/api/v1/auth/change-password');
+        initialReq.flush(
+            { code: 'AUTHENTICATION_REQUIRED' },
+            { status: 401, statusText: 'Unauthorized' },
+        );
+
+        const refreshReq = httpMock.expectOne('http://localhost:8080/api/v1/auth/refresh');
+        refreshReq.flush(refreshedTokens);
+
+        const retryReq = httpMock.expectOne('http://localhost:8080/api/v1/auth/change-password');
+        expect(retryReq.request.headers.get('Authorization')).toBe('Bearer new-access-token');
+        retryReq.flush(
+            { code: 'BAD_CREDENTIALS', detail: 'Bad credentials' },
+            { status: 401, statusText: 'Unauthorized' },
+        );
+
+        expect(authService.logout).not.toHaveBeenCalled();
+        expect(tokenStorage.getAccessToken()).toBe('new-access-token');
+        expect(router.navigateByUrl).not.toHaveBeenCalled();
+    });
+
     it('should refresh token on 401 and retry the original request', () => {
         tokenStorage.setTokens(mockTokens);
 

@@ -271,6 +271,33 @@
   caret-color: var(--app-color-primary);
 }
 
+.settings-password-input {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 6px;
+  min-width: 0;
+}
+
+.password-visibility-button {
+  appearance: none;
+  flex: 0 0 auto;
+  padding: 6px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--app-color-primary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.password-visibility-button:focus-visible {
+  border-radius: 8px;
+  outline: 2px solid rgba(var(--app-color-primary-rgb), 0.4);
+  outline-offset: 2px;
+}
+
 .settings-row--phone {
   align-items: flex-start;
 }
@@ -481,6 +508,10 @@
   .settings-phone-input-row {
     width: 100%;
   }
+
+  .settings-password-input {
+    width: 100%;
+  }
 }
 
 @media (max-height: 700px) {
@@ -525,4 +556,5 @@
   .settings-hero__title {
     font-size: 34px;
   }
+
 }

@@ -45,7 +45,7 @@ describe('SettingsPage', () => {
                     provide: AuthService,
                     useValue: jasmine.createSpyObj<AuthService>(
                         'AuthService',
-                        ['logoutAndRevoke'],
+                        ['changePassword', 'logoutAndRevoke'],
                         { authState$: of(createAuthTokens()) },
                     ),
                 },
@@ -125,6 +125,7 @@ describe('SettingsPage', () => {
         pushRegistration.requestPermission.and.returnValue(Promise.resolve('granted'));
         pushRegistration.disableCurrentDevice.and.returnValue(Promise.resolve());
         authService.logoutAndRevoke.and.returnValue(of(void 0));
+        authService.changePassword.and.returnValue(of(void 0));
         appToastService.show.and.returnValue(Promise.resolve());
         presentAlert = jasmine.createSpy('present').and.returnValue(Promise.resolve());
         alertController.create.and.callFake((options) => Promise.resolve({
@@ -748,6 +749,124 @@ describe('SettingsPage', () => {
             replaceUrl: true,
         });
     }));
+
+    it('should change the password and navigate to login', () => {
+        component.openPasswordModal();
+        component.passwordForm.setValue({
+            currentPassword: 'password123',
+            newPassword: 'new-password-456',
+            confirmPassword: 'new-password-456',
+        });
+
+        component.changePassword();
+
+        expect(authService.changePassword).toHaveBeenCalledOnceWith({
+            currentPassword: 'password123',
+            newPassword: 'new-password-456',
+        });
+        expect(router.navigateByUrl).toHaveBeenCalledOnceWith('/auth/login', {
+            replaceUrl: true,
+        });
+        expect(component.isChangingPassword()).toBeFalse();
+        expect(component.isPasswordModalOpen()).toBeFalse();
+        expect(component.passwordForm.getRawValue()).toEqual({
+            currentPassword: '',
+            newPassword: '',
+            confirmPassword: '',
+        });
+    });
+
+    it('should open the password dialog from the security action', () => {
+        dataService.getPageData.and.returnValue(of(mockPageData()));
+        fixture.detectChanges();
+
+        const changePasswordButton = fixture.nativeElement.querySelector(
+            '.settings-card .primary-cta-card',
+        ) as HTMLButtonElement;
+
+        expect(component.isPasswordModalOpen()).toBeFalse();
+        expect(changePasswordButton.textContent).toContain('Change password');
+
+        changePasswordButton.click();
+        fixture.detectChanges();
+
+        expect(component.isPasswordModalOpen()).toBeTrue();
+        const passwordDialog = fixture.nativeElement.querySelector(
+            '.contact-actions-overlay .password-dialog',
+        ) as HTMLElement;
+        expect(passwordDialog).not.toBeNull();
+        expect(passwordDialog.getAttribute('role')).toBe('dialog');
+        expect(passwordDialog.getAttribute('aria-modal')).toBe('true');
+    });
+
+    it('should clear sensitive password state when the dialog closes', () => {
+        component.openPasswordModal();
+        component.passwordForm.setValue({
+            currentPassword: 'password123',
+            newPassword: 'new-password-456',
+            confirmPassword: 'new-password-456',
+        });
+        component.passwordError = 'Example error';
+        component.togglePasswordVisibility('currentPassword');
+
+        component.closePasswordModal();
+
+        expect(component.isPasswordModalOpen()).toBeFalse();
+        expect(component.passwordForm.getRawValue()).toEqual({
+            currentPassword: '',
+            newPassword: '',
+            confirmPassword: '',
+        });
+        expect(component.passwordError).toBeNull();
+        expect(component.isPasswordVisible('currentPassword')).toBeFalse();
+    });
+
+    it('should reject mismatched passwords without sending a request', () => {
+        component.passwordForm.setValue({
+            currentPassword: 'password123',
+            newPassword: 'new-password-456',
+            confirmPassword: 'different-password',
+        });
+
+        component.changePassword();
+
+        expect(component.passwordForm.hasError('passwordMismatch')).toBeTrue();
+        expect(authService.changePassword).not.toHaveBeenCalled();
+    });
+
+    it('should independently show and hide change-password fields', () => {
+        expect(component.isPasswordVisible('currentPassword')).toBeFalse();
+        expect(component.isPasswordVisible('newPassword')).toBeFalse();
+
+        component.togglePasswordVisibility('currentPassword');
+
+        expect(component.isPasswordVisible('currentPassword')).toBeTrue();
+        expect(component.isPasswordVisible('newPassword')).toBeFalse();
+
+        component.togglePasswordVisibility('currentPassword');
+
+        expect(component.isPasswordVisible('currentPassword')).toBeFalse();
+    });
+
+    it('should show a change-password error and keep the session active', () => {
+        authService.changePassword.and.returnValue(throwError(() => ({
+            code: 'INVALID_CREDENTIALS',
+            message: 'Your current password is incorrect.',
+        })));
+        component.openPasswordModal();
+        component.passwordForm.setValue({
+            currentPassword: 'wrong-password',
+            newPassword: 'new-password-456',
+            confirmPassword: 'new-password-456',
+        });
+
+        component.changePassword();
+
+        expect(component.passwordError).toBe('Your current password is incorrect.');
+        expect(component.isChangingPassword()).toBeFalse();
+        expect(component.isPasswordModalOpen()).toBeTrue();
+        expect(router.navigateByUrl).not.toHaveBeenCalled();
+    });
 
     it('should ignore duplicate logout attempts while logging out', fakeAsync(() => {
         authService.logoutAndRevoke.and.returnValue(new Subject<void>());

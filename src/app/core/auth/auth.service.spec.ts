@@ -6,6 +6,7 @@ import { TestBed } from "@angular/core/testing";
 import { provideHttpClient } from "@angular/common/http";
 import { LoginRequest } from "../models/login-request.model";
 import { RegisterRequest } from "../models/register-request.model";
+import { ChangePasswordRequest } from '../models/change-password-request.model';
 
 
 describe('AuthService', () => {
@@ -82,6 +83,52 @@ describe('AuthService', () => {
         expect(req.request.body).toEqual(payload);
 
         req.flush(mockTokens);
+    });
+
+    it('should change the password and clear revoked tokens', () => {
+        tokenStorage.setTokens(mockTokens);
+        const payload: ChangePasswordRequest = {
+            currentPassword: 'password123',
+            newPassword: 'new-password-456',
+        };
+        const authStates: Array<AuthTokens | null> = [];
+        const sub = service.authState$.subscribe((state) => authStates.push(state));
+
+        service.changePassword(payload).subscribe(() => {
+            expect(tokenStorage.getAccessToken()).toBeNull();
+            expect(tokenStorage.getRefreshToken()).toBeNull();
+            expect(authStates.at(-1)).toBeNull();
+        });
+
+        const req = httpMock.expectOne('http://localhost:8080/api/v1/auth/change-password');
+        expect(req.request.method).toBe('POST');
+        expect(req.request.body).toEqual(payload);
+        req.flush(null, { status: 204, statusText: 'No Content' });
+
+        sub.unsubscribe();
+    });
+
+    it('should retain tokens when changing the password fails', () => {
+        tokenStorage.setTokens(mockTokens);
+
+        service.changePassword({
+            currentPassword: 'wrong-password',
+            newPassword: 'new-password-456',
+        }).subscribe({
+            next: () => fail('Expected error'),
+            error: (error: AuthError) => {
+                expect(error.code).toBe('INVALID_CREDENTIALS');
+                expect(error.message).toBe('Your current password is incorrect.');
+                expect(tokenStorage.getAccessToken()).toBe(mockTokens.accessToken);
+                expect(tokenStorage.getRefreshToken()).toBe(mockTokens.refreshToken);
+            },
+        });
+
+        const req = httpMock.expectOne('http://localhost:8080/api/v1/auth/change-password');
+        req.flush(
+            { code: 'BAD_CREDENTIALS', detail: 'Bad credentials' },
+            { status: 401, statusText: 'Unauthorized' },
+        );
     });
 
     it('should refresh token and persist new tokens', () => {
