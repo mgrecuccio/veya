@@ -60,6 +60,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             return throwError(() => refreshError);
           }
 
+          if (!isUnauthorizedRefreshError(refreshError)) {
+            return throwError(() => refreshError);
+          }
+
           authService.logout();
           redirectToLogin(router);
           return throwError(() => refreshError);
@@ -76,4 +80,11 @@ function isRejectedChangePassword(error: HttpErrorResponse, url: string): boolea
 
 function redirectToLogin(router: Router): void {
   void router.navigateByUrl('/auth/login', { replaceUrl: true });
+}
+
+function isUnauthorizedRefreshError(error: unknown): boolean {
+  return !!error &&
+    typeof error === 'object' &&
+    'code' in error &&
+    error.code === 'UNAUTHORIZED';
 }

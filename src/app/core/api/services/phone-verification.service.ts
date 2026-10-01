@@ -31,19 +31,32 @@ export interface PhoneVerificationError {
 @Injectable({ providedIn: 'root' })
 export class PhoneVerificationService {
   private readonly http = inject(HttpClient);
-  private readonly otpApiUrl = `${environment.apiBaseUrl}/api/v1/otp`;
-  private readonly verifyApiUrl = `${this.otpApiUrl}/verify`;
+  private readonly authApiUrl = `${environment.apiBaseUrl}/api/v1/auth`;
+  private readonly userApiUrl = `${environment.apiBaseUrl}/api/v1/users/me`;
 
-  verify(payload: VerifyPhoneOtpRequest): Observable<PhoneVerificationResponse> {
+  verifyRegistrationPhone(
+    payload: VerifyPhoneOtpRequest,
+  ): Observable<PhoneVerificationResponse> {
     return this.http
-      .post<PhoneVerificationResponse>(this.verifyApiUrl, payload)
+      .post<PhoneVerificationResponse>(
+        `${this.authApiUrl}/verify-registration-phone`,
+        payload,
+      )
+      .pipe(catchError((error: HttpErrorResponse) => this.mapError(error)));
+  }
+
+  verifyPhone(
+    payload: VerifyPhoneOtpRequest,
+  ): Observable<PhoneVerificationResponse> {
+    return this.http
+      .post<PhoneVerificationResponse>(`${this.userApiUrl}/verify-phone`, payload)
       .pipe(catchError((error: HttpErrorResponse) => this.mapError(error)));
   }
 
   resend(): Observable<ResendPhoneVerificationResponse> {
     return this.http
       .post<ResendPhoneVerificationResponse>(
-        `${this.otpApiUrl}/resend-phone-verification`,
+        `${this.userApiUrl}/resend-phone-verification`,
         null,
       )
       .pipe(catchError((error: HttpErrorResponse) => this.mapError(error)));

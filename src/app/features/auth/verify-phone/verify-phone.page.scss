@@ -28,3 +28,32 @@
   cursor: default;
   opacity: 0.55;
 }
+
+.phone-input-row {
+  display: grid;
+  grid-template-columns: minmax(112px, 0.8fr) minmax(0, 1.6fr);
+  gap: 10px;
+}
+
+.phone-country-item,
+.phone-number-item {
+  width: 100%;
+  min-width: 0;
+}
+
+.phone-edit-form {
+  margin-bottom: 18px;
+}
+
+.phone-edit-actions {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 14px;
+}
+
+@media (max-width: 380px) {
+  .phone-input-row {
+    grid-template-columns: 1fr;
+  }
+}

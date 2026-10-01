@@ -1,5 +1,5 @@
 import { Location } from '@angular/common';
-import { Component, NgZone, OnDestroy, ViewChild, inject } from '@angular/core';
+import { Component, NgZone, OnDestroy, ViewChild, inject, signal } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { App } from '@capacitor/app';
 import type { PluginListenerHandle } from '@capacitor/core';
@@ -15,7 +15,9 @@ import { PushNotificationRoutingService } from './core/notifications/push-notifi
 import { PushRegistrationReconciliationService } from './core/notifications/push-registration-reconciliation.service';
 import { addIcons } from 'ionicons';
 import { Subscription } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
+import { filter, take, timeout } from 'rxjs/operators';
+import { AuthError, AuthService } from './core/auth/auth.service';
 import {
   add,
   calendar,
@@ -36,13 +38,42 @@ import {
   starOutline,
 } from 'ionicons/icons';
 
+const STARTUP_SESSION_TIMEOUT_MS = 10_000;
+
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [IonApp, IonRouterOutlet],
   template: `
     <ion-app>
-      <ion-router-outlet></ion-router-outlet>
+      <ion-router-outlet
+        [class.app-router-outlet--hidden]="startupState() !== 'ready'"
+      ></ion-router-outlet>
+
+      @if (startupState() === 'checking') {
+        <main class="app-startup" role="status" aria-live="polite">
+          <div class="app-startup__brand">Veya</div>
+          <div class="app-startup__spinner" aria-hidden="true"></div>
+          <p>Getting things ready…</p>
+        </main>
+      } @else if (startupState() === 'unavailable') {
+        <main class="app-startup" role="alert">
+          <section class="app-startup__card">
+            <div class="app-startup__brand app-startup__brand--card">Veya</div>
+            <h1>Unable to connect</h1>
+            <p>Veya is temporarily unavailable. Check your connection and try again.</p>
+            <button
+              type="button"
+              class="app-startup__retry"
+              [disabled]="startupState() === 'checking'"
+              (click)="retryStartup()"
+            >
+              Try again
+            </button>
+          </section>
+        </main>
+      }
+
       @if (appToastService.toast(); as toast) {
         <div
           class="app-toast-overlay"
@@ -57,6 +88,7 @@ import {
       }
     </ion-app>
   `,
+  styleUrls: ['./app.component.scss'],
 })
 export class AppComponent implements OnDestroy {
   @ViewChild(IonRouterOutlet) private readonly routerOutlet?: IonRouterOutlet;
@@ -65,6 +97,7 @@ export class AppComponent implements OnDestroy {
   private readonly router = inject(Router);
   private readonly platform = inject(Platform);
   private readonly zone = inject(NgZone);
+  private readonly authService = inject(AuthService);
   readonly appToastService = inject(AppToastService);
   private readonly pushRegistration = inject(PushRegistrationReconciliationService);
   private readonly pushNotificationRouting = inject(PushNotificationRoutingService);
@@ -72,6 +105,9 @@ export class AppComponent implements OnDestroy {
   private keyboardListeners: Promise<PluginListenerHandle>[] = [];
   private backButtonSubscription?: Subscription;
   private routerEventsSubscription?: Subscription;
+  private applicationStarted = false;
+
+  readonly startupState = signal<'checking' | 'unavailable' | 'ready'>('checking');
 
   constructor() {
     addIcons({
@@ -99,8 +135,7 @@ export class AppComponent implements OnDestroy {
     this.registerKeyboardListeners();
     this.registerBackButtonHandler();
     this.registerContentScrollRefresh();
-    this.pushRegistration.initialize();
-    this.pushNotificationRouting.initialize();
+    void this.initializeApplication();
   }
 
   ngOnDestroy(): void {
@@ -115,6 +150,63 @@ export class AppComponent implements OnDestroy {
 
     this.backButtonSubscription?.unsubscribe();
     this.routerEventsSubscription?.unsubscribe();
+  }
+
+  retryStartup(): void {
+    if (this.startupState() === 'checking') {
+      return;
+    }
+
+    void this.initializeApplication();
+  }
+
+  private async initializeApplication(): Promise<void> {
+    this.startupState.set('checking');
+
+    if (!this.authService.getRefreshToken()) {
+      this.startApplication();
+      return;
+    }
+
+    try {
+      await firstValueFrom(
+        this.authService.refreshToken().pipe(
+          timeout({ first: STARTUP_SESSION_TIMEOUT_MS }),
+        ),
+      );
+      this.startApplication();
+    } catch (error) {
+      if (this.isUnauthorized(error)) {
+        this.startApplication();
+        return;
+      }
+
+      this.startupState.set('unavailable');
+    }
+  }
+
+  private startApplication(): void {
+    if (this.applicationStarted) {
+      return;
+    }
+
+    this.applicationStarted = true;
+    this.pushRegistration.initialize();
+    this.pushNotificationRouting.initialize();
+    this.router.events
+      .pipe(
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+        take(1),
+      )
+      .subscribe(() => this.startupState.set('ready'));
+    this.router.initialNavigation();
+  }
+
+  private isUnauthorized(error: unknown): error is AuthError {
+    return !!error &&
+      typeof error === 'object' &&
+      'code' in error &&
+      error.code === 'UNAUTHORIZED';
   }
 
   private registerContentScrollRefresh(): void {
