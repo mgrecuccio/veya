@@ -98,6 +98,33 @@ describe('authInterceptor', () => {
         req.flush(mockTokens);
     });
 
+    it('should not attach Authorization header to password recovery endpoints', () => {
+        tokenStorage.setTokens(mockTokens);
+
+        http.post('http://localhost:8080/api/v1/auth/password-recovery', {
+            phoneNumber: '+32468009911',
+        }).subscribe();
+
+        const requestReq = httpMock.expectOne(
+            'http://localhost:8080/api/v1/auth/password-recovery',
+        );
+        expect(requestReq.request.headers.has('Authorization')).toBeFalse();
+        requestReq.flush({ verificationId: 'verification-id' });
+
+        http.post('http://localhost:8080/api/v1/auth/verify-password-recovery', {
+            phoneNumber: '+32468009911',
+            verificationId: 'verification-id',
+            otpCode: '123456',
+            newPassword: 'newStrongPassword',
+        }).subscribe();
+
+        const verifyReq = httpMock.expectOne(
+            'http://localhost:8080/api/v1/auth/verify-password-recovery',
+        );
+        expect(verifyReq.request.headers.has('Authorization')).toBeFalse();
+        verifyReq.flush(null, { status: 204, statusText: 'No Content' });
+    });
+
     it('should attach Authorization and not refresh for rejected current credentials', () => {
         spyOn(authService, 'logout').and.callThrough();
         tokenStorage.setTokens(mockTokens);

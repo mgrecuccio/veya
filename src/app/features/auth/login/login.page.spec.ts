@@ -112,6 +112,13 @@ describe('LoginPage', () => {
         expect(extras).not.toEqual(jasmine.objectContaining({ replaceUrl: true }));
     });
 
+    it('should navigate to password recovery', () => {
+        component.forgotPassword();
+
+        const [url] = (router.navigateByUrl as jasmine.Spy).calls.mostRecent().args;
+        expect(url.toString()).toBe('/auth/password-recovery');
+    });
+
     it('should navigate back to onboarding', () => {
         component.goBack();
 

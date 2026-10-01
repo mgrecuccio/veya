@@ -131,6 +131,88 @@ describe('AuthService', () => {
         );
     });
 
+    it('should request password recovery without authenticating the user', () => {
+        service.requestPasswordRecovery({ phoneNumber: '+32468009911' }).subscribe((response) => {
+            expect(response).toEqual({ verificationId: null });
+            expect(tokenStorage.getAccessToken()).toBeNull();
+        });
+
+        const req = httpMock.expectOne('http://localhost:8080/api/v1/auth/password-recovery');
+        expect(req.request.method).toBe('POST');
+        expect(req.request.body).toEqual({ phoneNumber: '+32468009911' });
+        req.flush({ verificationId: null });
+    });
+
+    it('should verify password recovery and clear any stored session', () => {
+        tokenStorage.setTokens(mockTokens);
+        const payload = {
+            phoneNumber: '+32468009911',
+            verificationId: 'verification-id',
+            otpCode: '123456',
+            newPassword: 'newStrongPassword',
+        };
+
+        service.verifyPasswordRecovery(payload).subscribe(() => {
+            expect(tokenStorage.getAccessToken()).toBeNull();
+            expect(tokenStorage.getRefreshToken()).toBeNull();
+        });
+
+        const req = httpMock.expectOne('http://localhost:8080/api/v1/auth/verify-password-recovery');
+        expect(req.request.method).toBe('POST');
+        expect(req.request.body).toEqual(payload);
+        req.flush(null, { status: 204, statusText: 'No Content' });
+    });
+
+    const passwordRecoveryErrors: Array<[AuthError['code'], string, number]> = [
+        ['INVALID_VERIFICATION_CODE', 'The verification code is invalid.', 400],
+        ['EXPIRED_VERIFICATION', 'The verification code has expired. Request a new one.', 400],
+        ['INVALID_VERIFICATION_EXCEPTION', 'We could not verify this code. Request a new one.', 404],
+        ['TOO_MANY_ATTEMPTS', 'Too many attempts. Try again later.', 429],
+    ];
+
+    passwordRecoveryErrors.forEach(([code, message, status]) => {
+        it(`should map ${code} password recovery errors`, () => {
+            service.verifyPasswordRecovery({
+                phoneNumber: '+32468009911',
+                verificationId: 'verification-id',
+                otpCode: '123456',
+                newPassword: 'newStrongPassword',
+            }).subscribe({
+                next: () => fail('Expected error'),
+                error: (error: AuthError) => {
+                    expect(error.code).toBe(code);
+                    expect(error.message).toBe(message);
+                },
+            });
+
+            const req = httpMock.expectOne('http://localhost:8080/api/v1/auth/verify-password-recovery');
+            req.flush({ code }, { status: status as number, statusText: 'Error' });
+        });
+    });
+
+    it('should preserve password recovery validation details', () => {
+        const details = { newPassword: 'Password needs an uppercase letter.' };
+
+        service.verifyPasswordRecovery({
+            phoneNumber: '+32468009911',
+            verificationId: 'verification-id',
+            otpCode: '123456',
+            newPassword: 'password',
+        }).subscribe({
+            next: () => fail('Expected error'),
+            error: (error: AuthError) => {
+                expect(error.code).toBe('VALIDATION_ERROR');
+                expect(error.apiError?.details).toEqual(details);
+            },
+        });
+
+        const req = httpMock.expectOne('http://localhost:8080/api/v1/auth/verify-password-recovery');
+        req.flush(
+            { code: 'VALIDATION_ERROR', message: 'Invalid request', details },
+            { status: 400, statusText: 'Bad Request' },
+        );
+    });
+
     it('should refresh token and persist new tokens', () => {
         tokenStorage.setTokens(mockTokens);
 

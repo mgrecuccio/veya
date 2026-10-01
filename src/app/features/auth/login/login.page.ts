@@ -175,7 +175,7 @@ export class LoginPage {
   }
 
   forgotPassword(): void {
-    console.log('Forgot password tapped');
+    void this.navController.navigateForward('/auth/password-recovery');
   }
 
   goToRegister(): void {
