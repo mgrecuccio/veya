@@ -13,50 +13,107 @@
           </p>
         </div>
 
-        <form class="auth-form" [formGroup]="form" (ngSubmit)="verify()" novalidate>
-          <div class="auth-field">
-            <label class="auth-label" for="verification-code">Verification code</label>
-            <input
-              id="verification-code"
-              class="auth-input-item auth-input otp-input"
-              [class.auth-input-item--invalid]="otpCode.invalid && (otpCode.touched || otpCode.dirty)"
-              type="text"
-              autocomplete="one-time-code"
-              placeholder="123456"
-              formControlName="otpCode"
-            />
+        @if (isEditingPhone) {
+          <form class="auth-form phone-edit-form" [formGroup]="phoneForm" (ngSubmit)="updatePhoneNumber()" novalidate>
+            <div class="auth-field">
+              <label class="auth-label" for="verification-phone">Correct phone number</label>
+              <div class="phone-input-row">
+                <select
+                  class="auth-input-item auth-select phone-country-item"
+                  aria-label="Country calling code"
+                  formControlName="phoneCountry"
+                >
+                  @for (country of countries; track country.code) {
+                    <option [value]="country.code">{{ country.flag }} {{ country.dialCode }}</option>
+                  }
+                </select>
+                <input
+                  id="verification-phone"
+                  class="auth-input-item auth-input phone-number-item"
+                  [class.auth-input-item--invalid]="isPhoneInvalid"
+                  type="tel"
+                  inputmode="tel"
+                  autocomplete="tel-national"
+                  placeholder="0470 12 34 56"
+                  formControlName="phoneNational"
+                />
+              </div>
+              @if (isPhoneInvalid) {
+                <div class="auth-error">Enter a valid phone number.</div>
+              }
+            </div>
 
-            @if (otpCode.invalid && (otpCode.touched || otpCode.dirty)) {
-              <div class="auth-error">Enter the verification code.</div>
-            }
+            <div class="phone-edit-actions">
+              <button
+                type="button"
+                class="auth-footer-link"
+                [disabled]="isUpdatingPhone"
+                (click)="cancelPhoneEdit()"
+              >
+                Cancel
+              </button>
+              <app-primary-button type="submit" [disabled]="phoneForm.invalid || isUpdatingPhone">
+                @if (isUpdatingPhone) { Updating... } @else { Send new code }
+              </app-primary-button>
+            </div>
+          </form>
+        } @else {
+          <form class="auth-form" [formGroup]="form" (ngSubmit)="verify()" novalidate>
+            <div class="auth-field">
+              <label class="auth-label" for="verification-code">Verification code</label>
+              <input
+                id="verification-code"
+                class="auth-input-item auth-input otp-input"
+                [class.auth-input-item--invalid]="otpCode.invalid && (otpCode.touched || otpCode.dirty)"
+                type="text"
+                autocomplete="one-time-code"
+                placeholder="123456"
+                formControlName="otpCode"
+              />
+
+              @if (otpCode.invalid && (otpCode.touched || otpCode.dirty)) {
+                <div class="auth-error">Enter the verification code.</div>
+              }
+            </div>
+
+            <div class="auth-submit">
+              <app-primary-button type="submit" [disabled]="!canVerify">
+                @if (isVerifying) { Verifying... } @else { Verify phone }
+              </app-primary-button>
+            </div>
+          </form>
+        }
+
+        @if (errorMessage) {
+          <div class="auth-error auth-error--form" role="alert">{{ errorMessage }}</div>
+        }
+
+        @if (infoMessage) {
+          <div class="verification-success" role="status">{{ infoMessage }}</div>
+        }
+
+        @if (!isEditingPhone) {
+          <div class="auth-footer">
+            Didn't receive a code?
+            <button
+              type="button"
+              class="auth-footer-link"
+              [disabled]="!canResend"
+              (click)="resend()"
+            >
+              {{ resendLabel }}
+            </button>
           </div>
+        }
 
-          @if (errorMessage) {
-            <div class="auth-error auth-error--form" role="alert">{{ errorMessage }}</div>
-          }
-
-          @if (infoMessage) {
-            <div class="verification-success" role="status">{{ infoMessage }}</div>
-          }
-
-          <div class="auth-submit">
-            <app-primary-button type="submit" [disabled]="!canVerify">
-              @if (isVerifying) { Verifying... } @else { Verify phone }
-            </app-primary-button>
+        @if (canChangePhone && !isEditingPhone) {
+          <div class="auth-footer">
+            Entered the wrong number?
+            <button type="button" class="auth-footer-link" (click)="editPhoneNumber()">
+              Change phone number
+            </button>
           </div>
-        </form>
-
-        <div class="auth-footer">
-          Didn't receive a code?
-          <button
-            type="button"
-            class="auth-footer-link"
-            [disabled]="!canResend"
-            (click)="resend()"
-          >
-            {{ resendLabel }}
-          </button>
-        </div>
+        }
       </section>
     </div>
   </div>

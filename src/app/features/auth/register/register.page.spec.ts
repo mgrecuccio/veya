@@ -105,7 +105,10 @@ describe('RegisterPage', () => {
 
     component.submit();
 
-    expect(verificationState.start).toHaveBeenCalledOnceWith();
+    expect(verificationState.start).toHaveBeenCalledOnceWith(
+      'registration',
+      '+32468009911',
+    );
     expect(router.navigateByUrl).toHaveBeenCalledWith('/auth/verify-phone', { replaceUrl: true });
   });
 

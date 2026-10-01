@@ -4,7 +4,7 @@ import { Component, DestroyRef, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { IonicModule } from '@ionic/angular';
-import { finalize, interval } from 'rxjs';
+import { finalize, interval, switchMap } from 'rxjs';
 
 import { PhoneVerificationStateService } from 'src/app/core/auth/phone-verification-state.service';
 import { AppToastService } from 'src/app/shared/toast/app-toast.service';
@@ -14,6 +14,15 @@ import {
 } from 'src/app/core/api/services/phone-verification.service';
 import { AppPrimaryButtonComponent } from 'src/app/shared/ui/app-primary-button/app-primary-button.component';
 import { AuthService } from 'src/app/core/auth/auth.service';
+import { UserService } from 'src/app/core/api/services/user.service';
+import { getApiErrorMessage } from 'src/app/core/api/api-error.util';
+import {
+  createPhoneCountries,
+  getDefaultPhoneCountry,
+  getNormalizedPhoneNumber,
+  requiredPhoneValidator,
+  splitE164PhoneNumber,
+} from 'src/app/shared/phone/phone-number.util';
 
 const RESEND_COOLDOWN_MS = 5 * 60 * 1000;
 
@@ -36,16 +45,28 @@ export class VerifyPhonePage {
   private readonly verificationState = inject(PhoneVerificationStateService);
   private readonly appToastService = inject(AppToastService);
   private readonly authService = inject(AuthService);
+  private readonly userService = inject(UserService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly form = this.fb.nonNullable.group({
     otpCode: ['', [Validators.required]],
   });
 
+  readonly phoneForm = this.fb.nonNullable.group(
+    {
+      phoneCountry: [getDefaultPhoneCountry()],
+      phoneNational: [''],
+    },
+    { validators: [requiredPhoneValidator()] },
+  );
+  readonly countries = createPhoneCountries();
+
   verificationId = this.verificationState.getPending()?.verificationId ?? null;
   cooldownSeconds = 0;
   isVerifying = false;
   isResending = false;
+  isEditingPhone = false;
+  isUpdatingPhone = false;
   errorMessage: string | null = null;
   infoMessage: string | null = null;
 
@@ -71,6 +92,18 @@ export class VerifyPhonePage {
 
   get canResend(): boolean {
     return this.cooldownSeconds === 0 && !this.isResending;
+  }
+
+  get canChangePhone(): boolean {
+    return this.verificationState.getPending()?.purpose === 'registration';
+  }
+
+  get phoneNational() {
+    return this.phoneForm.controls.phoneNational;
+  }
+
+  get isPhoneInvalid(): boolean {
+    return this.phoneNational.touched && this.phoneForm.invalid;
   }
 
   get resendLabel(): string {
@@ -104,7 +137,12 @@ export class VerifyPhonePage {
         : {}),
     };
 
-    this.verificationService.verify(payload).pipe(
+    const purpose = this.verificationState.getPending()?.purpose ?? 'registration';
+    const verificationRequest = purpose === 'phone-change'
+      ? this.verificationService.verifyPhone(payload)
+      : this.verificationService.verifyRegistrationPhone(payload);
+
+    verificationRequest.pipe(
       takeUntilDestroyed(this.destroyRef),
       finalize(() => {
         this.isVerifying = false;
@@ -112,7 +150,7 @@ export class VerifyPhonePage {
     ).subscribe({
       next: (response) => {
         if (!response.verified) {
-          this.returnToPreviousPage('Invalid code. Please try again.');
+          this.showError('Invalid code. Please try again.');
           return;
         }
 
@@ -128,7 +166,7 @@ export class VerifyPhonePage {
           return;
         }
 
-        this.returnToPreviousPage(error.message);
+        this.showError(error.message);
       },
     });
   }
@@ -160,7 +198,77 @@ export class VerifyPhonePage {
           return;
         }
 
-        this.returnToPreviousPage(error.message);
+        this.showError(error.message);
+      },
+    });
+  }
+
+  editPhoneNumber(): void {
+    if (!this.canChangePhone) {
+      return;
+    }
+
+    const currentPhone = this.verificationState.getPending()?.phoneNumber;
+    this.phoneForm.reset(splitE164PhoneNumber(currentPhone));
+    this.errorMessage = null;
+    this.infoMessage = null;
+    this.isEditingPhone = true;
+  }
+
+  cancelPhoneEdit(): void {
+    if (this.isUpdatingPhone) {
+      return;
+    }
+
+    this.isEditingPhone = false;
+    this.phoneForm.reset();
+  }
+
+  updatePhoneNumber(): void {
+    if (this.phoneForm.invalid || this.isUpdatingPhone || !this.canChangePhone) {
+      this.phoneForm.markAllAsTouched();
+      return;
+    }
+
+    const phoneNumber = getNormalizedPhoneNumber(
+      this.phoneForm.controls.phoneCountry.value,
+      this.phoneNational.value,
+    );
+
+    if (!phoneNumber) {
+      this.phoneForm.markAllAsTouched();
+      return;
+    }
+
+    this.errorMessage = null;
+    this.infoMessage = null;
+    this.isUpdatingPhone = true;
+
+    this.userService.getMe().pipe(
+      switchMap((profile) => this.userService.updateMe({
+        displayName: profile.displayName?.trim() ?? '',
+        timezone: profile.timezone?.trim() ||
+          Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+        phoneNumber,
+      })),
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => {
+        this.isUpdatingPhone = false;
+      }),
+    ).subscribe({
+      next: () => {
+        this.verificationState.start('registration', phoneNumber);
+        this.verificationId = null;
+        this.form.reset();
+        this.isEditingPhone = false;
+        this.infoMessage = 'Your phone number was updated. A new verification code has been sent.';
+        this.updateCooldown();
+      },
+      error: (error: unknown) => {
+        this.errorMessage = getApiErrorMessage(
+          error,
+          'We couldn’t update your phone number. Please try again.',
+        );
       },
     });
   }
@@ -176,14 +284,8 @@ export class VerifyPhonePage {
     return true;
   }
 
-  private returnToPreviousPage(message: string): void {
-    const purpose = this.verificationState.getPending()?.purpose;
-    this.verificationState.clear();
-    void this.appToastService.show(message, 'danger');
-    void this.router.navigateByUrl(
-      purpose === 'phone-change' ? '/settings' : '/app/home',
-      { replaceUrl: true },
-    );
+  private showError(message: string): void {
+    this.errorMessage = message;
   }
 
   private completeVerification(): void {

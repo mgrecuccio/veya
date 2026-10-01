@@ -31,6 +31,17 @@ describe('PhoneVerificationStateService', () => {
     expect(service.getPending()?.purpose).toBe('phone-change');
   });
 
+  it('stores and preserves the phone number for registration recovery', () => {
+    service.start('registration', '+32470123456');
+    service.updateAfterResend('verification-id');
+
+    expect(service.getPending()).toEqual(jasmine.objectContaining({
+      verificationId: 'verification-id',
+      purpose: 'registration',
+      phoneNumber: '+32470123456',
+    }));
+  });
+
   it('stores the id returned by resend', () => {
     spyOn(Date, 'now').and.returnValue(5678);
 

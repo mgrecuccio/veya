@@ -104,8 +104,13 @@ export class AuthService {
           this.refreshRequest$ = null;
         }),
         catchError((error: HttpErrorResponse) => {
-          this.logout();
-          return throwError(() => this.mapAuthError(error, 'refresh'));
+          const authError = this.mapAuthError(error, 'refresh');
+
+          if (authError.code === 'UNAUTHORIZED') {
+            this.logout();
+          }
+
+          return throwError(() => authError);
         })
       );
 

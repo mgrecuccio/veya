@@ -1,5 +1,5 @@
 import { ApplicationConfig } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withDisabledInitialNavigation } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideIonicAngular } from '@ionic/angular/standalone';
 
@@ -12,7 +12,7 @@ export const appConfig: ApplicationConfig = {
       mode: 'md',
       animated: false,
     }),
-    provideRouter(routes),
+    provideRouter(routes, withDisabledInitialNavigation()),
     provideHttpClient(
       withInterceptors([authInterceptor])
     ),

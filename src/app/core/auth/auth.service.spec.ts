@@ -360,6 +360,25 @@ describe('AuthService', () => {
         );
     });
 
+    it('should preserve stored tokens when refresh fails because the backend is unavailable', () => {
+        tokenStorage.setTokens(mockTokens);
+
+        service.refreshToken().subscribe({
+            next: () => fail('Expected error'),
+            error: (error: AuthError) => {
+                expect(error.code).toBe('NETWORK');
+                expect(tokenStorage.getAccessToken()).toBe(mockTokens.accessToken);
+                expect(tokenStorage.getRefreshToken()).toBe(mockTokens.refreshToken);
+            },
+        });
+
+        const req = httpMock.expectOne('http://localhost:8080/api/v1/auth/refresh');
+        req.error(new ProgressEvent('error'), {
+            status: 0,
+            statusText: 'Unknown Error',
+        });
+    });
+
     it('should share a single refresh request for concurrent refresh calls', () => {
         tokenStorage.setTokens(mockTokens);
 

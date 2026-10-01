@@ -4,6 +4,7 @@ export interface PendingPhoneVerification {
   verificationId: string | null;
   lastSentAt: number;
   purpose: 'registration' | 'phone-change';
+  phoneNumber?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -28,29 +29,41 @@ export class PhoneVerificationStateService {
         return null;
       }
 
-      return {
+      const result: PendingPhoneVerification = {
         verificationId: pending.verificationId ?? null,
         lastSentAt: pending.lastSentAt,
         purpose: pending.purpose === 'phone-change' ? 'phone-change' : 'registration',
       };
+
+      if (typeof pending.phoneNumber === 'string') {
+        result.phoneNumber = pending.phoneNumber;
+      }
+
+      return result;
     } catch {
       return null;
     }
   }
 
-  start(purpose: PendingPhoneVerification['purpose'] = 'registration'): void {
+  start(
+    purpose: PendingPhoneVerification['purpose'] = 'registration',
+    phoneNumber?: string,
+  ): void {
     this.store({
       verificationId: null,
       lastSentAt: Date.now(),
       purpose,
+      ...(phoneNumber ? { phoneNumber } : {}),
     });
   }
 
   updateAfterResend(verificationId: string): void {
+    const pending = this.getPending();
     this.store({
       verificationId,
       lastSentAt: Date.now(),
-      purpose: this.getPending()?.purpose ?? 'registration',
+      purpose: pending?.purpose ?? 'registration',
+      ...(pending?.phoneNumber ? { phoneNumber: pending.phoneNumber } : {}),
     });
   }
 

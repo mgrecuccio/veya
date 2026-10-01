@@ -26,10 +26,12 @@ describe('PhoneVerificationService', () => {
   afterEach(() => httpMock.verify());
 
   it('verifies the initial OTP without a verification id', () => {
-    service.verify({ otpCode: '123456' })
+    service.verifyRegistrationPhone({ otpCode: '123456' })
       .subscribe((response) => expect(response).toEqual({ userId: 42, verified: true }));
 
-    const request = httpMock.expectOne('http://localhost:8080/api/v1/otp/verify');
+    const request = httpMock.expectOne(
+      'http://localhost:8080/api/v1/auth/verify-registration-phone',
+    );
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual({
       otpCode: '123456',
@@ -38,14 +40,30 @@ describe('PhoneVerificationService', () => {
   });
 
   it('supports verification with the id returned by resend', () => {
-    service.verify({ otpCode: '123456', verificationId: 'verification-id' })
+    service.verifyRegistrationPhone({
+      otpCode: '123456',
+      verificationId: 'verification-id',
+    })
       .subscribe();
 
-    const request = httpMock.expectOne('http://localhost:8080/api/v1/otp/verify');
+    const request = httpMock.expectOne(
+      'http://localhost:8080/api/v1/auth/verify-registration-phone',
+    );
     expect(request.request.body).toEqual({
       otpCode: '123456',
       verificationId: 'verification-id',
     });
+    request.flush({ userId: 42, verified: true });
+  });
+
+  it('uses the profile endpoint when verifying a changed phone number', () => {
+    service.verifyPhone({ otpCode: '123456' }).subscribe();
+
+    const request = httpMock.expectOne(
+      'http://localhost:8080/api/v1/users/me/verify-phone',
+    );
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({ otpCode: '123456' });
     request.flush({ userId: 42, verified: true });
   });
 
@@ -55,7 +73,7 @@ describe('PhoneVerificationService', () => {
     });
 
     const request = httpMock.expectOne(
-      'http://localhost:8080/api/v1/otp/resend-phone-verification',
+      'http://localhost:8080/api/v1/users/me/resend-phone-verification',
     );
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toBeNull();
@@ -74,7 +92,7 @@ describe('PhoneVerificationService', () => {
     });
 
     const request = httpMock.expectOne(
-      'http://localhost:8080/api/v1/otp/resend-phone-verification',
+      'http://localhost:8080/api/v1/users/me/resend-phone-verification',
     );
     request.flush(
       { code: 'TOO_MANY_ATTEMPTS', detail: 'Localized rate-limit message' },
@@ -83,7 +101,10 @@ describe('PhoneVerificationService', () => {
   });
 
   it('maps the exact invalid-code backend error', () => {
-    service.verify({ otpCode: '000000', verificationId: 'verification-id' })
+    service.verifyRegistrationPhone({
+      otpCode: '000000',
+      verificationId: 'verification-id',
+    })
       .subscribe({
         next: () => fail('Expected an error'),
         error: (error: PhoneVerificationError) => {
@@ -93,7 +114,9 @@ describe('PhoneVerificationService', () => {
         },
       });
 
-    const request = httpMock.expectOne('http://localhost:8080/api/v1/otp/verify');
+    const request = httpMock.expectOne(
+      'http://localhost:8080/api/v1/auth/verify-registration-phone',
+    );
     request.flush(
       { code: 'INVALID_VERIFICATION_CODE', detail: 'Wrong code.' },
       { status: 400, statusText: 'Bad Request' },
@@ -101,7 +124,7 @@ describe('PhoneVerificationService', () => {
   });
 
   it('maps the exact missing-verification backend error', () => {
-    service.verify({ otpCode: '123456' }).subscribe({
+    service.verifyRegistrationPhone({ otpCode: '123456' }).subscribe({
       next: () => fail('Expected an error'),
       error: (error: PhoneVerificationError) => {
         expect(error.code).toBe('EXPIRED_OR_MISSING');
@@ -110,7 +133,9 @@ describe('PhoneVerificationService', () => {
       },
     });
 
-    const request = httpMock.expectOne('http://localhost:8080/api/v1/otp/verify');
+    const request = httpMock.expectOne(
+      'http://localhost:8080/api/v1/auth/verify-registration-phone',
+    );
     request.flush(
       {
         code: 'INVALID_VERIFICATION_EXCEPTION',
@@ -121,14 +146,16 @@ describe('PhoneVerificationService', () => {
   });
 
   it('maps HTTP 401 to an authentication error', () => {
-    service.verify({ otpCode: '123456' }).subscribe({
+    service.verifyRegistrationPhone({ otpCode: '123456' }).subscribe({
       next: () => fail('Expected an error'),
       error: (error: PhoneVerificationError) => {
         expect(error.code).toBe('AUTH_REQUIRED');
       },
     });
 
-    const request = httpMock.expectOne('http://localhost:8080/api/v1/otp/verify');
+    const request = httpMock.expectOne(
+      'http://localhost:8080/api/v1/auth/verify-registration-phone',
+    );
     request.flush(
       { code: 'AUTHENTICATION_REQUIRED', detail: 'Localized auth message' },
       { status: 401, statusText: 'Unauthorized' },
@@ -136,7 +163,7 @@ describe('PhoneVerificationService', () => {
   });
 
   it('maps the already-verified backend code as a terminal state', () => {
-    service.verify({ otpCode: '123456' }).subscribe({
+    service.verifyRegistrationPhone({ otpCode: '123456' }).subscribe({
       next: () => fail('Expected an error'),
       error: (error: PhoneVerificationError) => {
         expect(error.code).toBe('ALREADY_VERIFIED');
@@ -144,7 +171,9 @@ describe('PhoneVerificationService', () => {
       },
     });
 
-    const request = httpMock.expectOne('http://localhost:8080/api/v1/otp/verify');
+    const request = httpMock.expectOne(
+      'http://localhost:8080/api/v1/auth/verify-registration-phone',
+    );
     request.flush(
       { code: 'ALREADY_VERIFIED', detail: 'Invalid request' },
       { status: 400, statusText: 'Bad Request' },
@@ -163,7 +192,7 @@ describe('PhoneVerificationService', () => {
     });
 
     const request = httpMock.expectOne(
-      'http://localhost:8080/api/v1/otp/resend-phone-verification',
+      'http://localhost:8080/api/v1/users/me/resend-phone-verification',
     );
     request.flush(
       { code: 'PHONE_VERIFICATION_EXCEPTION', detail: 'Localized provider failure' },

@@ -72,12 +72,14 @@ describe('authInterceptor', () => {
     it('should attach the registration access token to OTP verification', () => {
         tokenStorage.setTokens(mockTokens);
 
-        http.post('http://localhost:8080/api/v1/otp/verify', {
+        http.post('http://localhost:8080/api/v1/auth/verify-registration-phone', {
             otpCode: '123456',
             verificationId: 'verification-id',
         }).subscribe();
 
-        const req = httpMock.expectOne('http://localhost:8080/api/v1/otp/verify');
+        const req = httpMock.expectOne(
+            'http://localhost:8080/api/v1/auth/verify-registration-phone',
+        );
         expect(req.request.headers.get('Authorization')).toBe('Bearer access-token');
         req.flush({ userId: 42, verified: true });
     });
@@ -198,6 +200,29 @@ describe('authInterceptor', () => {
 
         const refreshReq = httpMock.expectOne('http://localhost:8080/api/v1/auth/refresh');
         refreshReq.flush({}, { status: 401, statusText: 'Unauthorized' });
+    });
+
+    it('should preserve the session and current route when refresh cannot reach the backend', () => {
+        spyOn(authService, 'logout').and.callThrough();
+        tokenStorage.setTokens(mockTokens);
+
+        http.get('http://localhost:8080/api/v1/protected').subscribe({
+            next: () => fail('Expected error'),
+            error: (error) => expect(error.code).toBe('NETWORK'),
+        });
+
+        const initialReq = httpMock.expectOne('http://localhost:8080/api/v1/protected');
+        initialReq.flush({}, { status: 401, statusText: 'Unauthorized' });
+
+        const refreshReq = httpMock.expectOne('http://localhost:8080/api/v1/auth/refresh');
+        refreshReq.error(new ProgressEvent('error'), {
+            status: 0,
+            statusText: 'Unknown Error',
+        });
+
+        expect(authService.logout).not.toHaveBeenCalled();
+        expect(tokenStorage.getAccessToken()).toBe(mockTokens.accessToken);
+        expect(router.navigateByUrl).not.toHaveBeenCalled();
     });
 
     it('should logout and redirect to login without refresh when no refresh token exists', () => {

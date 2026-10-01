@@ -227,7 +227,7 @@ export class RegisterPage {
       })
     ).subscribe({
       next: () => {
-        this.verificationState.start();
+        this.verificationState.start('registration', phoneNumber!);
         void this.router.navigateByUrl('/auth/verify-phone', { replaceUrl: true });
       },
       error: (error: AuthError) => {
