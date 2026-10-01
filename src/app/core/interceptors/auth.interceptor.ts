@@ -13,7 +13,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const isAuthEndpoint =
     req.url.includes('/api/v1/auth/login') ||
     req.url.includes('/api/v1/auth/register') ||
-    req.url.includes('/api/v1/auth/refresh');
+    req.url.includes('/api/v1/auth/refresh') ||
+    req.url.includes('/api/v1/auth/password-recovery') ||
+    req.url.includes('/api/v1/auth/verify-password-recovery');
 
   const accessToken = authService.getAccessToken();
 

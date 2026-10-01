@@ -27,6 +27,14 @@ export const routes: Routes = [
     canActivate: [anonymousGuard],
   },
   {
+    path: 'auth/password-recovery',
+    loadComponent: () =>
+      import('./features/auth/password-recovery/password-recovery.page').then(
+        (m) => m.PasswordRecoveryPage,
+      ),
+    canActivate: [anonymousGuard],
+  },
+  {
     path: 'auth/verify-phone',
     loadComponent: () =>
       import('./features/auth/verify-phone/verify-phone.page').then((m) => m.VerifyPhonePage),

@@ -12,11 +12,21 @@ import { ApiError } from '../api/model/api-error.model';
 import { extractApiError } from '../api/api-error.util';
 import { PhoneVerificationStateService } from './phone-verification-state.service';
 import { ChangePasswordRequest } from '../models/change-password-request.model';
+import {
+  PasswordRecoveryRequest,
+  PasswordRecoveryResponse,
+  VerifyPasswordRecoveryRequest,
+} from '../models/password-recovery.model';
 
 export interface AuthError {
   code:
     | 'INVALID_CREDENTIALS'
     | 'PHONE_NUMBER_ALREADY_EXISTS'
+    | 'INVALID_VERIFICATION_CODE'
+    | 'EXPIRED_VERIFICATION'
+    | 'INVALID_VERIFICATION_EXCEPTION'
+    | 'TOO_MANY_ATTEMPTS'
+    | 'VALIDATION_ERROR'
     | 'UNAUTHORIZED'
     | 'NETWORK'
     | 'UNKNOWN';
@@ -76,6 +86,31 @@ export class AuthService {
         throwError(() => this.mapAuthError(error, 'changePassword'))
       )
     );
+  }
+
+  requestPasswordRecovery(
+    payload: PasswordRecoveryRequest,
+  ): Observable<PasswordRecoveryResponse> {
+    return this.http
+      .post<PasswordRecoveryResponse>(`${this.authApiUrl}/password-recovery`, payload)
+      .pipe(
+        catchError((error: HttpErrorResponse) =>
+          throwError(() => this.mapAuthError(error, 'passwordRecovery'))
+        ),
+      );
+  }
+
+  verifyPasswordRecovery(
+    payload: VerifyPasswordRecoveryRequest,
+  ): Observable<void> {
+    return this.http
+      .post<void>(`${this.authApiUrl}/verify-password-recovery`, payload)
+      .pipe(
+        tap(() => this.logout()),
+        catchError((error: HttpErrorResponse) =>
+          throwError(() => this.mapAuthError(error, 'verifyPasswordRecovery'))
+        ),
+      );
   }
 
   refreshToken(): Observable<AuthTokens> {
@@ -150,7 +185,13 @@ export class AuthService {
 
   private mapAuthError(
     error: HttpErrorResponse,
-    operation: 'login' | 'register' | 'refresh' | 'changePassword'
+    operation:
+      | 'login'
+      | 'register'
+      | 'refresh'
+      | 'changePassword'
+      | 'passwordRecovery'
+      | 'verifyPasswordRecovery'
   ): AuthError {
     const apiError = extractApiError(error);
     const authApiError = apiError ?? undefined;
@@ -214,6 +255,36 @@ export class AuthService {
         message: 'Your session has expired. Please log in again.',
         apiError: authApiError,
       };
+    }
+
+    if (
+      (operation === 'passwordRecovery' || operation === 'verifyPasswordRecovery') &&
+      apiError?.code === 'VALIDATION_ERROR'
+    ) {
+      return {
+        code: 'VALIDATION_ERROR',
+        message: apiError.message || 'Check the information you entered and try again.',
+        apiError: authApiError,
+      };
+    }
+
+    if (operation === 'verifyPasswordRecovery') {
+      const recoveryMessages: Partial<Record<AuthError['code'], string>> = {
+        INVALID_VERIFICATION_CODE: 'The verification code is invalid.',
+        EXPIRED_VERIFICATION: 'The verification code has expired. Request a new one.',
+        INVALID_VERIFICATION_EXCEPTION: 'We could not verify this code. Request a new one.',
+        TOO_MANY_ATTEMPTS: 'Too many attempts. Try again later.',
+      };
+      const recoveryCode = apiError?.code as AuthError['code'] | undefined;
+      const recoveryMessage = recoveryCode ? recoveryMessages[recoveryCode] : undefined;
+
+      if (recoveryCode && recoveryMessage) {
+        return {
+          code: recoveryCode,
+          message: recoveryMessage,
+          apiError: authApiError,
+        };
+      }
     }
 
     return {
