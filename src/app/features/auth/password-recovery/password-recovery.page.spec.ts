@@ -37,14 +37,18 @@ describe('PasswordRecoveryPage', () => {
     fixture.detectChanges();
   });
 
-  it('should request recovery with an E.164 phone number', () => {
-    authService.requestPasswordRecovery.and.returnValue(
-      of({ verificationId: 'verification-id' }),
-    );
+  function enterPhone(): void {
     component.phoneForm.patchValue({
       phoneCountry: 'BE',
       phoneNational: '0468 00 99 11',
     });
+  }
+
+  it('requests recovery with an E.164 phone number', () => {
+    authService.requestPasswordRecovery.and.returnValue(
+      of({ verificationId: 'verification-id' }),
+    );
+    enterPhone();
 
     component.requestRecovery();
 
@@ -55,37 +59,72 @@ describe('PasswordRecoveryPage', () => {
     expect(component.verificationId).toBe('verification-id');
   });
 
-  it('should show the same generic state when no verification ID is returned', () => {
+  it('shows the verification form even when the phone number does not exist', () => {
     authService.requestPasswordRecovery.and.returnValue(of({ verificationId: null }));
-    component.phoneForm.patchValue({
-      phoneCountry: 'BE',
-      phoneNational: '0468 00 99 11',
-    });
+    enterPhone();
 
     component.requestRecovery();
     fixture.detectChanges();
 
-    expect(component.step).toBe('unavailable');
+    expect(component.step).toBe('verify');
+    expect(fixture.nativeElement.querySelector('#recovery-code')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('#recovery-new-password')).not.toBeNull();
     expect(fixture.nativeElement.textContent).toContain(
       'If an account exists for this phone number, we sent a verification code.',
     );
     expect(fixture.nativeElement.textContent).not.toContain('not found');
   });
 
-  it('should submit all verification fields', () => {
+  it('clears a stale attempt error when the user edits the verification form', () => {
+    component.serverError = 'Too many attempts. Try again later.';
+
+    component.verificationForm.controls.otpCode.setValue('1');
+
+    expect(component.serverError).toBeNull();
+  });
+
+  it('clears a stale attempt error before requesting another code', () => {
+    component.phoneNumber = '+32468009911';
+    component.serverError = 'Too many attempts. Try again later.';
     authService.requestPasswordRecovery.and.returnValue(
-      of({ verificationId: 'verification-id' }),
+      of({ verificationId: 'new-verification-id' }),
     );
-    authService.verifyPasswordRecovery.and.returnValue(of(void 0));
-    component.phoneForm.patchValue({
-      phoneCountry: 'BE',
-      phoneNational: '0468 00 99 11',
+
+    component.requestAgain();
+
+    expect(component.serverError).toBeNull();
+    expect(authService.requestPasswordRecovery).toHaveBeenCalledOnceWith({
+      phoneNumber: '+32468009911',
     });
-    component.requestRecovery();
+    expect(component.verificationId).toBe('new-verification-id');
+  });
+
+  it('does not send an invalid verification request when no ID was returned', () => {
+    component.step = 'verify';
+    component.phoneNumber = '+32468009911';
+    component.verificationId = null;
     component.verificationForm.setValue({
       otpCode: '123456',
       newPassword: 'newStrongPassword',
     });
+
+    component.resetPassword();
+
+    expect(authService.verifyPasswordRecovery).not.toHaveBeenCalled();
+    expect(component.serverError).toBe(
+      'We could not verify this code. Request a new one.',
+    );
+  });
+
+  it('submits all fields and returns to login after a successful reset', () => {
+    component.step = 'verify';
+    component.phoneNumber = '+32468009911';
+    component.verificationId = 'verification-id';
+    component.verificationForm.setValue({
+      otpCode: '123456',
+      newPassword: 'newStrongPassword',
+    });
+    authService.verifyPasswordRecovery.and.returnValue(of(void 0));
 
     component.resetPassword();
 
@@ -95,20 +134,6 @@ describe('PasswordRecoveryPage', () => {
       otpCode: '123456',
       newPassword: 'newStrongPassword',
     });
-  });
-
-  it('should show success and return to login after reset', () => {
-    authService.verifyPasswordRecovery.and.returnValue(of(void 0));
-    component.step = 'verify';
-    component.phoneNumber = '+32468009911';
-    component.verificationId = 'verification-id';
-    component.verificationForm.setValue({
-      otpCode: '123456',
-      newPassword: 'newStrongPassword',
-    });
-
-    component.resetPassword();
-
     expect(appToastService.show).toHaveBeenCalledOnceWith(
       'Your password has been reset. Log in with your new password.',
       'success',
@@ -116,7 +141,7 @@ describe('PasswordRecoveryPage', () => {
     expect(router.navigateByUrl).toHaveBeenCalledWith('/auth/login', { replaceUrl: true });
   });
 
-  it('should show the specified verification error message', () => {
+  it('shows the specified verification error message', () => {
     const error: AuthError = {
       code: 'EXPIRED_VERIFICATION',
       message: 'The verification code has expired. Request a new one.',
@@ -137,7 +162,7 @@ describe('PasswordRecoveryPage', () => {
     );
   });
 
-  it('should display field-level backend validation messages', () => {
+  it('displays field-level backend validation messages', () => {
     const error: AuthError = {
       code: 'VALIDATION_ERROR',
       message: 'Invalid request',
@@ -166,13 +191,15 @@ describe('PasswordRecoveryPage', () => {
     expect(component.serverError).toBeNull();
   });
 
-  it('should let the user request another code without revealing account status', () => {
-    component.step = 'unavailable';
-    component.verificationId = null;
+  it('returns to phone entry when choosing a different number', () => {
+    component.step = 'verify';
+    component.phoneNumber = '+32468009911';
+    component.verificationId = 'verification-id';
 
-    component.requestAgain();
+    component.useDifferentPhoneNumber();
 
     expect(component.step).toBe('request');
+    expect(component.phoneNumber).toBeNull();
     expect(component.verificationId).toBeNull();
   });
 });
