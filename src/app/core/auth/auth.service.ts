@@ -269,21 +269,17 @@ export class AuthService {
     }
 
     if (operation === 'verifyPasswordRecovery') {
-      const recoveryMessages: Partial<Record<AuthError['code'], string>> = {
+      const messages: Partial<Record<AuthError['code'], string>> = {
         INVALID_VERIFICATION_CODE: 'The verification code is invalid.',
         EXPIRED_VERIFICATION: 'The verification code has expired. Request a new one.',
         INVALID_VERIFICATION_EXCEPTION: 'We could not verify this code. Request a new one.',
         TOO_MANY_ATTEMPTS: 'Too many attempts. Try again later.',
       };
-      const recoveryCode = apiError?.code as AuthError['code'] | undefined;
-      const recoveryMessage = recoveryCode ? recoveryMessages[recoveryCode] : undefined;
+      const code = apiError?.code as AuthError['code'] | undefined;
+      const message = code ? messages[code] : undefined;
 
-      if (recoveryCode && recoveryMessage) {
-        return {
-          code: recoveryCode,
-          message: recoveryMessage,
-          apiError: authApiError,
-        };
+      if (code && message) {
+        return { code, message, apiError: authApiError };
       }
     }
 

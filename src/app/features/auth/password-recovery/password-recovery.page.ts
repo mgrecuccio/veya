@@ -16,7 +16,7 @@ import {
   requiredPhoneValidator,
 } from 'src/app/shared/phone/phone-number.util';
 
-type RecoveryStep = 'request' | 'verify' | 'unavailable';
+type RecoveryStep = 'request' | 'verify';
 
 const GENERIC_RECOVERY_MESSAGE =
   'If an account exists for this phone number, we sent a verification code.';
@@ -66,6 +66,15 @@ export class PasswordRecoveryPage {
   otpServerError: string | null = null;
   passwordServerError: string | null = null;
 
+  constructor() {
+    this.phoneForm.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.clearErrors());
+    this.verificationForm.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.clearErrors());
+  }
+
   get phoneNational() {
     return this.phoneForm.controls.phoneNational;
   }
@@ -102,38 +111,25 @@ export class PasswordRecoveryPage {
       return;
     }
 
-    this.clearErrors();
-    this.isSubmitting = true;
-
-    this.authService.requestPasswordRecovery({ phoneNumber }).pipe(
-      takeUntilDestroyed(this.destroyRef),
-      finalize(() => {
-        this.isSubmitting = false;
-      }),
-    ).subscribe({
-      next: (response) => {
-        this.phoneNumber = phoneNumber;
-        this.verificationId = response.verificationId;
-        this.step = response.verificationId ? 'verify' : 'unavailable';
-      },
-      error: (error: AuthError) => this.handleRequestError(error),
-    });
+    this.sendRecoveryRequest(phoneNumber);
   }
 
   resetPassword(): void {
-    if (
-      this.verificationForm.invalid ||
-      this.isSubmitting ||
-      !this.phoneNumber ||
-      !this.verificationId
-    ) {
+    if (this.verificationForm.invalid || this.isSubmitting || !this.phoneNumber) {
       this.verificationForm.markAllAsTouched();
       return;
     }
 
     this.clearErrors();
-    this.isSubmitting = true;
 
+    // A null ID is deliberately indistinguishable in the UI. There is no valid
+    // verification request to send, so fail with the same public recovery error.
+    if (!this.verificationId) {
+      this.serverError = 'We could not verify this code. Request a new one.';
+      return;
+    }
+
+    this.isSubmitting = true;
     this.authService.verifyPasswordRecovery({
       phoneNumber: this.phoneNumber,
       verificationId: this.verificationId,
@@ -157,11 +153,22 @@ export class PasswordRecoveryPage {
   }
 
   requestAgain(): void {
+    if (!this.phoneNumber || this.isSubmitting) {
+      return;
+    }
+
+    this.clearErrors();
+    this.verificationForm.reset();
+    this.sendRecoveryRequest(this.phoneNumber);
+  }
+
+  useDifferentPhoneNumber(): void {
     if (this.isSubmitting) {
       return;
     }
 
     this.step = 'request';
+    this.phoneNumber = null;
     this.verificationId = null;
     this.verificationForm.reset();
     this.clearErrors();
@@ -169,6 +176,25 @@ export class PasswordRecoveryPage {
 
   goToLogin(): void {
     void this.navController.navigateBack('/auth/login');
+  }
+
+  private sendRecoveryRequest(phoneNumber: string): void {
+    this.clearErrors();
+    this.isSubmitting = true;
+
+    this.authService.requestPasswordRecovery({ phoneNumber }).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => {
+        this.isSubmitting = false;
+      }),
+    ).subscribe({
+      next: (response) => {
+        this.phoneNumber = phoneNumber;
+        this.verificationId = response.verificationId;
+        this.step = 'verify';
+      },
+      error: (error: AuthError) => this.handleRequestError(error),
+    });
   }
 
   private handleRequestError(error: AuthError): void {
