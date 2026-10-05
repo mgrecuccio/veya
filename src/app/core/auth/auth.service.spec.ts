@@ -108,6 +108,47 @@ describe('AuthService', () => {
         sub.unsubscribe();
     });
 
+    it('should delete the authenticated account and clear the session', () => {
+        tokenStorage.setTokens(mockTokens);
+        const authStates: Array<AuthTokens | null> = [];
+        const sub = service.authState$.subscribe((state) => authStates.push(state));
+
+        service.deleteAccount().subscribe(() => {
+            expect(tokenStorage.getAccessToken()).toBeNull();
+            expect(tokenStorage.getRefreshToken()).toBeNull();
+            expect(authStates.at(-1)).toBeNull();
+        });
+
+        const req = httpMock.expectOne('http://localhost:8080/api/v1/auth/me');
+        expect(req.request.method).toBe('DELETE');
+        expect(req.request.body).toBeNull();
+        req.flush(null, { status: 200, statusText: 'OK' });
+
+        sub.unsubscribe();
+    });
+
+    it('should retain the session when account deletion fails', () => {
+        tokenStorage.setTokens(mockTokens);
+
+        service.deleteAccount().subscribe({
+            next: () => fail('Expected error'),
+            error: (error: AuthError) => {
+                expect(error.apiError?.code).toBe('INTERNAL_SERVER_ERROR');
+                expect(tokenStorage.getAccessToken()).toBe(mockTokens.accessToken);
+                expect(tokenStorage.getRefreshToken()).toBe(mockTokens.refreshToken);
+            },
+        });
+
+        const req = httpMock.expectOne('http://localhost:8080/api/v1/auth/me');
+        req.flush(
+            {
+                code: 'INTERNAL_SERVER_ERROR',
+                detail: 'Account deletion failed.',
+            },
+            { status: 500, statusText: 'Internal Server Error' },
+        );
+    });
+
     it('should retain tokens when changing the password fails', () => {
         tokenStorage.setTokens(mockTokens);
 

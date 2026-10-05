@@ -88,6 +88,15 @@ export class AuthService {
     );
   }
 
+  deleteAccount(): Observable<void> {
+    return this.http.delete<void>(`${this.authApiUrl}/me`).pipe(
+      tap(() => this.logout()),
+      catchError((error: HttpErrorResponse) =>
+        throwError(() => this.mapAuthError(error, 'deleteAccount'))
+      )
+    );
+  }
+
   requestPasswordRecovery(
     payload: PasswordRecoveryRequest,
   ): Observable<PasswordRecoveryResponse> {
@@ -190,6 +199,7 @@ export class AuthService {
       | 'register'
       | 'refresh'
       | 'changePassword'
+      | 'deleteAccount'
       | 'passwordRecovery'
       | 'verifyPasswordRecovery'
   ): AuthError {
@@ -226,6 +236,14 @@ export class AuthService {
     }
 
     if (operation === 'changePassword' && error.status === 401) {
+      return {
+        code: 'UNAUTHORIZED',
+        message: 'Your session has expired. Please log in again.',
+        apiError: authApiError,
+      };
+    }
+
+    if (operation === 'deleteAccount' && error.status === 401) {
       return {
         code: 'UNAUTHORIZED',
         message: 'Your session has expired. Please log in again.',
