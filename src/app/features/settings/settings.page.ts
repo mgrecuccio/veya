@@ -118,6 +118,8 @@ export class SettingsPage {
     readonly isSavingProfile = signal(false);
     readonly isSavingPreferences = signal(false);
     readonly isLoggingOut = signal(false);
+    readonly isDeletingAccount = signal(false);
+    readonly isDeleteAccountModalOpen = signal(false);
     readonly isChangingPassword = signal(false);
     readonly isPasswordModalOpen = signal(false);
     readonly visiblePasswordFields = signal<ReadonlySet<PasswordField>>(new Set());
@@ -450,6 +452,45 @@ export class SettingsPage {
             this.router.navigateByUrl('/auth/login', { replaceUrl: true });
           },
         });
+      });
+    }
+
+    openDeleteAccountModal(): void {
+      if (this.isDeletingAccount()) {
+        return;
+      }
+
+      this.isDeleteAccountModalOpen.set(true);
+    }
+
+    closeDeleteAccountModal(): void {
+      if (this.isDeletingAccount()) {
+        return;
+      }
+
+      this.isDeleteAccountModalOpen.set(false);
+    }
+
+    deleteAccount(): void {
+      if (this.isDeletingAccount()) {
+        return;
+      }
+
+      this.isDeletingAccount.set(true);
+      this.authService.deleteAccount().subscribe({
+        next: () => {
+          void this.router.navigateByUrl('/auth/login', { replaceUrl: true });
+        },
+        error: (error: unknown) => {
+          this.isDeletingAccount.set(false);
+          this.showToast(
+            getApiErrorMessage(
+              error,
+              'We couldn’t delete your account right now. Please try again.',
+            ),
+            'danger',
+          );
+        },
       });
     }
 

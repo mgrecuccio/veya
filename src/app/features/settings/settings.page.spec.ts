@@ -45,7 +45,7 @@ describe('SettingsPage', () => {
                     provide: AuthService,
                     useValue: jasmine.createSpyObj<AuthService>(
                         'AuthService',
-                        ['changePassword', 'logoutAndRevoke'],
+                        ['changePassword', 'deleteAccount', 'logoutAndRevoke'],
                         { authState$: of(createAuthTokens()) },
                     ),
                 },
@@ -126,6 +126,7 @@ describe('SettingsPage', () => {
         pushRegistration.disableCurrentDevice.and.returnValue(Promise.resolve());
         authService.logoutAndRevoke.and.returnValue(of(void 0));
         authService.changePassword.and.returnValue(of(void 0));
+        authService.deleteAccount.and.returnValue(of(void 0));
         appToastService.show.and.returnValue(Promise.resolve());
         presentAlert = jasmine.createSpy('present').and.returnValue(Promise.resolve());
         alertController.create.and.callFake((options) => Promise.resolve({
@@ -749,6 +750,68 @@ describe('SettingsPage', () => {
             replaceUrl: true,
         });
     }));
+
+    it('should confirm account deletion before sending the request', () => {
+        dataService.getPageData.and.returnValue(of(mockPageData()));
+        component.openDeleteAccountModal();
+        fixture.detectChanges();
+
+        expect(component.isDeleteAccountModalOpen()).toBeTrue();
+        expect(authService.deleteAccount).not.toHaveBeenCalled();
+
+        const dialog = fixture.nativeElement.querySelector(
+            '[aria-labelledby="delete-account-title"]',
+        ) as HTMLElement;
+        const deleteButton = dialog.querySelector(
+            '.contact-actions-sheet__button--danger',
+        ) as HTMLButtonElement;
+
+        expect(dialog).not.toBeNull();
+        expect(dialog.getAttribute('role')).toBe('dialog');
+        expect(dialog.getAttribute('aria-modal')).toBe('true');
+        expect(dialog.textContent).toContain('This action cannot be undone.');
+
+        deleteButton.click();
+
+        expect(authService.deleteAccount).toHaveBeenCalledTimes(1);
+        expect(router.navigateByUrl).toHaveBeenCalledOnceWith('/auth/login', {
+            replaceUrl: true,
+        });
+    });
+
+    it('should close account deletion confirmation without deleting', () => {
+        component.openDeleteAccountModal();
+        component.closeDeleteAccountModal();
+
+        expect(component.isDeleteAccountModalOpen()).toBeFalse();
+        expect(authService.deleteAccount).not.toHaveBeenCalled();
+    });
+
+    it('should show an error and keep the user on settings when deletion fails', () => {
+        authService.deleteAccount.and.returnValue(throwError(() => ({
+            apiError: { message: 'Account deletion failed.' },
+        })));
+
+        component.deleteAccount();
+
+        expect(component.isDeletingAccount()).toBeFalse();
+        expect(component.toastState()).toEqual({
+            isOpen: true,
+            message: 'Account deletion failed.',
+            color: 'danger',
+        });
+        expect(router.navigateByUrl).not.toHaveBeenCalled();
+    });
+
+    it('should ignore duplicate account deletion attempts while pending', () => {
+        authService.deleteAccount.and.returnValue(new Subject<void>());
+
+        component.deleteAccount();
+        component.deleteAccount();
+
+        expect(component.isDeletingAccount()).toBeTrue();
+        expect(authService.deleteAccount).toHaveBeenCalledTimes(1);
+    });
 
     it('should change the password and navigate to login', () => {
         component.openPasswordModal();

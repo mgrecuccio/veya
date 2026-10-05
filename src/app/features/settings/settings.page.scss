@@ -179,7 +179,6 @@
   color: var(--app-color-text);
   cursor: pointer;
   text-align: left;
-  text-decoration: none;
 }
 
 .primary-cta-card__content {
@@ -265,10 +264,6 @@
   font: inherit;
   font-size: 14px;
   text-align: right;
-}
-
-.settings-row__control:focus {
-  caret-color: var(--app-color-primary);
 }
 
 .settings-password-input {
@@ -377,17 +372,36 @@
   padding-top: 4px;
 }
 
-.settings-save-button {
+.settings-action-button {
   appearance: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: 44px;
-  margin: 0;
   padding: 0 18px;
   border: 0;
   border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.settings-action-button ion-spinner {
+  width: 18px;
+  height: 18px;
+  margin-right: 8px;
+}
+
+.settings-action-button[disabled] {
+  cursor: default;
+}
+
+.settings-save-button {
+  min-height: 44px;
+  margin: 0;
   background: linear-gradient(
     135deg,
     var(--app-color-accent) 0%,
@@ -395,59 +409,35 @@
   );
   box-shadow: var(--app-shadow-button);
   color: var(--app-color-primary-contrast);
-  cursor: pointer;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.settings-save-button ion-spinner {
-  width: 18px;
-  height: 18px;
-  margin-right: 8px;
 }
 
 .settings-save-button[disabled] {
   background: rgba(var(--app-color-primary-rgb), 0.18);
   box-shadow: none;
   color: rgba(90, 70, 128, 0.56);
-  cursor: default;
   opacity: 1;
 }
 
 .logout-button {
-  appearance: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
   min-height: 46px;
   margin: 4px 0 0;
   padding: 0 24px;
-  border: 0;
-  border-radius: 999px;
   background: linear-gradient(135deg, #b95c68 0%, var(--app-color-accent) 100%);
   box-shadow: var(--app-shadow-button);
   color: #fff;
-  cursor: pointer;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.logout-button ion-spinner {
-  width: 18px;
-  height: 18px;
-  margin-right: 8px;
 }
 
 .logout-button[disabled] {
-  cursor: default;
   opacity: 0.5;
+}
+
+.delete-account-button {
+  margin: 0;
+  padding: 0 24px;
+  border: 1px solid rgba(185, 92, 104, 0.45);
+  background: rgba(185, 92, 104, 0.08);
+  box-shadow: none;
+  color: #a44855;
 }
 
 .settings-footer {
