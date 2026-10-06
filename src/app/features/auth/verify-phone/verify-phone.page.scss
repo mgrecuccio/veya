@@ -1,4 +1,4 @@
-@use '../auth-form.shared';
+@use '../auth-form.platform';
 
 :host {
   display: block;
@@ -11,17 +11,18 @@
 .otp-input {
   text-align: center;
   font-size: 24px;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.35em;
 }
 
 .verification-success {
-  border-radius: 14px;
+  border-radius: var(--app-radius-md);
   padding: 12px 14px;
-  font-size: 13px;
+  font-size: var(--app-font-size-label);
+  font-weight: 600;
   line-height: 1.45;
-  background: rgba(56, 161, 105, 0.1);
-  color: #26764c;
+  background: rgba(var(--app-color-success-rgb), 0.1);
+  color: var(--app-color-success);
 }
 
 .auth-footer-link:disabled {

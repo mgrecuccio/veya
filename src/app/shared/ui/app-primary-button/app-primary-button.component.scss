@@ -8,21 +8,35 @@
   margin: 0;
   padding: 16px 22px;
   border: 0;
-  border-radius: 999px;
-  background: #f4766a;
-  box-shadow: 0 10px 20px rgba(244, 118, 106, 0.25);
-  color: #ffffff;
+  border-radius: var(--app-radius-pill);
+  background: var(--app-color-primary-strong);
+  box-shadow: var(--app-shadow-button);
+  color: var(--app-color-primary-contrast);
   cursor: pointer;
-  font-weight: 600;
   font: inherit;
+  font-size: var(--app-font-size-body);
+  font-weight: 800;
   line-height: 1.2;
   text-transform: none;
+  transition:
+    transform var(--app-motion-duration) var(--app-motion-ease),
+    box-shadow var(--app-motion-duration) var(--app-motion-ease);
   -webkit-tap-highlight-color: transparent;
 }
 
+.app-primary-button:active:not([disabled]) {
+  transform: scale(0.98);
+}
+
+.app-primary-button:focus-visible {
+  outline: none;
+  box-shadow: var(--app-focus-ring);
+}
+
 .app-primary-button[disabled] {
-  background: #f8aaa4;
+  background: rgba(var(--app-color-primary-rgb), 0.12);
   box-shadow: none;
+  color: var(--app-color-text-muted);
   cursor: default;
   opacity: 1;
 }

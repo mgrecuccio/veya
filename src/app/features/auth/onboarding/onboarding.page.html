@@ -7,47 +7,48 @@
 
         <div class="hero-brand">Veya</div>
 
+        <img class="hero-visual__image" src="assets/onboarding/header_card.png" alt="Friends reconnecting" />
+
         <h1 class="hero-title">
           Reconnect with your friends,<br />
           <span>when you're both free!</span>
         </h1>
 
-        <div class="hero-visual">
-          <img class="hero-visual__image" src="assets/onboarding/header_card.png" alt="Friends reconnecting" />
-        </div>
-      </div>
-
-      <!-- ACTIONS -->
-      <div class="actions-grid">
-        <app-outline-button (buttonClick)="goToLogin()">Log In</app-outline-button>
-        <app-primary-button (buttonClick)="goToRegister()">Sign Up</app-primary-button>
+        <p class="cta-text">Join Veya and make plans in the moment!</p>
       </div>
 
       <!-- FEATURES -->
-      <div class="features-section">
-        <app-feature-card
-          imageSrc="assets/onboarding/friends_card.png"
-          imageAlt="Friends card"
-          title="Connect with Friends"
-          description="Invite and chat with trusted contacts."
-        ></app-feature-card>
+      <ul class="feature-list">
+        <li class="feature-row">
+          <span class="feature-row__icon" aria-hidden="true">
+            <ion-icon name="people-outline"></ion-icon>
+          </span>
+          <span class="feature-row__copy">
+            <strong class="feature-row__title">Connect with friends</strong>
+            <span class="feature-row__text">Invite and chat with trusted contacts.</span>
+          </span>
+        </li>
 
-        <app-feature-card
-          imageSrc="assets/onboarding/map_card.png"
-          imageAlt="Map card"
-          title="Meet Up Spontaneously"
-          description="Find the best time to reconnect."
-        ></app-feature-card>
-      </div>
+        <li class="feature-row">
+          <span class="feature-row__icon" aria-hidden="true">
+            <ion-icon name="sparkles-outline"></ion-icon>
+          </span>
+          <span class="feature-row__copy">
+            <strong class="feature-row__title">Meet up spontaneously</strong>
+            <span class="feature-row__text">Find the best time to reconnect.</span>
+          </span>
+        </li>
+      </ul>
     </div>
 
+    <!-- ACTIONS -->
     <div class="onboarding-footer">
-      <!-- CTA -->
-      <div class="cta-text">
-        Join Veya and make plans in the moment!
-      </div>
+      <app-primary-button (buttonClick)="goToRegister()">Get started</app-primary-button>
 
-      <app-cta-button (buttonClick)="goToRegister()">Get Started</app-cta-button>
+      <p class="login-prompt">
+        Already have an account?
+        <button type="button" class="login-prompt__link" (click)="goToLogin()">Log in</button>
+      </p>
     </div>
   </div>
 </ion-content>

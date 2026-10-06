@@ -7,15 +7,33 @@
   min-height: 56px;
   margin: 0;
   padding: 16px 22px;
-  border: 1.5px solid rgba(var(--app-color-primary-rgb), 0.35);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--app-color-primary);
+  border: 1.5px solid rgba(var(--app-color-primary-strong-rgb), 0.35);
+  border-radius: var(--app-radius-pill);
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--app-color-primary-strong);
   cursor: pointer;
-  font-weight: 600;
   font: inherit;
+  font-size: var(--app-font-size-body);
+  font-weight: 800;
   line-height: 1.2;
   text-transform: none;
   backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: transform var(--app-motion-duration) var(--app-motion-ease);
   -webkit-tap-highlight-color: transparent;
+}
+
+.app-outline-button:active:not([disabled]) {
+  transform: scale(0.98);
+}
+
+.app-outline-button:focus-visible {
+  outline: none;
+  box-shadow: var(--app-focus-ring);
+}
+
+.app-outline-button[disabled] {
+  border-color: rgba(var(--app-color-primary-rgb), 0.12);
+  color: var(--app-color-text-muted);
+  cursor: default;
 }

@@ -1,4 +1,4 @@
-@use '../auth-form.shared';
+@use '../auth-form.platform';
 
 :host {
   display: block;
@@ -31,7 +31,7 @@
 
 .auth-label-optional {
   color: var(--app-color-text-muted);
-  font-weight: 400;
+  font-weight: 500;
 }
 
 @media (max-width: 380px) {

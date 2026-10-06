@@ -58,7 +58,7 @@
                 </span>
               </div>
 
-              <span class="primary-cta-card__arrow">→</span>
+              <ion-icon class="primary-cta-card__arrow" name="chevron-forward-outline" aria-hidden="true"></ion-icon>
             </button>
           </section>
         } @else {
@@ -92,9 +92,13 @@
                 (click)="toggleFreeNow()"
                 [attr.aria-pressed]="freeNowState.active"
               >
+                <span class="free-now-card__icon" aria-hidden="true">
+                  <ion-icon name="sparkles-outline"></ion-icon>
+                </span>
+
                 <div class="free-now-card__copy">
                   <div class="free-now-card__label">
-                    {{ freeNowState.active ? "You're free now ✨" : "Free now" }}
+                    {{ freeNowState.active ? "You're free now" : "Free now" }}
                   </div>
 
                   <div class="free-now-card__text">
@@ -138,7 +142,9 @@
               <div class="checklist">
                 @for (item of state.data.dashboard.upcomingAvailability; track item.id) {
                   <div class="checklist-item">
-                    <div class="checklist-item__icon">◌</div>
+                    <div class="checklist-item__icon" aria-hidden="true">
+                      <ion-icon name="time-outline"></ion-icon>
+                    </div>
 
                     <div class="checklist-item__body">
                       <div class="checklist-item__title">
@@ -201,7 +207,7 @@
                 </p>
               </div>
 
-              <span class="secondary-link-card__arrow">→</span>
+              <ion-icon class="secondary-link-card__arrow" name="chevron-forward-outline" aria-hidden="true"></ion-icon>
             </a>
           </section>
         }

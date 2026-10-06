@@ -8,6 +8,7 @@ import { StatusBar, Style } from '@capacitor/status-bar';
 import {
   IonApp,
   IonRouterOutlet,
+  IonToast,
   Platform
 } from '@ionic/angular/standalone';
 import { AppToastService } from './shared/toast/app-toast.service';
@@ -20,7 +21,9 @@ import { filter, take, timeout } from 'rxjs/operators';
 import { AuthError, AuthService } from './core/auth/auth.service';
 import {
   add,
+  alertCircleOutline,
   calendar,
+  chevronBackOutline,
   chevronForwardOutline,
   checkmarkOutline,
   closeOutline,
@@ -30,12 +33,16 @@ import {
   logoWhatsapp,
   mailOpenOutline,
   people,
+  peopleOutline,
+  personAddOutline,
+  refreshOutline,
   sendOutline,
   settings,
   settingsOutline,
   sparklesOutline,
   star,
   starOutline,
+  timeOutline,
 } from 'ionicons/icons';
 
 const STARTUP_SESSION_TIMEOUT_MS = 10_000;
@@ -43,7 +50,7 @@ const STARTUP_SESSION_TIMEOUT_MS = 10_000;
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [IonApp, IonRouterOutlet],
+  imports: [IonApp, IonRouterOutlet, IonToast],
   template: `
     <ion-app>
       <ion-router-outlet
@@ -75,16 +82,18 @@ const STARTUP_SESSION_TIMEOUT_MS = 10_000;
       }
 
       @if (appToastService.toast(); as toast) {
-        <div
-          class="app-toast-overlay"
-          [class.app-toast-overlay--danger]="toast.color === 'danger'"
-          [class.app-toast-overlay--success]="toast.color === 'success'"
-          role="status"
-          aria-live="polite"
+        <ion-toast
+          class="app-toast"
+          [class.app-toast--danger]="toast.color === 'danger'"
+          [class.app-toast--success]="toast.color === 'success'"
+          [isOpen]="true"
+          [message]="toast.message"
+          [icon]="toast.color === 'danger' ? 'alert-circle-outline' : 'checkmark-outline'"
+          position="top"
+          swipeGesture="vertical"
           (click)="appToastService.dismiss()"
-        >
-          {{ toast.message }}
-        </div>
+          (didDismiss)="appToastService.dismiss()"
+        ></ion-toast>
       }
     </ion-app>
   `,
@@ -112,6 +121,8 @@ export class AppComponent implements OnDestroy {
   constructor() {
     addIcons({
       add,
+      'alert-circle-outline': alertCircleOutline,
+      'chevron-back-outline': chevronBackOutline,
       'chevron-forward-outline': chevronForwardOutline,
       'checkmark-outline': checkmarkOutline,
       'close-outline': closeOutline,
@@ -123,11 +134,15 @@ export class AppComponent implements OnDestroy {
       settings,
       'logo-whatsapp': logoWhatsapp,
       'mail-open-outline': mailOpenOutline,
+      'people-outline': peopleOutline,
+      'person-add-outline': personAddOutline,
+      'refresh-outline': refreshOutline,
       'settings-outline': settingsOutline,
       'ellipsis-horizontal': ellipsisHorizontal,
       'sparkles-outline': sparklesOutline,
       star,
       'star-outline': starOutline,
+      'time-outline': timeOutline,
     });
 
     this.applyPlatformClasses();

@@ -7,7 +7,7 @@
     aria-label="Go back"
     (click)="goBack()"
   >
-    <span class="settings-back-button__icon" aria-hidden="true">‹</span>
+    <ion-icon class="settings-back-button__icon" name="chevron-back-outline" aria-hidden="true"></ion-icon>
   </button>
   </header>
 
@@ -55,7 +55,7 @@
                   Try fetching your profile and matching preferences again.
                 </span>
               </div>
-              <span class="primary-cta-card__arrow">→</span>
+              <ion-icon class="primary-cta-card__arrow" name="chevron-forward-outline" aria-hidden="true"></ion-icon>
             </button>
           </section>
         } @else {
@@ -307,7 +307,7 @@
                   Update your credentials and sign in again.
                 </span>
               </div>
-              <span class="primary-cta-card__arrow" aria-hidden="true">→</span>
+              <ion-icon class="primary-cta-card__arrow" name="chevron-forward-outline" aria-hidden="true"></ion-icon>
             </button>
           </section>
 
@@ -384,7 +384,7 @@
           [disabled]="isDeletingAccount()"
           (click)="closeDeleteAccountModal()"
         >
-          <span aria-hidden="true">×</span>
+          <ion-icon name="close-outline" aria-hidden="true"></ion-icon>
         </button>
       </header>
 
@@ -435,7 +435,7 @@
               [disabled]="isChangingPassword()"
               (click)="closePasswordModal()"
             >
-              <span aria-hidden="true">×</span>
+              <ion-icon name="close-outline" aria-hidden="true"></ion-icon>
             </button>
           </header>
 
