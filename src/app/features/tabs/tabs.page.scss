@@ -5,23 +5,38 @@
 }
 
 .app-tab-bar {
-  --background: rgba(255, 255, 255, 0.94);
-  --border: transparent;
+  --background: rgba(255, 255, 255, 0.88);
+  --border: 1px solid var(--app-color-divider);
   --color: var(--app-color-text-muted);
-  --color-selected: var(--app-color-accent);
-  box-shadow: 0 -10px 24px rgba(122, 99, 246, 0.08);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  --color-selected: var(--app-color-primary-strong);
+  box-shadow: 0 -8px 24px rgba(91, 70, 160, 0.08);
+  backdrop-filter: blur(var(--app-glass-blur));
+  -webkit-backdrop-filter: blur(var(--app-glass-blur));
 }
 
 ion-tab-button {
+  --ripple-color: transparent;
   font-weight: 700;
 }
 
+ion-tab-button.tab-selected {
+  font-weight: 800;
+}
+
 ion-icon {
+  /* content-box: padding draws the selected pill around the 22px glyph (56×28) */
+  box-sizing: content-box;
+  padding: 3px 17px;
+  border-radius: var(--app-radius-pill);
   font-size: 22px;
+  transition: background var(--app-motion-duration) var(--app-motion-ease);
+}
+
+ion-tab-button.tab-selected ion-icon {
+  background: rgba(var(--app-color-primary-strong-rgb), 0.12);
 }
 
 ion-label {
-  font-size: 14px;
+  margin-top: 3px;
+  font-size: var(--app-font-size-caption);
 }

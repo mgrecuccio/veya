@@ -1,0 +1,33 @@
+/*
+ * Platform/keyboard rules for the auth screens, kept component-scoped (@use'd per page)
+ * exactly as before the visual refresh.
+ *
+ * Note: under Angular's emulated encapsulation these compile to `html[_ngcontent-…] …`,
+ * which never matches, so they are currently inert. Making them effective (e.g. moving
+ * them to global styles or using :host-context) changes Android/keyboard layout and should
+ * be a separate, device-tested change.
+ */
+
+html.keyboard-is-open .auth-content {
+  --padding-bottom: calc(var(--app-keyboard-height, 0px) + 24px);
+}
+
+html.keyboard-is-open .auth-content::part(scroll) {
+  scroll-padding-bottom: calc(var(--app-keyboard-height, 0px) + 96px);
+}
+
+html.keyboard-is-open .auth-keyboard-spacer {
+  height: calc(var(--app-keyboard-height, 0px) + 64px);
+}
+
+html.plt-hybrid .auth-topbar,
+html.plt-android .auth-topbar {
+  --auth-brand-top-padding: max(56px, calc(12px + env(safe-area-inset-top)));
+}
+
+@media (max-height: 860px) {
+  html.plt-hybrid .auth-content--register .auth-topbar,
+  html.plt-android .auth-content--register .auth-topbar {
+    --auth-brand-top-padding: max(44px, calc(2px + env(safe-area-inset-top)));
+  }
+}

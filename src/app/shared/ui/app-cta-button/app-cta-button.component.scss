@@ -1,3 +1,4 @@
+/* Warm CTA: coral with ink text; 18px/800 keeps it above the 3:1 large-text contrast threshold */
 .app-cta-button {
   appearance: none;
   display: inline-flex;
@@ -8,14 +9,32 @@
   margin: 0;
   padding: 18px 24px;
   border: 0;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #7a63f6 0%, #9c8bff 100%);
-  box-shadow: 0 14px 28px rgba(122, 99, 246, 0.25);
-  color: white;
+  border-radius: var(--app-radius-pill);
+  background: var(--app-color-accent);
+  box-shadow: 0 10px 24px rgba(var(--app-color-accent-rgb), 0.3);
+  color: var(--app-color-accent-contrast);
   cursor: pointer;
-  font-weight: 700;
   font: inherit;
+  font-size: 18px;
+  font-weight: 800;
   line-height: 1.2;
   text-transform: none;
+  transition: transform var(--app-motion-duration) var(--app-motion-ease);
   -webkit-tap-highlight-color: transparent;
+}
+
+.app-cta-button:active:not([disabled]) {
+  transform: scale(0.98);
+}
+
+.app-cta-button:focus-visible {
+  outline: none;
+  box-shadow: var(--app-focus-ring);
+}
+
+.app-cta-button[disabled] {
+  background: rgba(var(--app-color-primary-rgb), 0.12);
+  box-shadow: none;
+  color: var(--app-color-text-muted);
+  cursor: default;
 }

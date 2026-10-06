@@ -24,14 +24,16 @@
 
 .app-startup__brand {
   color: #fff;
-  font-size: 2.4rem;
-  font-weight: 700;
-  letter-spacing: -0.04em;
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-shadow: 0 1px 12px rgba(61, 44, 94, 0.18);
 }
 
 .app-startup__brand--card {
-  color: var(--app-color-primary, #7a63f6);
-  font-size: 2rem;
+  color: var(--app-color-primary-strong);
+  font-size: 32px;
+  text-shadow: none;
 }
 
 .app-startup__spinner {
@@ -45,21 +47,26 @@
 
 .app-startup > p {
   margin: 0;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--app-color-ink);
+  font-weight: 600;
 }
 
 .app-startup__card {
   width: min(100%, 420px);
   padding: 30px 24px;
-  border: 1px solid var(--app-color-border);
-  border-radius: var(--app-radius-lg);
+  border: 1px solid var(--app-color-glass-border);
+  border-radius: var(--app-radius-xl);
   background: var(--app-color-surface);
-  box-shadow: var(--app-shadow-card);
+  box-shadow: var(--app-shadow-lg);
+  backdrop-filter: blur(var(--app-glass-blur));
+  -webkit-backdrop-filter: blur(var(--app-glass-blur));
 }
 
 .app-startup__card h1 {
   margin: 18px 0 8px;
-  font-size: 1.6rem;
+  color: var(--app-color-ink);
+  font-size: 24px;
+  font-weight: 800;
 }
 
 .app-startup__card p {
@@ -70,14 +77,16 @@
 
 .app-startup__retry {
   width: 100%;
-  min-height: 48px;
+  min-height: 56px;
   margin-top: 24px;
   border: 0;
-  border-radius: 999px;
-  color: #fff;
-  background: var(--app-color-primary, #7a63f6);
+  border-radius: var(--app-radius-pill);
+  color: var(--app-color-primary-contrast);
+  background: var(--app-color-primary-strong);
+  box-shadow: var(--app-shadow-button);
   font: inherit;
-  font-weight: 700;
+  font-size: var(--app-font-size-body);
+  font-weight: 800;
   cursor: pointer;
 }
 

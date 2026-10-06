@@ -22,7 +22,7 @@ import {
   splitE164PhoneNumber,
 } from "src/app/shared/phone/phone-number.util";
 import { AppToastColor, AppToastService } from "src/app/shared/toast/app-toast.service";
-import { getCountries, parsePhoneNumberFromString } from "libphonenumber-js";
+import { parsePhoneNumberFromString } from "libphonenumber-js";
 
 type ContactsPageVmState =
     | { kind: 'loading' }
@@ -106,7 +106,7 @@ export class ContactsPage {
       color: 'success',
     });
 
-    readonly countries: PhoneCountry[] = createPhoneCountries(getCountries());
+    readonly countries: PhoneCountry[] = createPhoneCountries();
 
     readonly inviteForm = this.fb.nonNullable.group(
       {

@@ -1,3 +1,5 @@
+@use "sass:meta";
+
 /* Core CSS required for Ionic components to work properly */
 @import "@ionic/angular/css/core.css";
 
@@ -24,6 +26,21 @@ ion-content {
 body {
   color: var(--app-color-text);
   background: var(--app-gradient-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 ion-content.app-gradient-content {
@@ -105,10 +122,11 @@ ion-button::part(native) {
 
 .app-page-brand {
   color: #fff;
-  font-size: 2rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
   text-align: left;
+  text-shadow: 0 1px 12px rgba(61, 44, 94, 0.18);
 }
 
 .actions-grid {
@@ -121,9 +139,11 @@ ion-button::part(native) {
 
 .app-surface {
   background: var(--app-color-surface);
-  border: 1px solid var(--app-color-border);
-  box-shadow: var(--app-shadow-card);
+  border: 1px solid var(--app-color-glass-border);
+  box-shadow: var(--app-shadow-md);
   border-radius: var(--app-radius-lg);
+  backdrop-filter: blur(var(--app-glass-blur));
+  -webkit-backdrop-filter: blur(var(--app-glass-blur));
 }
 
 .app-section + .app-section {
@@ -182,11 +202,11 @@ ion-button::part(native) {
   --padding-start: 0;
   --padding-end: 0;
   position: absolute;
-  top: calc(var(--app-safe-area-top) + (var(--app-header-height) - 42px) / 2);
+  top: calc(var(--app-safe-area-top) + (var(--app-header-height) - var(--app-touch-target)) / 2);
   right: 16px;
   z-index: 30;
-  width: 42px;
-  height: 42px;
+  width: var(--app-touch-target);
+  height: var(--app-touch-target);
   margin: 0;
 }
 
@@ -197,49 +217,328 @@ ion-button::part(native) {
 }
 
 .page-settings-button::part(native) {
-  width: 42px;
-  height: 42px;
+  width: var(--app-touch-target);
+  height: var(--app-touch-target);
   padding: 0;
-  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: var(--app-radius-pill);
+  background: rgba(255, 255, 255, 0.24);
   box-shadow: none;
 }
 
 .page-settings-button ion-icon {
-  width: 21px;
-  height: 21px;
-  font-size: 21px;
+  width: 22px;
+  height: 22px;
+  font-size: 22px;
+}
+
+/* ── Shared page patterns (Home, Contacts, Matches, Availability, Settings) ── */
+
+/* Page header: sits directly on the gradient (no card) */
+.contacts-hero,
+.matches-hero,
+.availability-hero,
+.settings-hero {
+  position: relative;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.contacts-hero__glow,
+.matches-hero__glow,
+.availability-hero__glow,
+.settings-hero__glow {
+  display: none;
+}
+
+.contacts-hero__content,
+.matches-hero__content,
+.availability-hero__content,
+.settings-hero__content {
+  position: relative;
+}
+
+.contacts-hero__eyebrow,
+.matches-hero__eyebrow,
+.availability-hero__eyebrow,
+.settings-hero__eyebrow {
+  margin: 0 0 6px;
+  color: var(--app-color-ink);
+  font-size: var(--app-font-size-caption);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.contacts-hero__title,
+.matches-hero__title,
+.availability-hero__title,
+.settings-hero__title {
+  margin: 0;
+  color: var(--app-color-ink);
+  font-size: var(--app-font-size-title-1);
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.contacts-hero__subtitle,
+.matches-hero__subtitle,
+.availability-hero__subtitle,
+.settings-hero__subtitle {
+  margin: 6px 0 0;
+  max-width: 40ch;
+  color: var(--app-color-ink);
+  font-size: var(--app-font-size-small);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+/* Skeleton keeps a card while loading */
+.contacts-hero.contacts-skeleton,
+.availability-hero.availability-skeleton,
+.settings-hero.settings-skeleton {
+  padding: 20px;
+  border: 1px solid var(--app-color-glass-border);
+  border-radius: var(--app-radius-lg);
+  background: var(--app-color-surface);
+  box-shadow: var(--app-shadow-md);
+}
+
+/* Section cards */
+.dashboard-card,
+.contacts-card,
+.matches-card,
+.availability-card,
+.settings-card {
+  padding: 20px;
+  border-radius: var(--app-radius-lg);
+}
+
+.card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.card-title {
+  margin: 0;
+  color: var(--app-color-ink);
+  font-size: var(--app-font-size-title-2);
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.card-subtitle {
+  margin: 4px 0 0;
+  color: var(--app-color-text-muted);
+  font-size: var(--app-font-size-small);
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.field-label {
+  padding-left: 4px;
+  color: var(--app-color-ink);
+  font-size: var(--app-font-size-label);
+  font-weight: 700;
+}
+
+/* Person avatar (initials) and count badge */
+.match-avatar,
+.contact-avatar {
+  display: grid;
+  width: var(--app-touch-target);
+  height: var(--app-touch-target);
+  flex-shrink: 0;
+  place-items: center;
+  border-radius: var(--app-radius-pill);
+  background: var(--app-gradient-hero);
+  color: var(--app-color-ink);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.match-count,
+.progress-badge {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: var(--app-radius-pill);
+  background: rgba(var(--app-color-primary-rgb), 0.12);
+  color: var(--app-color-primary-strong);
+  font-size: var(--app-font-size-label);
+  font-weight: 800;
+}
+
+.stat-tile {
+  padding: 14px;
+  border-radius: var(--app-radius-md);
+  background: var(--app-color-surface-solid);
+  box-shadow: var(--app-shadow-sm);
+}
+
+.stat-tile__value {
+  color: var(--app-color-ink);
+  font-size: var(--app-font-size-title-1);
+  font-weight: 800;
+  line-height: 1;
+}
+
+.stat-tile__label {
+  margin-top: 6px;
+  font-size: var(--app-font-size-label);
+  font-weight: 600;
+}
+
+/* Tappable link card with kicker, title and chevron */
+.primary-cta-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  padding: 16px;
+  border: 0;
+  border-radius: var(--app-radius-lg);
+  background: var(--app-color-tint);
+  box-shadow: none;
+  color: var(--app-color-text);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  transition: transform var(--app-motion-duration) var(--app-motion-ease);
+}
+
+.primary-cta-card:active {
+  transform: scale(0.98);
+}
+
+.primary-cta-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.primary-cta-card__kicker {
+  color: var(--app-color-primary-strong);
+  font-size: var(--app-font-size-caption);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.primary-cta-card__title {
+  color: var(--app-color-ink);
+  font-size: var(--app-font-size-title-3);
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.primary-cta-card__subtitle {
+  color: var(--app-color-text-muted);
+  font-size: var(--app-font-size-small);
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.primary-cta-card__arrow {
+  flex-shrink: 0;
+  color: var(--app-color-primary-strong);
+  font-size: 20px;
+}
+
+/* Loading skeletons (Availability overrides sizes locally) */
+.home-skeleton .skeleton-line,
+.home-skeleton .skeleton-card,
+.contacts-skeleton .skeleton-line,
+.contacts-skeleton .skeleton-card,
+.settings-skeleton .skeleton-line,
+.settings-skeleton .skeleton-card {
+  background: rgba(var(--app-color-primary-rgb), 0.1);
+  border-radius: var(--app-radius-md);
+}
+
+.skeleton-line {
+  height: 14px;
+}
+
+.skeleton-line--sm {
+  width: 28%;
+}
+
+.skeleton-line--md {
+  width: 52%;
+}
+
+.skeleton-line--lg {
+  width: 72%;
+  margin-top: 10px;
+}
+
+.skeleton-card {
+  height: 78px;
+  margin-top: 12px;
+}
+
+@media (min-width: 768px) {
+  .dashboard-card,
+  .contacts-card,
+  .matches-card,
+  .availability-card,
+  .settings-card {
+    padding: 24px;
+  }
+
+  .contacts-hero__title,
+  .matches-hero__title,
+  .availability-hero__title,
+  .settings-hero__title {
+    font-size: var(--app-font-size-display);
+  }
 }
 
 .availability-segment {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   padding: 4px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.58);
+  border-radius: var(--app-radius-md);
+  background: rgba(var(--app-color-primary-rgb), 0.08);
 }
 
 .availability-segment ion-segment-button {
   --background: transparent;
-  --background-checked: #fff;
-  --border-radius: 14px;
+  --background-checked: var(--app-color-surface-solid);
+  --border-radius: var(--app-radius-sm);
   --color: var(--app-color-text-muted);
-  --color-checked: var(--app-color-primary);
+  --color-checked: var(--app-color-primary-strong);
   --indicator-color: transparent;
   --indicator-box-shadow: none;
-  min-height: 38px;
-  font-size: 14px;
+  min-height: 40px;
+  font-size: var(--app-font-size-small);
   font-weight: 800;
   text-transform: none;
 }
 
 .availability-segment ion-segment-button::part(native) {
   padding: 0 12px;
-  border-radius: 14px;
+  border-radius: var(--app-radius-sm);
 }
 
 .availability-segment ion-segment-button.segment-button-checked::part(native) {
-  background: #fff;
-  box-shadow: 0 8px 18px rgba(122, 99, 246, 0.12);
+  background: var(--app-color-surface-solid);
+  box-shadow: var(--app-shadow-sm);
 }
 
 .form-submit,
@@ -248,26 +547,32 @@ ion-button::part(native) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 44px;
+  min-height: var(--app-touch-target);
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--app-radius-pill);
   font: inherit;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: var(--app-font-size-small);
+  font-weight: 800;
+  transition: transform var(--app-motion-duration) var(--app-motion-ease);
   -webkit-tap-highlight-color: transparent;
+}
+
+.form-submit:active:not([disabled]),
+.form-cancel:active:not([disabled]) {
+  transform: scale(0.98);
 }
 
 .form-submit {
   padding: 0 18px;
-  background: linear-gradient(135deg, var(--app-color-accent), var(--app-color-primary));
+  background: var(--app-color-primary-strong);
   box-shadow: var(--app-shadow-button);
   color: var(--app-color-primary-contrast);
 }
 
 .form-cancel {
   padding: 0 16px;
-  background: rgba(255, 255, 255, 0.58);
-  color: var(--app-color-text-muted);
+  background: rgba(var(--app-color-primary-rgb), 0.1);
+  color: var(--app-color-primary-strong);
 }
 
 .form-submit[disabled],
@@ -293,31 +598,60 @@ ion-button::part(native) {
   padding-bottom: 28px;
 }
 
-.app-toast-overlay {
-  position: fixed;
-  top: calc(var(--app-safe-area-top) + 16px);
-  left: 16px;
-  right: 16px;
-  z-index: 10000;
-  max-width: 680px;
-  margin: 0 auto;
-  padding: 14px 16px;
-  border-radius: 18px;
-  box-shadow: 0 14px 34px rgba(64, 44, 96, 0.22);
-  color: #fff;
-  font-size: 14px;
+ion-toast.app-toast {
+  /* Align with the app's own safe-area fallback (Android edge-to-edge) */
+  --ion-safe-area-top: var(--app-safe-area-top);
+  --start: 16px;
+  --end: 16px;
+  --max-width: 680px;
+  --background: rgba(255, 255, 255, 0.96);
+  --color: var(--app-color-ink);
+  --border-color: var(--app-color-glass-border);
+  --border-style: solid;
+  --border-width: 1px;
+  --border-radius: var(--app-radius-md);
+  --box-shadow: var(--app-shadow-lg);
+  font-family: var(--app-font-family);
+}
+
+ion-toast.app-toast::part(wrapper) {
+  backdrop-filter: blur(var(--app-glass-blur));
+  -webkit-backdrop-filter: blur(var(--app-glass-blur));
+}
+
+ion-toast.app-toast::part(container) {
+  gap: 4px;
+  padding: 4px 6px 4px 10px;
+}
+
+ion-toast.app-toast::part(content) {
+  padding-inline-start: 4px;
+}
+
+ion-toast.app-toast::part(message) {
+  font-size: var(--app-font-size-small);
   font-weight: 700;
   line-height: 1.4;
-  text-align: center;
-  pointer-events: auto;
 }
 
-.app-toast-overlay--success {
-  background: #4a9b6f;
+/* ionicons forces content-box: 18px glyph + 7px padding = 32px circle */
+ion-toast.app-toast::part(icon) {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-inline-start: 0;
+  padding: 7px;
+  border-radius: var(--app-radius-pill);
 }
 
-.app-toast-overlay--danger {
-  background: #b95c68;
+ion-toast.app-toast--success::part(icon) {
+  background: rgba(var(--app-color-success-rgb), 0.14);
+  color: var(--app-color-success);
+}
+
+ion-toast.app-toast--danger::part(icon) {
+  background: rgba(var(--app-color-danger-rgb), 0.14);
+  color: var(--app-color-danger);
 }
 
 .contact-actions-overlay {
@@ -335,18 +669,18 @@ ion-button::part(native) {
 .contact-actions-sheet {
   width: 100%;
   max-width: 560px;
-  border-radius: 22px;
+  border-radius: var(--app-radius-xl);
   padding: 8px 10px 10px;
-  background: #fff;
-  box-shadow: 0 18px 44px rgba(64, 44, 96, 0.22);
+  background: var(--app-color-surface-solid);
+  box-shadow: var(--app-shadow-lg);
 }
 
 .contact-actions-sheet__handle {
   width: 42px;
   height: 4px;
   margin: 4px auto 10px;
-  border-radius: 999px;
-  background: rgba(122, 99, 246, 0.16);
+  border-radius: var(--app-radius-pill);
+  background: rgba(var(--app-color-primary-rgb), 0.2);
 }
 
 .contact-actions-sheet__header,
@@ -370,19 +704,20 @@ ion-button::part(native) {
   min-height: 54px;
   padding: 14px 16px;
   cursor: pointer;
-  border-top: 1px solid rgba(122, 99, 246, 0.08);
+  border-top: 1px solid var(--app-color-divider);
 }
 
 .contact-actions-sheet__button--cancel {
   margin-top: 6px;
   border-top: 0;
-  border-radius: 16px;
-  background: rgba(122, 99, 246, 0.08);
-  color: var(--app-color-primary);
+  border-radius: var(--app-radius-md);
+  background: rgba(var(--app-color-primary-rgb), 0.08);
+  color: var(--app-color-primary-strong);
+  font-weight: 800;
 }
 
 .contact-actions-sheet__button--danger {
-  color: #b95c52;
+  color: var(--app-color-danger);
 }
 
 .contact-actions-editor {
@@ -392,8 +727,9 @@ ion-button::part(native) {
 .contact-actions-editor__label {
   display: block;
   margin: 0 0 8px;
-  color: var(--app-color-text);
-  font-size: 14px;
+  padding-left: 4px;
+  color: var(--app-color-ink);
+  font-size: var(--app-font-size-label);
   font-weight: 700;
 }
 
@@ -401,18 +737,18 @@ ion-button::part(native) {
   width: 100%;
   min-height: 52px;
   padding: 0 14px;
-  border: 1px solid rgba(122, 99, 246, 0.16);
-  border-radius: 16px;
+  border: 1.5px solid var(--app-color-input-border);
+  border-radius: var(--app-radius-md);
   outline: 0;
-  background: rgba(122, 99, 246, 0.04);
-  color: var(--app-color-text);
+  background: var(--app-color-surface-solid);
+  color: var(--app-color-ink);
   font: inherit;
   font-size: 16px;
 }
 
 .contact-actions-editor__input:focus {
-  border-color: rgba(122, 99, 246, 0.42);
-  box-shadow: 0 0 0 3px rgba(122, 99, 246, 0.1);
+  border-color: var(--app-color-primary-strong);
+  box-shadow: var(--app-focus-ring);
 }
 
 .contact-actions-editor__actions {
@@ -425,16 +761,17 @@ ion-button::part(native) {
 .contact-actions-editor__button {
   min-height: 48px;
   border: 0;
-  border-radius: 999px;
-  background: rgba(122, 99, 246, 0.08);
-  color: var(--app-color-primary);
+  border-radius: var(--app-radius-pill);
+  background: rgba(var(--app-color-primary-rgb), 0.1);
+  color: var(--app-color-primary-strong);
   font: inherit;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .contact-actions-editor__button--primary {
-  background: linear-gradient(135deg, var(--app-color-accent), var(--app-color-primary));
-  color: #fff;
+  background: var(--app-color-primary-strong);
+  box-shadow: var(--app-shadow-button);
+  color: var(--app-color-primary-contrast);
 }
 
 .password-dialog {
@@ -450,8 +787,9 @@ ion-button::part(native) {
 
 .password-modal-header h2 {
   margin: 0;
-  color: var(--app-color-text);
+  color: var(--app-color-ink);
   font-size: 24px;
+  font-weight: 800;
   line-height: 1.2;
 }
 
@@ -464,9 +802,9 @@ ion-button::part(native) {
 
 .password-modal-eyebrow {
   margin: 0 0 6px;
-  color: var(--app-color-primary);
-  font-size: 12px;
-  font-weight: 700;
+  color: var(--app-color-primary-strong);
+  font-size: var(--app-font-size-caption);
+  font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -477,21 +815,29 @@ ion-button::part(native) {
   top: 0;
   right: 0;
   display: grid;
-  width: 40px;
-  height: 40px;
+  width: var(--app-touch-target);
+  height: var(--app-touch-target);
   padding: 0;
   place-items: center;
   border: 0;
   border-radius: 50%;
   background: rgba(var(--app-color-primary-rgb), 0.1);
-  color: var(--app-color-primary);
+  color: var(--app-color-primary-strong);
   cursor: pointer;
   font: inherit;
   font-size: 26px;
   line-height: 1;
 }
 
+.password-modal-close ion-icon {
+  font-size: 22px;
+}
+
 .password-modal-close:disabled {
   cursor: default;
   opacity: 0.5;
 }
+
+/* Auth screens (login, register, password recovery, verify phone): loaded once here
+   instead of per page; kept last so it layers over .app-surface as before */
+@include meta.load-css("app/features/auth/auth-form.shared");
