@@ -454,7 +454,7 @@ export class AvailabilityPage {
     ): EffectiveAvailabilityGroupVm[] {
         const today = new Date();
         const tomorrow = new Date();
-        tomorrow.setDate(today.getDate());
+        tomorrow.setDate(today.getDate() + 1);
 
         const groups: EffectiveAvailabilityGroupVm[] = [
             { title: 'Today', items: [] },
