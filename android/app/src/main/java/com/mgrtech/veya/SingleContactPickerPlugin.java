@@ -1,6 +1,7 @@
 package com.mgrtech.veya;
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
@@ -25,12 +26,11 @@ public class SingleContactPickerPlugin extends Plugin {
             ContactsContract.CommonDataKinds.Phone.CONTENT_URI
         );
 
-        if (intent.resolveActivity(getContext().getPackageManager()) == null) {
+        try {
+            startActivityForResult(call, intent, "handleContactResult");
+        } catch (ActivityNotFoundException error) {
             call.reject("The contact picker is unavailable.");
-            return;
         }
-
-        startActivityForResult(call, intent, "handleContactResult");
     }
 
     @ActivityCallback
