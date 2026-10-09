@@ -17,7 +17,7 @@ The product is intentionally private and lightweight. It is not a public availab
 - Authentication: onboarding, registration, login, token storage, refresh handling, and guarded app routes.
 - Home dashboard: readiness state, next best action, contact snapshot, upcoming availability, and Free now entry point.
 - Contacts: accepted contacts, invitations, accept/remove/block/edit flows.
-- Availability: recurring rules, temporary overrides, effective weekly preview, and active/future override display.
+- Availability: recurring rules, temporary override creation, and an effective weekly preview.
 - Mobile shell: Ionic tab navigation with Capacitor-ready output.
 
 ## Tech Stack
@@ -245,7 +245,7 @@ Availability is represented through:
 - temporary overrides, such as one-off availability or unavailability
 - effective availability, returned by the backend after rules and overrides are combined
 
-The availability page requests only ongoing or future overrides using the `endsAfter` query parameter and still applies a defensive client-side filter.
+The availability page reflects temporary overrides through the effective weekly preview rather than displaying override history.
 
 ### Home Readiness
 

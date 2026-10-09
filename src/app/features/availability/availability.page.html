@@ -365,54 +365,6 @@
                 </div>
               </form>
             }
-
-            @if (state.data.overrides.length > 0) {
-              @let visibleOverrides = showAllOverrides()
-                ? state.data.overrides
-                : state.data.overrides.slice(0, overridePreviewLimit);
-
-              <div class="availability-list">
-                @for (override of visibleOverrides; track override.id) {
-                  <article class="availability-item">
-                    <div class="availability-item__body">
-                      <div class="availability-item__topline">
-                        <strong>{{ override.dateLabel }}</strong>
-                        <span
-                          class="availability-chip"
-                          [class.availability-chip--available]="override.type === 'AVAILABLE'"
-                          [class.availability-chip--unavailable]="override.type === 'UNAVAILABLE'"
-                        >
-                          {{ override.typeLabel }}
-                        </span>
-                      </div>
-
-                      <div class="availability-meta">{{ override.timeRange }}</div>
-                    </div>
-
-                    <div class="availability-item__hint app-text-muted">
-                      Add another exception to adjust this.
-                    </div>
-                  </article>
-                }
-              </div>
-
-              @if (state.data.overrides.length > overridePreviewLimit) {
-                <button
-                  type="button"
-                  class="availability-show-more"
-                  (click)="toggleOverridesExpanded()"
-                >
-                  {{ showAllOverrides() ? 'Show fewer adjustments' : 'Show all ' + state.data.overrides.length + ' adjustments' }}
-                </button>
-              }
-            } @else {
-              <div class="empty-card">
-                <strong>No adjustments right now</strong>
-                <p class="app-text-muted">
-                  Your routine is being shared just as it is.
-                </p>
-              </div>
-            }
           </section>
         }
       }
