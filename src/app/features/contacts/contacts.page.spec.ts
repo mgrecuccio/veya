@@ -77,6 +77,7 @@ describe('ContactsPage', () => {
                 contacts: [],
                 blockedContacts: [],
                 pendingInvitations: [],
+                sentInvitations: [],
             })
         );
 
@@ -113,7 +114,7 @@ describe('ContactsPage', () => {
 
     it('should reload when retry is called', () => {
         dataService.getPageData.and.returnValue(
-            of({ contacts: [], blockedContacts: [], pendingInvitations: [] })
+            of({ contacts: [], blockedContacts: [], pendingInvitations: [], sentInvitations: [] })
         );
 
         const sub = component.vmState$.subscribe();
@@ -140,6 +141,7 @@ describe('ContactsPage', () => {
                 ],
                 blockedContacts: [],
                 pendingInvitations: [],
+                sentInvitations: [],
             })
         );
 
@@ -167,6 +169,7 @@ describe('ContactsPage', () => {
                         createdAt: '2026-09-20T10:00:00.000Z',
                     },
                 ],
+                sentInvitations: [],
             })
         );
 
@@ -176,6 +179,49 @@ describe('ContactsPage', () => {
                 done();
             }
         });
+    });
+
+    it('should map sent invitations and include them in the pending count', (done) => {
+        dataService.getPageData.and.returnValue(
+            of({
+                contacts: [],
+                blockedContacts: [],
+                pendingInvitations: [],
+                sentInvitations: [{
+                    invitationId: 11,
+                    recipientUserId: 19,
+                    recipientDisplayName: 'Recipient',
+                    recipientPhoneNumber: '+32468009912',
+                    nickName: 'Teammate',
+                    status: 'PENDING',
+                    createdAt: '2026-10-09T12:00:00.000Z',
+                }],
+            }),
+        );
+
+        component.vmState$.subscribe((state) => {
+            if (state.kind === 'success') {
+                expect(state.data.sentInvitations[0].displayLabel).toBe('Teammate');
+                expect(state.data.pendingInvitationsCount).toBe(1);
+                expect(state.data.showFullyEmptyState).toBeFalse();
+                done();
+            }
+        });
+    });
+
+    it('should scroll summary cards to their section', () => {
+        const section = document.createElement('section');
+        section.id = 'pending-invitations-test';
+        document.body.appendChild(section);
+        const scrollIntoView = spyOn(section, 'scrollIntoView');
+
+        component.scrollToSection(section.id);
+
+        expect(scrollIntoView).toHaveBeenCalledWith({
+            behavior: 'smooth',
+            block: 'start',
+        });
+        section.remove();
     });
 
     it('should not render original display name after nickname is edited', () => {
@@ -193,6 +239,7 @@ describe('ContactsPage', () => {
                 ],
                 blockedContacts: [],
                 pendingInvitations: [],
+                sentInvitations: [],
             })
         );
 
@@ -206,7 +253,7 @@ describe('ContactsPage', () => {
 
     it('should refresh when returning to the tab after first entry', () => {
         dataService.getPageData.and.returnValue(
-            of({ contacts: [], blockedContacts: [], pendingInvitations: [] })
+            of({ contacts: [], blockedContacts: [], pendingInvitations: [], sentInvitations: [] })
         );
 
         const sub = component.vmState$.subscribe();
@@ -275,7 +322,7 @@ describe('ContactsPage', () => {
     it('should handle invite submit success', fakeAsync(() => {
         dataService.sendInvitation.and.returnValue(of({} as any));
         dataService.getPageData.and.returnValue(
-            of({ contacts: [], blockedContacts: [], pendingInvitations: [] })
+            of({ contacts: [], blockedContacts: [], pendingInvitations: [], sentInvitations: [] })
         );
 
         spyOn(component, 'retry');
@@ -490,6 +537,7 @@ describe('ContactsPage', () => {
             ],
             blockedContacts: [],
             pendingInvitations: [],
+            sentInvitations: [],
         }));
 
         component.acceptInvitation({
@@ -565,6 +613,31 @@ describe('ContactsPage', () => {
 
         expect(dataService.rejectInvitation).not.toHaveBeenCalled();
     });
+
+    it('should cancel a sent invitation and refresh', fakeAsync(() => {
+        dataService.cancelInvitation.and.returnValue(of(void 0));
+        spyOn(component, 'retry');
+
+        component.cancelInvitation({
+            id: 11,
+            displayLabel: 'Teammate',
+            initials: 'T',
+            createdAt: null,
+            createdLabel: 'today',
+        });
+
+        expect(dataService.cancelInvitation).toHaveBeenCalledWith(11);
+        expect(component.rowActionBusyId()).toBeNull();
+        expect(component.retry).toHaveBeenCalled();
+
+        flushMicrotasks();
+
+        expect(component.toastState()).toEqual({
+            isOpen: true,
+            message: 'Invitation cancelled.',
+            color: 'success',
+        });
+    }));
 
     it('should open an action sheet for managing a contact', () => {
         const contact = {

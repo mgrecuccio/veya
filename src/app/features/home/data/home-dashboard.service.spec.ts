@@ -69,7 +69,7 @@ describe('HomeDashboardService', () => {
       ]),
     );
 
-    contactsService.getPendingInvitations.and.returnValue(of([]));
+    contactsService.getPendingInvitations.and.returnValue(of({ incoming: [], sent: [] }));
 
     availabilityService.getRules.and.returnValue(
       of([
@@ -180,16 +180,17 @@ describe('HomeDashboardService', () => {
     mockBase();
 
     contactsService.getPendingInvitations.and.returnValue(
-      of([
-        {
+      of({
+        incoming: [{
           invitationId: 1,
           senderUserId: 2,
           senderDisplayName: 'Nina',
           senderPhoneNumber: '+32468009911',
           status: 'PENDING',
           createdAt: '2026-04-09T12:00:00.000Z',
-        },
-      ]),
+        }],
+        sent: [],
+      }),
     );
 
     service.getDashboardState(new Date('2026-04-10T09:00:00.000Z')).subscribe((state) => {

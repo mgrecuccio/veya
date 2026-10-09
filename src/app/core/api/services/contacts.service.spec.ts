@@ -4,7 +4,7 @@ import { TestBed } from "@angular/core/testing";
 import { provideHttpClient } from "@angular/common/http";
 import { ContactView } from "../model/contact-view.model";
 import { environment } from "src/environments/environment";
-import { PendingContactInvitationView } from "../model/pending-contact-invitation-view.model";
+import { PendingContactInvitationsResponse } from "../model/pending-contact-invitation-view.model";
 import { EditContactRequest } from "../request/edit-contact.request";
 
 describe('ContactService', () => {
@@ -69,27 +69,38 @@ describe('ContactService', () => {
     });
 
     it('should call pending invitations', () => {
-        let mockInvitations: PendingContactInvitationView[] = [
-            {
+        const mockInvitations: PendingContactInvitationsResponse = {
+            incoming: [{
                 invitationId: 1,
                 senderUserId: 2,
                 senderDisplayName: 'Nina',
                 senderPhoneNumber: '+32468009911',
                 status: 'PENDING',
                 createdAt: '2026-04-10T09:00:00.000Z',
-            },
-        ];
+            }],
+            sent: [{
+                invitationId: 2,
+                recipientUserId: 3,
+                recipientDisplayName: 'Alex',
+                recipientPhoneNumber: '+32468009912',
+                nickName: 'Teammate',
+                status: 'PENDING',
+                createdAt: '2026-04-10T10:00:00.000Z',
+            }],
+        };
 
         service.getPendingInvitations().subscribe(invitations => {
-            expect(invitations).toHaveSize(1);
+            expect(invitations.incoming).toHaveSize(1);
+            expect(invitations.sent).toHaveSize(1);
 
-            let invitation = invitations[0];
+            const invitation = invitations.incoming[0];
             expect(invitation.invitationId).toBe(1);
             expect(invitation.senderUserId).toBe(2);
             expect(invitation.senderDisplayName).toBe('Nina');
             expect(invitation.senderPhoneNumber).toBe('+32468009911');
             expect(invitation.status).toBe('PENDING');
             expect(invitation.createdAt).toBe('2026-04-10T09:00:00.000Z');
+            expect(invitations.sent[0].recipientDisplayName).toBe('Alex');
         });
 
         const req = httpMock.expectOne(`${environment.apiBaseUrl}/api/v1/contacts/invitations/pending`);

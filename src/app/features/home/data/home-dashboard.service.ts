@@ -38,7 +38,7 @@ export class HomeDashboardService {
     return forkJoin({
       me: this.userService.getMe(),
       contacts: this.contactsService.getContacts(),
-      pendingInvitations: this.contactsService.getPendingInvitations(),
+      pendingInvitationsResponse: this.contactsService.getPendingInvitations(),
       rules: this.availabilityService.getRules(),
       availabilityPreview: this.availabilityService.getEffectiveAvailability(from, to).pipe(
         map((windows): AvailabilityPreviewResult => ({
@@ -53,9 +53,10 @@ export class HomeDashboardService {
         ),
       ),
     }).pipe(
-      map(({ me, contacts, pendingInvitations, rules, availabilityPreview }) => {
+      map(({ me, contacts, pendingInvitationsResponse, rules, availabilityPreview }) => {
         const enabledRules = this.getEnabledRules(rules);
         const hasContacts = contacts.length > 0;
+        const pendingInvitations = pendingInvitationsResponse.incoming;
         const hasPendingInvitations = pendingInvitations.length > 0;
         const upcomingAvailability = mapEffectiveAvailabilityToUpcomingItems(
           availabilityPreview.windows,
