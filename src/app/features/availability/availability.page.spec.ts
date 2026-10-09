@@ -134,6 +134,45 @@ describe('AbailabilityPage', () => {
         sub.unsubscribe();
     });
 
+    it('should group the next local day under Tomorrow', () => {
+        jasmine.clock().install();
+        jasmine.clock().mockDate(new Date('2026-10-09T12:00:00Z'));
+
+        try {
+            dataService.getPageData.and.returnValue(
+                of({
+                    rules: [],
+                    overrides: [],
+                    effective: [
+                        {
+                            startDateTime: '2026-10-10T09:00:00Z',
+                            endDateTime: '2026-10-10T10:29:00Z',
+                            channelType: 'CALL',
+                        },
+                    ],
+                    overrideEndsAfter: '2026-10-09T12:00:00Z',
+                }),
+            );
+
+            fixture.detectChanges();
+
+            const sections = Array.from(
+                (fixture.nativeElement as HTMLElement).querySelectorAll('.preview-group'),
+            ) as HTMLElement[];
+            const tomorrowSection = sections.find((section) =>
+                section.textContent?.includes('Tomorrow'),
+            );
+            const laterSection = sections.find((section) =>
+                section.textContent?.includes('Later this week'),
+            );
+
+            expect(tomorrowSection?.querySelectorAll('.preview-slot').length).toBe(1);
+            expect(laterSection?.querySelectorAll('.preview-slot').length).toBe(0);
+        } finally {
+            jasmine.clock().uninstall();
+        }
+    });
+
     it('should open the create rule panel and fill the form with default data', () => {
         component.openCreateRule();
         expect(component.ruleFormExpanded()).toBeTrue();
