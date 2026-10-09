@@ -23,6 +23,7 @@ import {
 } from "src/app/shared/phone/phone-number.util";
 import { AppToastColor, AppToastService } from "src/app/shared/toast/app-toast.service";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
+import { I18nService } from "src/app/core/i18n/i18n.service";
 
 type ContactsPageVmState =
     | { kind: 'loading' }
@@ -81,6 +82,7 @@ export class ContactsPage {
     private readonly appToastService = inject(AppToastService);
     private readonly authService = inject(AuthService);
     private readonly nativeContactPicker = inject(NativeContactPickerService);
+    private readonly i18n = inject(I18nService);
     private readonly reload$ = new Subject<void>();
     private readonly acceptedDisplayNameFallbacks = new Map<number, string>();
     private hasEntered = false;
@@ -683,7 +685,7 @@ export class ContactsPage {
         return `${diffDays} days ago`;
       }
 
-      return new Intl.DateTimeFormat(undefined, {
+      return new Intl.DateTimeFormat(this.i18n.locale(), {
         month: 'short',
         day: 'numeric',
         year: now.getFullYear() === date.getFullYear() ? undefined : 'numeric',

@@ -14,6 +14,7 @@ import {
 import { AppToastService } from './shared/toast/app-toast.service';
 import { PushNotificationRoutingService } from './core/notifications/push-notification-routing.service';
 import { PushRegistrationReconciliationService } from './core/notifications/push-registration-reconciliation.service';
+import { TranslationHostDirective } from './core/i18n/translation-host.directive';
 import { addIcons } from 'ionicons';
 import { Subscription } from 'rxjs';
 import { firstValueFrom } from 'rxjs';
@@ -50,9 +51,9 @@ const STARTUP_SESSION_TIMEOUT_MS = 10_000;
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [IonApp, IonRouterOutlet, IonToast],
+  imports: [IonApp, IonRouterOutlet, IonToast, TranslationHostDirective],
   template: `
-    <ion-app>
+    <ion-app appTranslationHost>
       <ion-router-outlet
         [class.app-router-outlet--hidden]="startupState() !== 'ready'"
       ></ion-router-outlet>

@@ -16,6 +16,7 @@ import { getApiErrorMessage } from "src/app/core/api/api-error.util";
 import { AuthService } from "src/app/core/auth/auth.service";
 import { authenticatedSessionReload } from "src/app/core/auth/authenticated-session-reload.util";
 import { AppToastColor, AppToastService } from "src/app/shared/toast/app-toast.service";
+import { I18nService } from "src/app/core/i18n/i18n.service";
 
 type AvailabilityVmState =
   | { kind: 'loading' }
@@ -70,6 +71,7 @@ export class AvailabilityPage {
     private readonly availabilityPageDataService = inject(AvailabilityPageDataService);
     private readonly appToastService = inject(AppToastService);
     private readonly authService = inject(AuthService);
+    private readonly i18n = inject(I18nService);
     private readonly reload$ = new Subject<void>();
     private hasEntered = false;
 
@@ -421,7 +423,7 @@ export class AvailabilityPage {
     }
 
     private formatDateLabel(date: Date): string {
-        return new Intl.DateTimeFormat(undefined, {
+        return new Intl.DateTimeFormat(this.i18n.locale(), {
             weekday: 'short',
             month: 'short',
             day: 'numeric',
@@ -434,7 +436,7 @@ export class AvailabilityPage {
             ? value
             : new Date(`1970-01-01T${this.normalizeTimeForInput(value)}:00`);
 
-        return new Intl.DateTimeFormat(undefined, {
+        return new Intl.DateTimeFormat(this.i18n.locale(), {
             hour: '2-digit',
             minute: '2-digit',
         }).format(date);

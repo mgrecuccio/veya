@@ -17,6 +17,7 @@ import {
   extractApiError,
   UserFacingApiError,
 } from 'src/app/core/api/api-error.util';
+import { I18nService } from 'src/app/core/i18n/i18n.service';
 
 interface AvailabilityPreviewResult {
   windows: EffectiveAvailabilityView[];
@@ -28,6 +29,7 @@ export class HomeDashboardService {
   private readonly userService = inject(UserService);
   private readonly contactsService = inject(ContactsService);
   private readonly availabilityService = inject(AvailabilityService);
+  private readonly i18n = inject(I18nService);
 
   getDashboardState(now: Date = new Date()): Observable<HomeDashboardState> {
     const from = now.toISOString();
@@ -61,6 +63,7 @@ export class HomeDashboardService {
           availabilityPreview.windows,
           me.timezone,
           now,
+          this.i18n.locale(),
         );
 
         const dashboard: HomeDashboardVm = {

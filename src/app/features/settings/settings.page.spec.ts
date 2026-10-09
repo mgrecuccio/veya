@@ -12,6 +12,7 @@ import { NativeNotificationSettingsService } from 'src/app/core/platform/native-
 import { PhoneVerificationStateService } from 'src/app/core/auth/phone-verification-state.service';
 import { PhoneChangeCooldownService } from 'src/app/core/auth/phone-change-cooldown.service';
 import { HttpErrorResponse } from '@angular/common/http';
+import { I18nService } from 'src/app/core/i18n/i18n.service';
 
 describe('SettingsPage', () => {
     let fixture: ComponentFixture<SettingsPage>;
@@ -26,6 +27,7 @@ describe('SettingsPage', () => {
     let router: jasmine.SpyObj<Router>;
     let phoneVerificationState: jasmine.SpyObj<PhoneVerificationStateService>;
     let phoneChangeCooldown: jasmine.SpyObj<PhoneChangeCooldownService>;
+    let i18n: I18nService;
     let permissionState: ReturnType<typeof signal<'prompt' | 'prompt-with-rationale' | 'granted' | 'denied' | 'unsupported'>>;
 
     beforeEach(async () => {
@@ -120,6 +122,8 @@ describe('SettingsPage', () => {
         phoneChangeCooldown = TestBed.inject(
             PhoneChangeCooldownService,
         ) as jasmine.SpyObj<PhoneChangeCooldownService>;
+        i18n = TestBed.inject(I18nService);
+        i18n.setLanguage('en');
 
         pushRegistration.reconcile.and.returnValue(Promise.resolve());
         pushRegistration.requestPermission.and.returnValue(Promise.resolve('granted'));
@@ -150,6 +154,7 @@ describe('SettingsPage', () => {
                 timezone: 'Europe/Brussels',
                 phoneNumber: '+32470000000',
                 status: 'ACTIVE',
+                preferredLanguage: 'en',
             },
             userPreferences: {
                 userId: 1,
@@ -232,6 +237,31 @@ describe('SettingsPage', () => {
         expect(component.profileForm.dirty).toBeTrue();
         expect(profileSaveButton.disabled).toBeFalse();
     });
+
+    it('should switch language immediately and persist it with the profile', fakeAsync(() => {
+        const data = mockPageData();
+        dataService.getPageData.and.returnValue(of(data));
+        dataService.saveProfile.and.returnValue(of({
+            ...data.userProfile,
+            preferredLanguage: 'fr',
+        }));
+        fixture.detectChanges();
+
+        const select = fixture.nativeElement.querySelector(
+            '#settings-language',
+        ) as HTMLSelectElement;
+        select.value = 'fr';
+        select.dispatchEvent(new Event('change'));
+        tick();
+
+        expect(i18n.language()).toBe('fr');
+        expect(dataService.saveProfile).toHaveBeenCalledWith({
+            displayName: 'Marco',
+            timezone: 'Europe/Brussels',
+            phoneNumber: '+32470000000',
+            preferredLanguage: 'fr',
+        });
+    }));
 
     it('should show a success toast after saving the profile', fakeAsync(() => {
         const data = mockPageData();

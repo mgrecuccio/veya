@@ -32,6 +32,7 @@ import {
   PhoneCountry,
   splitE164PhoneNumber,
 } from 'src/app/shared/phone/phone-number.util';
+import { I18nService, SupportedLanguage } from 'src/app/core/i18n/i18n.service';
 
 type SettingsPageVmState =
     | { kind: 'loading' }
@@ -108,19 +109,27 @@ export class SettingsPage {
     private readonly pushRegistration = inject(PushRegistrationReconciliationService);
     private readonly phoneVerificationState = inject(PhoneVerificationStateService);
     private readonly phoneChangeCooldown = inject(PhoneChangeCooldownService);
+    readonly i18n = inject(I18nService);
     private readonly reload$ = new Subject<void>();
     private savedPhoneNumber: string | null = null;
     private profileUserId: number | null = null;
+    private savedProfileForLanguage: {
+      displayName: string;
+      timezone: string;
+      phoneNumber: string;
+    } | null = null;
 
     readonly countries: PhoneCountry[] = createPhoneCountries();
     readonly timezoneOptions = TIMEZONE_OPTIONS;
     readonly appVersion = APP_VERSION;
+    readonly languageOptions = this.i18n.options;
     readonly isSavingProfile = signal(false);
     readonly isSavingPreferences = signal(false);
     readonly isLoggingOut = signal(false);
     readonly isDeletingAccount = signal(false);
     readonly isDeleteAccountModalOpen = signal(false);
     readonly isChangingPassword = signal(false);
+    readonly isSavingLanguage = signal(false);
     readonly isPasswordModalOpen = signal(false);
     readonly visiblePasswordFields = signal<ReadonlySet<PasswordField>>(new Set());
     readonly isPhoneChangeLocked = signal(false);
@@ -299,6 +308,16 @@ export class SettingsPage {
           );
         }
       });
+    }
+
+    onLanguageChange(event: Event): void {
+      const language = (event.target as HTMLSelectElement).value;
+      if (!this.i18n.isSupportedLanguage(language)) {
+        return;
+      }
+
+      this.i18n.setLanguage(language);
+      this.saveLanguage(language);
     }
 
     async onPushNotificationsToggle(): Promise<void> {
@@ -540,6 +559,15 @@ export class SettingsPage {
       const phone = splitE164PhoneNumber(data.userProfile.phoneNumber);
       this.savedPhoneNumber = data.userProfile.phoneNumber;
       this.profileUserId = data.userProfile.id;
+      this.savedProfileForLanguage = {
+        displayName: data.userProfile.displayName?.trim() ?? '',
+        timezone: data.userProfile.timezone ?? data.userPreferences.timezone ?? '',
+        phoneNumber: data.userProfile.phoneNumber,
+      };
+
+      if (this.i18n.isSupportedLanguage(data.userProfile.preferredLanguage)) {
+        this.i18n.setLanguage(data.userProfile.preferredLanguage);
+      }
 
       this.profileForm.patchValue({
         displayName: data.userProfile.displayName ?? '',
@@ -559,6 +587,32 @@ export class SettingsPage {
       this.profileForm.markAsPristine();
       this.preferencesForm.markAsPristine();
       this.applyStoredPhoneChangeLock();
+    }
+
+    private saveLanguage(language: SupportedLanguage): void {
+      if (!this.savedProfileForLanguage || this.isSavingLanguage()) {
+        return;
+      }
+
+      this.isSavingLanguage.set(true);
+      this.settingsPageDataService.saveProfile({
+        ...this.savedProfileForLanguage,
+        preferredLanguage: language,
+      }).subscribe({
+        next: (profile) => {
+          this.isSavingLanguage.set(false);
+          this.savedProfileForLanguage = {
+            displayName: profile.displayName?.trim() ?? this.savedProfileForLanguage?.displayName ?? '',
+            timezone: profile.timezone ?? this.savedProfileForLanguage?.timezone ?? '',
+            phoneNumber: profile.phoneNumber,
+          };
+          this.showToast('Language saved.', 'success');
+        },
+        error: () => {
+          this.isSavingLanguage.set(false);
+          this.showToast('We couldn’t save your language right now.', 'danger');
+        },
+      });
     }
 
     private hasPhoneNumberChanged(phoneNumber: string): boolean {
@@ -634,15 +688,15 @@ export class SettingsPage {
 
     private async showNotificationSettingsPrompt(): Promise<void> {
       const alert = await this.alertController.create({
-        header: 'Enable notifications',
-        message: 'Notifications are disabled for Veya. You can enable them in your device settings.',
+        header: this.i18n.translate('Enable notifications'),
+        message: this.i18n.translate('Notifications are disabled for Veya. You can enable them in your device settings.'),
         buttons: [
           {
-            text: 'Cancel',
+            text: this.i18n.translate('Cancel'),
             role: 'cancel',
           },
           {
-            text: 'Open Settings',
+            text: this.i18n.translate('Open Settings'),
             handler: () => {
               void this.notificationSettings.open().catch((error) => {
                 console.warn('[SettingsPage] Opening notification settings failed', {

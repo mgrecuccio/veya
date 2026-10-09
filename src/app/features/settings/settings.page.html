@@ -79,6 +79,32 @@
           <section class="app-surface settings-card">
             <div class="card-header">
               <div>
+                <h2 class="card-title">Language</h2>
+                <p class="card-subtitle">Choose the language used by Veya.</p>
+              </div>
+            </div>
+
+            <div class="settings-row-list">
+              <div class="settings-row">
+                <label class="settings-row__label" for="settings-language">Language</label>
+                <select
+                  id="settings-language"
+                  class="settings-row__control"
+                  [value]="i18n.language()"
+                  [disabled]="isSavingLanguage()"
+                  (change)="onLanguageChange($event)"
+                >
+                  @for (language of languageOptions; track language.code) {
+                    <option [value]="language.code">{{ language.label }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <section class="app-surface settings-card">
+            <div class="card-header">
+              <div>
                 <h2 class="card-title">Profile</h2>
                 <p class="card-subtitle">
                   {{ userProfile.timezone || userPreferences.timezone }}

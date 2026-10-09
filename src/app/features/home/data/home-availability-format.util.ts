@@ -37,6 +37,7 @@ export function formatAvailabilityDayLabel(
     dateIso: string,
     preferredTimeZone?: string | null,
     now: Date = new Date(),
+    locale = 'en-GB',
 ): string {
     const date = new Date(dateIso);
 
@@ -48,7 +49,7 @@ export function formatAvailabilityDayLabel(
         return 'Tomorrow';
     }
 
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat(locale, {
         timeZone: getFormatterTimeZone(preferredTimeZone),
         weekday: 'long'
     }).format(date);
@@ -59,10 +60,11 @@ export function formatAvailabilityTimeRange(
     startIso: string,
     endIso: string,
     preferredTimeZone?: string | null,
+    locale = 'en-GB',
 ): string {
     const timeZone = getFormatterTimeZone(preferredTimeZone);
 
-    const formatter = new Intl.DateTimeFormat('en-GB', {
+    const formatter = new Intl.DateTimeFormat(locale, {
         timeZone,
         hour: '2-digit',
         minute: '2-digit',
@@ -77,6 +79,7 @@ export function mapEffectiveAvailabilityToUpcomingItems(
     windows: EffectiveAvailabilityView[],
     preferredTimeZone?: string | null,
     now: Date = new Date(),
+    locale = 'en-GB',
 ): UpcomingAvailabilityItem[] {
     const currentDayMidnight = addDays(now, 1);
     currentDayMidnight.setHours(0, 0, 0, 0);
@@ -85,11 +88,12 @@ export function mapEffectiveAvailabilityToUpcomingItems(
         .filter((window) => new Date(window.startDateTime) < currentDayMidnight)
         .map((window, index) => ({
             id: `${window.startDateTime}-${window.endDateTime}-${index}`,
-            label: formatAvailabilityDayLabel(window.startDateTime, preferredTimeZone, now),
+            label: formatAvailabilityDayLabel(window.startDateTime, preferredTimeZone, now, locale),
             timeRange: formatAvailabilityTimeRange(
                 window.startDateTime,
                 window.endDateTime,
-                preferredTimeZone
+                preferredTimeZone,
+                locale,
             ),
             startDateTime: window.startDateTime,
             endDateTime: window.endDateTime,

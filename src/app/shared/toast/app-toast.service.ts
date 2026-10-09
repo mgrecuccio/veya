@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
+import { I18nService } from 'src/app/core/i18n/i18n.service';
 
 export type AppToastColor = 'success' | 'danger';
 
@@ -9,6 +10,7 @@ export interface AppToast {
 
 @Injectable({ providedIn: 'root' })
 export class AppToastService {
+  private readonly i18n = inject(I18nService);
   private dismissTimer?: number;
   readonly toast = signal<AppToast | null>(null);
 
@@ -19,7 +21,7 @@ export class AppToastService {
   ): Promise<void> {
     window.clearTimeout(this.dismissTimer);
     this.toast.set({
-      message,
+      message: this.i18n.translate(message),
       color,
     });
 
