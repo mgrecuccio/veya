@@ -5,7 +5,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { RouterModule } from "@angular/router";
 import { IonicModule } from '@ionic/angular';
 import { catchError, finalize, map, merge, Observable, of, shareReplay, startWith, Subject, switchMap } from "rxjs";
-import { AvailabilityOverrideType, AvailabilityOverrideView } from "src/app/core/api/model/availability-override-view-model";
+import { AvailabilityOverrideType } from "src/app/core/api/model/availability-override-view-model";
 import { AvailabilityChannelType, AvailabilityDayOfWeek, AvailabilityRuleView } from "src/app/core/api/model/availability-rule-view.model";
 import { EffectiveAvailabilityView } from "src/app/core/api/model/effective-availability-view.model";
 import { UpdateAvailabilityRuleRequest } from "src/app/core/api/request/update-availability-rule.request";
@@ -24,7 +24,6 @@ type AvailabilityVmState =
 
 interface AvailabilityPageVm {
   rules: AvailabilityRuleCardVm[];
-  overrides: AvailabilityOverrideCardVm[];
   effectiveGroups: EffectiveAvailabilityGroupVm[];
 }
 
@@ -35,15 +34,6 @@ interface AvailabilityRuleCardVm {
   channelLabel: string;
   enabled: boolean;
   raw: AvailabilityRuleView;
-}
-
-interface AvailabilityOverrideCardVm {
-  id: number;
-  dateLabel: string;
-  timeRange: string;
-  type: AvailabilityOverrideType;
-  typeLabel: string;
-  raw: AvailabilityOverrideView;
 }
 
 interface EffectiveAvailabilityGroupVm {
@@ -102,8 +92,6 @@ export class AvailabilityPage {
 
     readonly channels: AvailabilityChannelType[] = ['CHAT', 'CALL'];
     readonly overrideTypes: AvailabilityOverrideType[] = ['AVAILABLE', 'UNAVAILABLE'];
-    readonly overridePreviewLimit = 3;
-    readonly showAllOverrides = signal(false);
 
     readonly ruleForm = this.fb.nonNullable.group({
         dayOfWeek: ['MONDAY' as AvailabilityDayOfWeek, [Validators.required]],
@@ -299,10 +287,6 @@ export class AvailabilityPage {
         this.overrideFormExpanded.set(false);
     }
 
-    toggleOverridesExpanded(): void {
-        this.showAllOverrides.update((showAll) => !showAll);
-    }
-
     submitOverride(): void {
         if(this.overrideForm.invalid || this.submittingOverride()) {
             this.overrideForm.markAllAsTouched();
@@ -363,13 +347,6 @@ export class AvailabilityPage {
     private mapToVm(data: AvailabilityPageData): AvailabilityPageVm {
         return {
             rules: data.rules.map((rule) => this.mapRule(rule)),
-            overrides: data.overrides
-                .filter((override) => this.isOngoingOrFutureOverride(override, data.overrideEndsAfter))
-                .map((override) => this.mapOverride(override))
-                .sort((left, right) =>
-                    new Date(left.raw.startDateTime).getTime() -
-                    new Date(right.raw.startDateTime).getTime()
-                ),
             effectiveGroups: this.groupEffectiveAvailability(data.effective),
         };
     }
@@ -396,28 +373,6 @@ export class AvailabilityPage {
     private toBackendTime(value: string): string {
         const match = this.getTimeMatch(value);
         return match ? `${match[1]}:${match[2]}:${match[3] ?? '00'}` : value;
-    }
-
-
-    private mapOverride(override: AvailabilityOverrideView): AvailabilityOverrideCardVm {
-        const start = new Date(override.startDateTime);
-        const end = new Date(override.endDateTime);
-
-        return {
-            id: override.id,
-            dateLabel: this.formatDateLabel(start),
-            timeRange: `${this.formatTime(start)} – ${this.formatTime(end)}`,
-            type: override.type,
-            typeLabel: override.type === 'AVAILABLE' ? 'Available' : 'Unavailable',
-            raw: override,
-        }
-    }
-
-    private isOngoingOrFutureOverride(
-        override: AvailabilityOverrideView,
-        endsAfter: string,
-    ): boolean {
-        return new Date(override.endDateTime).getTime() > new Date(endsAfter).getTime();
     }
 
     private formatDateLabel(date: Date): string {

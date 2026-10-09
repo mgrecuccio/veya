@@ -50,19 +50,6 @@ describe('AvailabilityPageDataService', () => {
             ]),
         );
 
-        availabilityService.getOverrides.and.returnValue(
-            of([
-                {
-                    id: 2,
-                    userId: 2,
-                    startDateTime: '2026-04-25T09:00:00.000Z',
-                    endDateTime: '2026-04-25T10:00:00.000Z',
-                    type: 'UNAVAILABLE',
-                    createdAt: '2026-04-24T09:00:00.000Z',
-                },
-            ]),
-        );
-
         availabilityService.getEffectiveAvailability.and.returnValue(
             of([
                 {
@@ -79,10 +66,9 @@ describe('AvailabilityPageDataService', () => {
 
         service.getPageData().subscribe((data) => {
             expect(data.rules).toHaveSize(1);
-            expect(data.overrides).toHaveSize(1);
             expect(data.effective).toHaveSize(1);
-            expect(data.overrideEndsAfter).toContain('T');
-            expect(availabilityService.getOverrides).toHaveBeenCalledWith(data.overrideEndsAfter);
+            expect(availabilityService.getRules).toHaveBeenCalled();
+            expect(availabilityService.getOverrides).not.toHaveBeenCalled();
             expect(availabilityService.getEffectiveAvailability).toHaveBeenCalled();
             done();
         });

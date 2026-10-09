@@ -222,16 +222,6 @@
   font-weight: 800;
 }
 
-.availability-chip--available {
-  background: rgba(var(--app-color-success-rgb), 0.12);
-  color: var(--app-color-success);
-}
-
-.availability-chip--unavailable {
-  background: rgba(var(--app-color-danger-rgb), 0.1);
-  color: var(--app-color-danger);
-}
-
 .availability-item__actions {
   display: flex;
   align-items: center;
@@ -270,19 +260,6 @@
 .item-action-button:focus-visible {
   outline: 3px solid rgba(var(--app-color-primary-rgb), 0.22);
   outline-offset: 2px;
-}
-
-.availability-show-more {
-  width: 100%;
-  min-height: var(--app-touch-target);
-  margin-top: 8px;
-  border: 0;
-  background: transparent;
-  color: var(--app-color-primary-strong);
-  font: inherit;
-  font-size: var(--app-font-size-small);
-  font-weight: 800;
-  text-align: center;
 }
 
 .preview-list {

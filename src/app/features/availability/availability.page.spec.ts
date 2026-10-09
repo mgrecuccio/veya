@@ -58,9 +58,7 @@ describe('AbailabilityPage', () => {
         dataService.getPageData.and.returnValue(
             of({
                 rules: [],
-                overrides: [],
                 effective: [],
-                overrideEndsAfter: ''
             }),
         );
 
@@ -97,9 +95,7 @@ describe('AbailabilityPage', () => {
         dataService.getPageData.and.returnValue(
             of({
                 rules: [],
-                overrides: [],
                 effective: [],
-                overrideEndsAfter: ''
             }),
         );
 
@@ -116,9 +112,7 @@ describe('AbailabilityPage', () => {
         dataService.getPageData.and.returnValue(
             of({
                 rules: [],
-                overrides: [],
                 effective: [],
-                overrideEndsAfter: ''
             }),
         );
 
@@ -142,7 +136,6 @@ describe('AbailabilityPage', () => {
             dataService.getPageData.and.returnValue(
                 of({
                     rules: [],
-                    overrides: [],
                     effective: [
                         {
                             startDateTime: '2026-10-10T09:00:00Z',
@@ -150,7 +143,6 @@ describe('AbailabilityPage', () => {
                             channelType: 'CALL',
                         },
                     ],
-                    overrideEndsAfter: '2026-10-09T12:00:00Z',
                 }),
             );
 
@@ -287,9 +279,7 @@ describe('AbailabilityPage', () => {
                         updatedAt: '2026-04-26',
                     },
                 ],
-                overrides: [],
                 effective: [],
-                overrideEndsAfter: '',
             }),
         );
         dataService.deleteRule.and.returnValue(of(void 0));
@@ -345,9 +335,7 @@ describe('AbailabilityPage', () => {
         dataService.getPageData.and.returnValue(
             of({
                 rules: [],
-                overrides: [],
                 effective: [],
-                overrideEndsAfter: ''
             }),
         );
 
@@ -382,9 +370,7 @@ describe('AbailabilityPage', () => {
         dataService.getPageData.and.returnValue(
             of({
                 rules: [],
-                overrides: [],
                 effective: [],
-                overrideEndsAfter: ''
             }),
         );
 
@@ -466,16 +452,6 @@ describe('AbailabilityPage', () => {
         component.closeOverrideForm();
 
         expect(component.overrideFormExpanded()).toBeFalse();
-    });
-
-    it('should toggle the overrides expanded state', () => {
-        expect(component.showAllOverrides()).toBeFalse();
-
-        component.toggleOverridesExpanded();
-        expect(component.showAllOverrides()).toBeTrue();
-
-        component.toggleOverridesExpanded();
-        expect(component.showAllOverrides()).toBeFalse();
     });
 
     it('should handle override submit success', fakeAsync(() => {

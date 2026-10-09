@@ -12,9 +12,7 @@ import { toUserFacingApiError } from "src/app/core/api/api-error.util";
 
 export interface AvailabilityPageData {
     rules: AvailabilityRuleView[];
-    overrides: AvailabilityOverrideView[];
     effective: EffectiveAvailabilityView[];
-    overrideEndsAfter: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -23,18 +21,14 @@ export class AvailabilityPageDataService {
 
     getPageData(): Observable<AvailabilityPageData> {
         const { from, to } = this.getThisWeekRange();
-        const overrideEndsAfter = this.toLocalOffsetIsoString(new Date());
 
         return forkJoin({
             rules: this.availabilityService.getRules(),
-            overrides: this.availabilityService.getOverrides(overrideEndsAfter),
             effective: this.availabilityService.getEffectiveAvailability(from, to),
         }).pipe(
-            map(({ rules, overrides, effective }) => ({
+            map(({ rules, effective }) => ({
                 rules,
-                overrides,
                 effective,
-                overrideEndsAfter,
             })),
             catchError((error) => {
                 console.error('[AvailabilityPageDataService] Failed to load availability page', error);
@@ -62,18 +56,6 @@ export class AvailabilityPageDataService {
 
     createOverride(request: CreateAvailabilityOverrideRequest): Observable<AvailabilityOverrideView> {
         return this.availabilityService.createOverride(request);
-    }
-
-    private toLocalOffsetIsoString(date: Date): string {
-        const pad = (value: number, length = 2) => String(value).padStart(length, '0');
-        const timezoneOffset = -date.getTimezoneOffset();
-        const offsetSign = timezoneOffset >= 0 ? '+' : '-';
-        const offsetHours = Math.floor(Math.abs(timezoneOffset) / 60);
-        const offsetMinutes = Math.abs(timezoneOffset) % 60;
-
-        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
-            `T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}` +
-            `.${pad(date.getMilliseconds(), 3)}${offsetSign}${pad(offsetHours)}:${pad(offsetMinutes)}`;
     }
 
     private getThisWeekRange(): { from: string; to: string } {
