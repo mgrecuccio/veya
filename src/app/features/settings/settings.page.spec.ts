@@ -252,11 +252,7 @@ describe('SettingsPage', () => {
             timezone: 'Europe/Brussels',
             phoneNumber: '+32470123456',
         });
-        expect(component.toastState()).toEqual({
-            isOpen: true,
-            message: 'Profile saved.',
-            color: 'success',
-        });
+        expect(appToastService.show).toHaveBeenCalledWith('Profile saved.', 'success');
     }));
 
     it('should save the selected timezone value', () => {
@@ -399,7 +395,7 @@ describe('SettingsPage', () => {
         }));
         expect(phoneChangeCooldown.lock).not.toHaveBeenCalled();
         expect(phoneVerificationState.start).not.toHaveBeenCalled();
-        expect(component.toastState().message).toBe('Profile saved.');
+        expect(appToastService.show).toHaveBeenCalledWith('Profile saved.', 'success');
     }));
 
     it('should explain a backend phone-change rate limit and preserve other edits', () => {
@@ -420,11 +416,7 @@ describe('SettingsPage', () => {
 
         component.saveProfile();
 
-        expect(component.toastState()).toEqual({
-            isOpen: true,
-            message: 'You can change your phone number once per day. Please try again later.',
-            color: 'danger',
-        });
+        expect(appToastService.show).toHaveBeenCalledWith('You can change your phone number once per day. Please try again later.', 'danger');
         expect(component.profileForm.controls.displayName.value).toBe('Marco Veya');
         expect(component.phoneNational.value).toBe('470000000');
         expect(component.profileForm.controls.displayName.enabled).toBeTrue();
@@ -542,11 +534,7 @@ describe('SettingsPage', () => {
 
         tick();
 
-        expect(component.toastState()).toEqual({
-            isOpen: true,
-            message: 'Preferences saved.',
-            color: 'success',
-        });
+        expect(appToastService.show).toHaveBeenCalledWith('Preferences saved.', 'success');
 
         sub.unsubscribe();
     }));
@@ -683,11 +671,7 @@ describe('SettingsPage', () => {
 
         expect(component.isSavingPreferences()).toBeFalse();
         expect(dataService.savePreferences).toHaveBeenCalledTimes(1);
-        expect(component.toastState()).toEqual({
-            isOpen: true,
-            message: 'Quiet hours are invalid.',
-            color: 'danger',
-        });
+        expect(appToastService.show).toHaveBeenCalledWith('Quiet hours are invalid.', 'danger');
     }));
 
     it('should offer to open device settings when notification permission is denied', fakeAsync(() => {
@@ -795,11 +779,7 @@ describe('SettingsPage', () => {
         component.deleteAccount();
 
         expect(component.isDeletingAccount()).toBeFalse();
-        expect(component.toastState()).toEqual({
-            isOpen: true,
-            message: 'Account deletion failed.',
-            color: 'danger',
-        });
+        expect(appToastService.show).toHaveBeenCalledWith('Account deletion failed.', 'danger');
         expect(router.navigateByUrl).not.toHaveBeenCalled();
     });
 

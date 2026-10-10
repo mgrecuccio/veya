@@ -73,16 +73,6 @@ export class AvailabilityPage {
     readonly submittingOverride = signal(false);
     readonly rowActionBusyId = signal<number | null>(null);
 
-    readonly toastState = signal<{
-        isOpen: boolean;
-        message: string;
-        color: AppToastColor;
-    }>({
-        isOpen: false,
-        message: '',
-        color: 'success',
-    });
-
     readonly days: AvailabilityDayOfWeek[] = [
         'MONDAY',
         'TUESDAY',
@@ -344,10 +334,6 @@ export class AvailabilityPage {
         });
     }
 
-    onToastDismiss(): void {
-        this.toastState.update((state) => ({ ...state, isOpen: false }));
-    }
-
     // the override inputs show wall-clock time in the user's time zone.
     private toDatetimeLocalValue(date: Date): string {
         return toDateTimeLocalValue(date, this.timeZone);
@@ -453,12 +439,6 @@ export class AvailabilityPage {
     }
 
     private showToast(message: string, color: AppToastColor): void {
-        this.toastState.set({
-            isOpen: true,
-            message,
-            color,
-        });
-
-        void this.appToastService.show(message, color, 'app-toast availability-page-toast');
+        void this.appToastService.show(message, color);
     }
 }

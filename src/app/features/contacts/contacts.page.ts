@@ -109,16 +109,6 @@ export class ContactsPage {
     readonly contactActionsContact = signal<ContactCardVm | null>(null);
     readonly contactNicknameEditorOpen = signal(false);
     readonly contactNicknameDraft = signal('');
-    readonly toastState = signal<{
-      isOpen: boolean;
-      message: string;
-      color: AppToastColor;
-    }>({
-      isOpen: false,
-      message: '',
-      color: 'success',
-    });
-
     readonly countries: PhoneCountry[] = createPhoneCountries();
 
     readonly inviteForm = this.fb.nonNullable.group(
@@ -647,21 +637,8 @@ export class ContactsPage {
       this.reload$.next();
     }
 
-    onToastDismiss(): void {
-      this.toastState.update((state) => ({
-        ...state,
-        isOpen: false,
-      }));
-    }
-
     private showToast(message: string, color: AppToastColor): void {
-      this.toastState.set({
-        isOpen: true,
-        message,
-        color,
-      });
-
-      void this.appToastService.show(message, color, 'app-toast contacts-page-toast');
+      void this.appToastService.show(message, color);
     }
 
     private getContactUpdateNickName(contact: ContactCardVm): string {

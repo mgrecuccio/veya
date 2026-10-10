@@ -232,11 +232,7 @@ export class MatchesPage {
     }).subscribe({
       next: () => {
         this.proposalBusyId.set(null);
-        void this.appToastService.show(
-          'Proposal sent.',
-          'success',
-          'app-toast matches-page-toast',
-        );
+        void this.appToastService.show('Proposal sent.', 'success');
         this.retrySuggestions();
       },
       error: (error: unknown) => {
@@ -375,7 +371,6 @@ export class MatchesPage {
         void this.appToastService.show(
           action === 'accept' ? 'Proposal accepted.' : 'Proposal declined.',
           'success',
-          'app-toast matches-page-toast',
         );
         this.retryIncoming();
 
@@ -499,7 +494,7 @@ export class MatchesPage {
   }
 
   private showToast(message: string): void {
-    void this.appToastService.show(message, 'danger', 'app-toast matches-page-toast');
+    void this.appToastService.show(message, 'danger');
   }
 
 }

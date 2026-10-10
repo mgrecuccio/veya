@@ -12,11 +12,7 @@ export class AppToastService {
   private dismissTimer?: number;
   readonly toast = signal<AppToast | null>(null);
 
-  async show(
-    message: string,
-    color: AppToastColor,
-    _cssClass = 'app-toast',
-  ): Promise<void> {
+  async show(message: string, color: AppToastColor): Promise<void> {
     window.clearTimeout(this.dismissTimer);
     this.toast.set({
       message,

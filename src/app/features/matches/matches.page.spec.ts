@@ -347,7 +347,6 @@ describe('MatchesPage', () => {
     expect(appToastService.show).toHaveBeenCalledWith(
       'Proposal sent.',
       'success',
-      'app-toast matches-page-toast',
     );
 
     sub.unsubscribe();
@@ -376,7 +375,6 @@ describe('MatchesPage', () => {
     expect(appToastService.show).toHaveBeenCalledWith(
       'A proposal already exists for this suggestion.',
       'danger',
-      'app-toast matches-page-toast',
     );
   }));
 
@@ -407,7 +405,6 @@ describe('MatchesPage', () => {
     expect(appToastService.show).toHaveBeenCalledWith(
       'Proposal accepted.',
       'success',
-      'app-toast matches-page-toast',
     );
 
     incomingSub.unsubscribe();
@@ -441,7 +438,6 @@ describe('MatchesPage', () => {
     expect(appToastService.show).toHaveBeenCalledWith(
       'Proposal declined.',
       'success',
-      'app-toast matches-page-toast',
     );
 
     incomingSub.unsubscribe();
@@ -472,7 +468,6 @@ describe('MatchesPage', () => {
     expect(appToastService.show).toHaveBeenCalledWith(
       'This proposal has expired.',
       'danger',
-      'app-toast matches-page-toast',
     );
 
     incomingSub.unsubscribe();
@@ -499,7 +494,6 @@ describe('MatchesPage', () => {
     expect(appToastService.show).toHaveBeenCalledWith(
       'Only the candidate can decline this proposal.',
       'danger',
-      'app-toast matches-page-toast',
     );
   }));
 
@@ -643,7 +637,6 @@ describe('MatchesPage', () => {
     expect(appToastService.show).toHaveBeenCalledWith(
       'We could not open WhatsApp. Make sure it is installed and try again.',
       'danger',
-      'app-toast matches-page-toast',
     );
   }));
 
@@ -668,7 +661,6 @@ describe('MatchesPage', () => {
     expect(appToastService.show).toHaveBeenCalledWith(
       'Add your phone number before contacting this match.',
       'danger',
-      'app-toast matches-page-toast',
     );
   }));
 
