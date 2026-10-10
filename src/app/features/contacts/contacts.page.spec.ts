@@ -347,11 +347,7 @@ describe('ContactsPage', () => {
 
         flushMicrotasks();
 
-        expect(component.toastState()).toEqual({
-            isOpen: true,
-            message: 'Invitation sent.',
-            color: 'success',
-        });
+        expect(appToastService.show).toHaveBeenCalledWith('Invitation sent.', 'success');
     }));
 
     it('should show backend invite errors', fakeAsync(() => {
@@ -375,11 +371,7 @@ describe('ContactsPage', () => {
         flushMicrotasks();
 
         expect(component.inviteSubmitting()).toBeFalse();
-        expect(component.toastState()).toEqual({
-            isOpen: true,
-            message: 'That person isn’t on Veya yet.',
-            color: 'danger',
-        });
+        expect(appToastService.show).toHaveBeenCalledWith('That person isn’t on Veya yet.', 'danger');
     }));
 
     it('should populate the form from a picked contact without submitting', fakeAsync(() => {
@@ -472,9 +464,7 @@ describe('ContactsPage', () => {
         flushMicrotasks();
 
         expect(component.inviteForm.controls.phoneNational.value).toBe('');
-        expect(component.toastState().message).toBe(
-            'That contact has no phone number. Enter one manually instead.',
-        );
+        expect(appToastService.show).toHaveBeenCalledWith('That contact has no phone number. Enter one manually instead.', 'danger');
     }));
 
     it('should keep manual entry available when the native picker fails', fakeAsync(() => {
@@ -485,9 +475,7 @@ describe('ContactsPage', () => {
         flushMicrotasks();
 
         expect(component.inviteForm.controls.phoneNational.value).toBe('0470 12 34 56');
-        expect(component.toastState().message).toBe(
-            'We couldn’t open your contacts. Enter the phone number instead.',
-        );
+        expect(appToastService.show).toHaveBeenCalledWith('We couldn’t open your contacts. Enter the phone number instead.', 'danger');
     }));
 
     it('should set busy id and refresh after accepting invitation', fakeAsync(() => {
@@ -515,11 +503,7 @@ describe('ContactsPage', () => {
         flushMicrotasks();
 
         expect(dataService.editContact).not.toHaveBeenCalled();
-        expect(component.toastState()).toEqual({
-            isOpen: true,
-            message: 'Invitation accepted.',
-            color: 'success',
-        });
+        expect(appToastService.show).toHaveBeenCalledWith('Invitation accepted.', 'success');
     }));
 
     it('should reuse accepted invitation display name when refreshed contact has no display name yet', (done) => {
@@ -592,11 +576,7 @@ describe('ContactsPage', () => {
 
         flushMicrotasks();
 
-        expect(component.toastState()).toEqual({
-            isOpen: true,
-            message: 'Invitation rejected.',
-            color: 'success',
-        });
+        expect(appToastService.show).toHaveBeenCalledWith('Invitation rejected.', 'success');
     }));
 
     it('should ignore rejectInvitation when another row action is busy', () => {
@@ -632,11 +612,7 @@ describe('ContactsPage', () => {
 
         flushMicrotasks();
 
-        expect(component.toastState()).toEqual({
-            isOpen: true,
-            message: 'Invitation cancelled.',
-            color: 'success',
-        });
+        expect(appToastService.show).toHaveBeenCalledWith('Invitation cancelled.', 'success');
     }));
 
     it('should open an action sheet for managing a contact', () => {
@@ -706,11 +682,7 @@ describe('ContactsPage', () => {
 
         flushMicrotasks();
 
-        expect(component.toastState()).toEqual({
-            isOpen: true,
-            message: 'Added to favorites.',
-            color: 'success',
-        });
+        expect(appToastService.show).toHaveBeenCalledWith('Added to favorites.', 'success');
     }));
 
     it('should toggle favorite with display name when nickname is missing', fakeAsync(() => {
@@ -737,11 +709,7 @@ describe('ContactsPage', () => {
 
         flushMicrotasks();
 
-        expect(component.toastState()).toEqual({
-            isOpen: true,
-            message: 'Added to favorites.',
-            color: 'success',
-        });
+        expect(appToastService.show).toHaveBeenCalledWith('Added to favorites.', 'success');
     }));
 
     it('should unblock a blocked contact', fakeAsync(() => {
@@ -764,11 +732,7 @@ describe('ContactsPage', () => {
 
         flushMicrotasks();
 
-        expect(component.toastState()).toEqual({
-            isOpen: true,
-            message: 'Contact unblocked.',
-            color: 'success',
-        });
+        expect(appToastService.show).toHaveBeenCalledWith('Contact unblocked.', 'success');
     }));
 });
 

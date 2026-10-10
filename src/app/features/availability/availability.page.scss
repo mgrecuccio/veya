@@ -385,10 +385,6 @@
   border-radius: var(--app-radius-md);
 }
 
-.availability-page-toast {
-  --border-radius: 18px;
-}
-
 @media (max-width: 380px) {
   .availability-item {
     align-items: flex-start;

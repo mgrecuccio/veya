@@ -318,11 +318,7 @@ describe('AbailabilityPage', () => {
 
         expect(component.rowActionBusyId()).toBeNull();
         expect(component.retry).toHaveBeenCalled();
-        expect(component.toastState()).toEqual({
-            isOpen: true,
-            message: 'Rule deleted.',
-            color: 'success',
-        });
+        expect(appToastService.show).toHaveBeenCalledWith('Rule deleted.', 'success');
     });
 
     it('should trigger delete from the rendered rule remove button', () => {
@@ -422,11 +418,7 @@ describe('AbailabilityPage', () => {
 
         flushMicrotasks();
 
-        expect(component.toastState()).toEqual({
-            isOpen: true,
-            message: 'Rule added.',
-            color: 'success',
-        });
+        expect(appToastService.show).toHaveBeenCalledWith('Rule added.', 'success');
     }));
 
     it('should open an error toast and not submit rule when startTime >= endTime', fakeAsync(() => {
@@ -458,11 +450,7 @@ describe('AbailabilityPage', () => {
 
         flushMicrotasks();
 
-        expect(component.toastState()).toEqual({
-            isOpen: true,
-            message: 'Start time must be before end time.',
-            color: 'danger',
-        });
+        expect(appToastService.show).toHaveBeenCalledWith('Start time must be before end time.', 'danger');
     }));
 
     it('should show a toast error when creating rule API call fails', fakeAsync(() => {
@@ -489,11 +477,7 @@ describe('AbailabilityPage', () => {
 
         flushMicrotasks();
 
-        expect(component.toastState()).toEqual({
-            isOpen: true,
-            message: 'We couldn’t save that rule right now.',
-            color: 'danger',
-        });
+        expect(appToastService.show).toHaveBeenCalledWith('We couldn’t save that rule right now.', 'danger');
     }));
 
     it('should open the create override panel and fill the form with default data', () => {
@@ -543,11 +527,7 @@ describe('AbailabilityPage', () => {
 
         flushMicrotasks();
 
-        expect(component.toastState()).toEqual({
-            isOpen: true,
-            message: 'Exception added',
-            color: 'success',
-        });
+        expect(appToastService.show).toHaveBeenCalledWith('Exception added', 'success');
     }));
 
     it('should open an error toast and not submit override when start is in the past', fakeAsync(() => {
@@ -571,11 +551,7 @@ describe('AbailabilityPage', () => {
 
         flushMicrotasks();
 
-        expect(component.toastState()).toEqual({
-            isOpen: true,
-            message: 'Start date must be now or in the future.',
-            color: 'danger',
-        });
+        expect(appToastService.show).toHaveBeenCalledWith('Start date must be now or in the future.', 'danger');
     }));
 
     it('should open an error toast and not submit override when start is after end', fakeAsync(() => {
@@ -598,11 +574,7 @@ describe('AbailabilityPage', () => {
 
         flushMicrotasks();
 
-        expect(component.toastState()).toEqual({
-            isOpen: true,
-            message: 'Start date must be before end date.',
-            color: 'danger',
-        });
+        expect(appToastService.show).toHaveBeenCalledWith('Start date must be before end date.', 'danger');
     }));
 
     it('should show an error toast when creating override API call fails', fakeAsync(() => {
@@ -631,11 +603,7 @@ describe('AbailabilityPage', () => {
 
         flushMicrotasks();
 
-        expect(component.toastState()).toEqual({
-            isOpen: true,
-            message: 'We couldn’t save that exception right now.',
-            color: 'danger',
-        });
+        expect(appToastService.show).toHaveBeenCalledWith('We couldn’t save that exception right now.', 'danger');
     }));
 });
 

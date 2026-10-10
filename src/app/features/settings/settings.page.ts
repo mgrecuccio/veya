@@ -141,16 +141,6 @@ export class SettingsPage {
       },
     );
 
-    readonly toastState = signal<{
-      isOpen: boolean;
-      message: string;
-      color: AppToastColor;
-    }>({
-      isOpen: false,
-      message: '',
-      color: 'success',
-    });
-
     readonly preferencesForm = this.fb.group({
         allowChat: [false],
         allowCall: [false],
@@ -498,21 +488,8 @@ export class SettingsPage {
       void this.router.navigateByUrl('/app/home');
     }
 
-    onToastDismiss(): void {
-      this.toastState.update((state) => ({
-        ...state,
-        isOpen: false,
-      }));
-    }
-
     private showToast(message: string, color: AppToastColor): void {
-      this.toastState.set({
-        isOpen: true,
-        message,
-        color,
-      });
-
-      void this.appToastService.show(message, color, 'app-toast settings-page-toast');
+      void this.appToastService.show(message, color);
     }
 
     private toBackendTimeOrNull(value: string | null | undefined): string | null {
