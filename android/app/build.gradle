@@ -6,7 +6,7 @@ def releaseKeyAlias = System.getenv("ANDROID_KEY_ALIAS")
 def releaseKeyPassword = System.getenv("ANDROID_KEY_PASSWORD")
 def releaseSigningConfigured = releaseKeystorePath && releaseKeystorePassword && releaseKeyAlias && releaseKeyPassword
 def appVersionCode = (project.findProperty('appVersionCode') ?: '3').toString().toInteger()
-def appVersionName = (project.findProperty('appVersionName') ?: '2.0.0').toString()
+def appVersionName = (project.findProperty('appVersionName') ?: '2.0.1').toString()
 
 android {
     namespace = "com.mgrtech.veya"

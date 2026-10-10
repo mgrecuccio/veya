@@ -305,6 +305,25 @@
   margin-bottom: 14px;
 }
 
+.stat-tile--link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  transition:
+    transform var(--app-motion-duration) var(--app-motion-ease),
+    box-shadow var(--app-motion-duration) var(--app-motion-ease);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.stat-tile--link:active {
+  transform: scale(0.97);
+}
+
+.stat-tile--link:focus-visible {
+  outline: 0;
+  box-shadow: var(--app-shadow-sm), var(--app-focus-ring);
+}
+
 .secondary-link-card {
   display: flex;
   align-items: center;

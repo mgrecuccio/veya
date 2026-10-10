@@ -1,10 +1,10 @@
 import { CommonModule } from "@angular/common";
 import { ChangeDetectionStrategy, Component, inject, signal } from "@angular/core";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
-import { RouterModule } from "@angular/router";
+import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import { IonicModule } from '@ionic/angular';
 import { ContactsPageData, ContactsPageDataService } from "./data/contacts-page-data.service";
-import { catchError, map, merge, Observable, of, shareReplay, startWith, Subject, switchMap } from "rxjs";
+import { catchError, map, merge, Observable, of, shareReplay, startWith, Subject, switchMap, tap } from "rxjs";
 import { extractApiError, getApiErrorMessage } from "src/app/core/api/api-error.util";
 import { AuthService } from "src/app/core/auth/auth.service";
 import { authenticatedSessionReload } from "src/app/core/auth/authenticated-session-reload.util";
@@ -91,9 +91,12 @@ export class ContactsPage {
     private readonly appToastService = inject(AppToastService);
     private readonly authService = inject(AuthService);
     private readonly nativeContactPicker = inject(NativeContactPickerService);
+    private readonly router = inject(Router);
+    private readonly route = inject(ActivatedRoute);
     private readonly reload$ = new Subject<void>();
     private readonly acceptedDisplayNameFallbacks = new Map<number, string>();
     private hasEntered = false;
+    private pendingSectionId: string | null = null;
 
     readonly inviteExpanded = signal(false);
     readonly inviteSubmitting = signal(false);
@@ -150,6 +153,11 @@ export class ContactsPage {
           ),
         ),
       ),
+      tap(state => {
+        if (state.kind === 'success') {
+          this.scrollToPendingSection();
+        }
+      }),
       shareReplay({ bufferSize: 1, refCount: true }),
     );
 
@@ -160,6 +168,23 @@ export class ContactsPage {
       }
 
       this.retry();
+    }
+
+    ionViewDidEnter(): void {
+      // Sections requested from other pages (e.g. Home stat tiles) arrive as ?section=<id>.
+      const sectionId = this.router.parseUrl(this.router.url).queryParamMap.get('section');
+      if (!sectionId) {
+        return;
+      }
+
+      this.pendingSectionId = sectionId;
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { section: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
+      this.scrollToPendingSection();
     }
 
     openInvite(): void {
@@ -180,6 +205,19 @@ export class ContactsPage {
       document.getElementById(sectionId)?.scrollIntoView({
         behavior: 'smooth',
         block: 'start',
+      });
+    }
+
+    private scrollToPendingSection(): void {
+      // Wait for the current render so the target section exists in the DOM.
+      setTimeout(() => {
+        const sectionId = this.pendingSectionId;
+        if (!sectionId || !document.getElementById(sectionId)) {
+          return;
+        }
+
+        this.pendingSectionId = null;
+        this.scrollToSection(sectionId);
       });
     }
 

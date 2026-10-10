@@ -127,6 +127,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   min-width: 0;
   min-height: 40px;
   padding: 0 12px;
@@ -140,16 +141,42 @@
   font-weight: 800;
   transition:
     background var(--app-motion-duration) var(--app-motion-ease),
+    box-shadow var(--app-motion-duration) var(--app-motion-ease),
     color var(--app-motion-duration) var(--app-motion-ease);
   line-height: 1.2;
   text-align: center;
   -webkit-tap-highlight-color: transparent;
 }
 
+.availability-segment-button__dot {
+  --dot-rgb: var(--app-color-primary-rgb);
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(var(--dot-rgb), 0.45);
+  transition:
+    background var(--app-motion-duration) var(--app-motion-ease),
+    box-shadow var(--app-motion-duration) var(--app-motion-ease);
+}
+
+.availability-segment-button--available .availability-segment-button__dot {
+  --dot-rgb: var(--app-color-success-rgb);
+}
+
+.availability-segment-button--unavailable .availability-segment-button__dot {
+  --dot-rgb: var(--app-color-danger-rgb);
+}
+
 .availability-segment-button--checked {
   background: var(--app-color-surface-solid);
-  color: var(--app-color-primary-strong);
+  color: var(--app-color-text);
   box-shadow: var(--app-shadow-sm);
+}
+
+.availability-segment-button--checked .availability-segment-button__dot {
+  background: rgb(var(--dot-rgb));
+  box-shadow: 0 0 0 3px rgba(var(--dot-rgb), 0.18);
 }
 
 .availability-segment-button:focus-visible {
