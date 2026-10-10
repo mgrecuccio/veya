@@ -177,12 +177,7 @@ export class RegisterPage {
 
   clearFocusedControlOffset(): void {
     window.setTimeout(() => {
-      const activeElement = document.activeElement;
-
-      if (
-        activeElement instanceof HTMLElement &&
-        activeElement.closest('.auth-content')
-      ) {
+      if (this.hasFocusedAuthControl()) {
         return;
       }
 
@@ -192,6 +187,12 @@ export class RegisterPage {
 
   @HostListener('window:appKeyboardDidHide')
   resetKeyboardScrollState(): void {
+    // iOS can report a keyboard hide while focus moves between fields
+    // (e.g. password -> confirm password); keep the current scroll then.
+    if (this.hasFocusedAuthControl()) {
+      return;
+    }
+
     this.authFocusOffset = 0;
     void this.content?.scrollToTop(220);
   }
@@ -271,43 +272,43 @@ export class RegisterPage {
     return getDefaultPhoneCountry();
   }
 
+  /*
+   * Brings the focused field to the top of the scroll area unless it already sits
+   * in the upper part of it. This does not depend on the keyboard height: on iOS the
+   * web view is resized above the keyboard (so subtracting the keyboard height again
+   * hid the field), while on Android it is not. Pinning the field near the top also
+   * keeps the next field (e.g. "Confirm password") visible above the keyboard.
+   */
   private async scrollTargetIntoView(target: HTMLElement): Promise<void> {
+    const field = target.closest<HTMLElement>('.auth-field') ?? target;
+
     if (!this.content) {
-      target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      field.scrollIntoView({ block: 'start', behavior: 'smooth' });
       return;
     }
 
     const scrollElement = await this.content.getScrollElement();
-    const targetRect = target.getBoundingClientRect();
+    const fieldRect = field.getBoundingClientRect();
     const scrollRect = scrollElement.getBoundingClientRect();
-    const keyboardHeight = this.getKeyboardHeight();
-    const visualViewport = window.visualViewport;
-    const viewportBottom = visualViewport
-      ? visualViewport.offsetTop + visualViewport.height
-      : window.innerHeight;
-    const visibleBottom = Math.min(
-      viewportBottom,
-      window.innerHeight - keyboardHeight
-    ) - 28;
-    const visibleTop = Math.max(scrollRect.top, 28);
-    let nextScrollTop = scrollElement.scrollTop;
+    const comfortableBottom = scrollRect.top + scrollRect.height * 0.45;
 
-    if (targetRect.bottom > visibleBottom) {
-      nextScrollTop += targetRect.bottom - visibleBottom;
-    } else if (targetRect.top < visibleTop) {
-      nextScrollTop -= visibleTop - targetRect.top;
-    } else {
+    if (fieldRect.top >= scrollRect.top && fieldRect.bottom <= comfortableBottom) {
       return;
     }
+
+    const nextScrollTop =
+      scrollElement.scrollTop + fieldRect.top - scrollRect.top - 16;
 
     await this.content.scrollToPoint(0, Math.max(0, nextScrollTop), 260);
   }
 
-  private getKeyboardHeight(): number {
-    const rawHeight = getComputedStyle(document.documentElement)
-      .getPropertyValue('--app-keyboard-height');
+  private hasFocusedAuthControl(): boolean {
+    const activeElement = document.activeElement;
 
-    return Number.parseFloat(rawHeight) || 360;
+    return (
+      activeElement instanceof HTMLElement &&
+      !!activeElement.closest('.auth-content')
+    );
   }
 
   private getFocusOffset(target: HTMLElement): number {
