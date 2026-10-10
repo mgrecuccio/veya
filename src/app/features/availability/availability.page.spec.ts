@@ -59,6 +59,7 @@ describe('AbailabilityPage', () => {
             of({
                 rules: [],
                 effective: [],
+                timeZone: null,
             }),
         );
 
@@ -96,6 +97,7 @@ describe('AbailabilityPage', () => {
             of({
                 rules: [],
                 effective: [],
+                timeZone: null,
             }),
         );
 
@@ -113,6 +115,7 @@ describe('AbailabilityPage', () => {
             of({
                 rules: [],
                 effective: [],
+                timeZone: null,
             }),
         );
 
@@ -143,6 +146,7 @@ describe('AbailabilityPage', () => {
                             channelType: 'CALL',
                         },
                     ],
+                    timeZone: null,
                 }),
             );
 
@@ -163,6 +167,64 @@ describe('AbailabilityPage', () => {
         } finally {
             jasmine.clock().uninstall();
         }
+    });
+
+    it('should group and format the week in the profile time zone', () => {
+        jasmine.clock().install();
+        jasmine.clock().mockDate(new Date('2026-10-09T12:00:00Z'));
+
+        try {
+            const lateEveningUtc = {
+                startDateTime: '2026-10-09T22:30:00Z',
+                endDateTime: '2026-10-09T23:00:00Z',
+                channelType: 'CHAT' as const,
+            };
+            const states: any[] = [];
+            dataService.getPageData.and.returnValues(
+                of({ rules: [], effective: [lateEveningUtc], timeZone: 'UTC' }),
+                of({ rules: [], effective: [lateEveningUtc], timeZone: 'Asia/Tokyo' }),
+            );
+
+            const sub = component.vmState$.subscribe((state) => states.push(state));
+            component.retry();
+            sub.unsubscribe();
+
+            const [utcGroups, tokyoGroups] = states
+                .filter((state) => state.kind === 'success')
+                .map((state) => state.data.effectiveGroups);
+
+            expect(utcGroups[0].items.length).toBe(1);
+            expect(utcGroups[0].items[0].timeRange).toMatch(/^(22|10):30/);
+            expect(tokyoGroups[0].items.length).toBe(0);
+            expect(tokyoGroups[1].items.length).toBe(1);
+            expect(tokyoGroups[1].items[0].timeRange).toContain('07:30');
+        } finally {
+            jasmine.clock().uninstall();
+        }
+    });
+
+    it('should read the override dates as wall-clock time in the profile time zone', () => {
+        dataService.getPageData.and.returnValue(
+            of({ rules: [], effective: [], timeZone: 'Asia/Tokyo' }),
+        );
+        dataService.createOverride.and.returnValue(of({} as any));
+        const sub = component.vmState$.subscribe();
+
+        component.openCreateOverride();
+        component.overrideForm.setValue({
+            startDateTime: '2100-01-01T09:00',
+            endDateTime: '2100-01-01T11:00',
+            type: 'UNAVAILABLE',
+        });
+        component.submitOverride();
+
+        expect(dataService.createOverride).toHaveBeenCalledWith({
+            startDateTime: '2100-01-01T00:00:00.000Z',
+            endDateTime: '2100-01-01T02:00:00.000Z',
+            type: 'UNAVAILABLE',
+        });
+
+        sub.unsubscribe();
     });
 
     it('should open the create rule panel and fill the form with default data', () => {
@@ -280,6 +342,7 @@ describe('AbailabilityPage', () => {
                     },
                 ],
                 effective: [],
+                timeZone: null,
             }),
         );
         dataService.deleteRule.and.returnValue(of(void 0));
@@ -336,6 +399,7 @@ describe('AbailabilityPage', () => {
             of({
                 rules: [],
                 effective: [],
+                timeZone: null,
             }),
         );
 
@@ -371,6 +435,7 @@ describe('AbailabilityPage', () => {
             of({
                 rules: [],
                 effective: [],
+                timeZone: null,
             }),
         );
 
