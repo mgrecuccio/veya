@@ -307,22 +307,24 @@
                 >
                   <button
                     type="button"
-                    class="availability-segment-button"
+                    class="availability-segment-button availability-segment-button--available"
                     role="radio"
                     [class.availability-segment-button--checked]="overrideForm.controls.type.value === 'AVAILABLE'"
                     [attr.aria-checked]="overrideForm.controls.type.value === 'AVAILABLE'"
                     (click)="overrideForm.controls.type.setValue('AVAILABLE')"
                   >
+                    <span class="availability-segment-button__dot" aria-hidden="true"></span>
                     Available
                   </button>
                   <button
                     type="button"
-                    class="availability-segment-button"
+                    class="availability-segment-button availability-segment-button--unavailable"
                     role="radio"
                     [class.availability-segment-button--checked]="overrideForm.controls.type.value === 'UNAVAILABLE'"
                     [attr.aria-checked]="overrideForm.controls.type.value === 'UNAVAILABLE'"
                     (click)="overrideForm.controls.type.setValue('UNAVAILABLE')"
                   >
+                    <span class="availability-segment-button__dot" aria-hidden="true"></span>
                     Unavailable
                   </button>
                 </div>

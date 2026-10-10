@@ -182,21 +182,31 @@
             </div>
 
             <div class="stats-grid">
-              <div class="stat-tile">
+              <a
+                class="stat-tile stat-tile--link"
+                routerLink="/app/contacts"
+                [queryParams]="{ section: 'accepted-contacts' }"
+                aria-label="Go to contacts"
+              >
                 <div class="stat-tile__value">
                   {{ state.data.dashboard.contactsCount }}
                 </div>
                 <div class="stat-tile__label app-text-muted">Contacts</div>
-              </div>
+              </a>
 
-              <div class="stat-tile">
+              <a
+                class="stat-tile stat-tile--link"
+                routerLink="/app/contacts"
+                [queryParams]="{ section: 'pending-invitations' }"
+                aria-label="Go to received invitations"
+              >
                 <div class="stat-tile__value">
                   {{ state.data.dashboard.pendingInvitationsCount }}
                 </div>
                 <div class="stat-tile__label app-text-muted">
                   Received invitations
                 </div>
-              </div>
+              </a>
             </div>
 
             <a class="secondary-link-card" routerLink="/app/contacts">
