@@ -153,6 +153,41 @@
   margin-top: 18px;
 }
 
+.stat-tile--link {
+  appearance: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition:
+    transform var(--app-motion-duration) var(--app-motion-ease),
+    box-shadow var(--app-motion-duration) var(--app-motion-ease);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.stat-tile--link:active {
+  transform: scale(0.97);
+}
+
+.stat-tile--link:focus-visible {
+  outline: 0;
+  box-shadow: var(--app-shadow-sm), var(--app-focus-ring);
+}
+
+.contacts-target-section {
+  scroll-margin-top: 20px;
+}
+
+.invitation-group-title {
+  margin: 18px 0 4px;
+  color: var(--app-color-text-muted);
+  font-size: var(--app-font-size-label);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .contact-list {
   display: flex;
   flex-direction: column;

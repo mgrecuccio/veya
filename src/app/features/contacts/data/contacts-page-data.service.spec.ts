@@ -49,16 +49,25 @@ describe('ContactPageDataService', () => {
         );
 
         contactsService.getPendingInvitations.and.returnValue(
-            of([
-                {
+            of({
+                incoming: [{
                     invitationId: 1,
                     senderUserId: 2,
                     senderDisplayName: 'senderDisplayName',
                     senderPhoneNumber: '+32468009911',
                     status: 'PENDING',
                     createdAt: '2026-04-19',
-                }
-            ])
+                }],
+                sent: [{
+                    invitationId: 2,
+                    recipientUserId: 3,
+                    recipientDisplayName: 'Recipient',
+                    recipientPhoneNumber: '+32468009912',
+                    nickName: 'Teammate',
+                    status: 'PENDING',
+                    createdAt: '2026-04-19',
+                }],
+            })
         );
 
         contactsService.getBlockedContacts.and.returnValue(
@@ -92,6 +101,7 @@ describe('ContactPageDataService', () => {
             expect(contactPageData.contacts.length).toBe(1);
             expect(contactPageData.blockedContacts.length).toBe(1);
             expect(contactPageData.pendingInvitations.length).toBe(1);
+            expect(contactPageData.sentInvitations.length).toBe(1);
             expect(contactPageData.pendingInvitations[0]).toEqual(
                 jasmine.objectContaining({
                     invitationId: 1,
@@ -100,6 +110,16 @@ describe('ContactPageDataService', () => {
                     senderPhoneNumber: '+32468009911',
                     status: 'PENDING',
                     createdAt: '2026-04-19',
+                }),
+            );
+
+            expect(contactPageData.sentInvitations[0]).toEqual(
+                jasmine.objectContaining({
+                    invitationId: 2,
+                    recipientUserId: 3,
+                    recipientDisplayName: 'Recipient',
+                    recipientPhoneNumber: '+32468009912',
+                    nickName: 'Teammate',
                 }),
             );
 

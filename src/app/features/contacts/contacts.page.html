@@ -78,20 +78,35 @@
               </p>
 
               <div class="stats-grid">
-                <div class="stat-tile">
+                <button
+                  type="button"
+                  class="stat-tile stat-tile--link"
+                  aria-label="Go to accepted contacts"
+                  (click)="scrollToSection('accepted-contacts')"
+                >
                   <div class="stat-tile__value">{{ state.data.contacts.length }}</div>
                   <div class="stat-tile__label app-text-muted">Contacts</div>
-                </div>
+                </button>
 
-                <div class="stat-tile">
-                  <div class="stat-tile__value">{{ state.data.pendingInvitations.length }}</div>
+                <button
+                  type="button"
+                  class="stat-tile stat-tile--link"
+                  aria-label="Go to pending invitations"
+                  (click)="scrollToSection('pending-invitations')"
+                >
+                  <div class="stat-tile__value">{{ state.data.pendingInvitationsCount }}</div>
                   <div class="stat-tile__label app-text-muted">Pending</div>
-                </div>
+                </button>
 
-                <div class="stat-tile">
+                <button
+                  type="button"
+                  class="stat-tile stat-tile--link"
+                  aria-label="Go to blocked contacts"
+                  (click)="scrollToSection('blocked-contacts')"
+                >
                   <div class="stat-tile__value">{{ state.data.blockedContacts.length }}</div>
                   <div class="stat-tile__label app-text-muted">Blocked</div>
-                </div>
+                </button>
               </div>
             </div>
           </section>
@@ -208,21 +223,22 @@
             }
           </section>
 
-          @if (state.data.pendingInvitations.length > 0) {
-            <section class="app-surface contacts-card app-section">
-              <div class="card-header">
-                <div>
-                  <h2 class="card-title">Pending invitations</h2>
-                  <p class="card-subtitle app-text-muted">
-                    A few people are waiting to join your trusted circle.
-                  </p>
-                </div>
-
-                <div class="progress-badge">
-                  {{ state.data.pendingInvitations.length }}
-                </div>
+          <section id="pending-invitations" class="app-surface contacts-card app-section contacts-target-section">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">Pending invitations</h2>
+                <p class="card-subtitle app-text-muted">
+                  Requests you received and invitations you sent.
+                </p>
               </div>
 
+              <div class="progress-badge">
+                {{ state.data.pendingInvitationsCount }}
+              </div>
+            </div>
+
+            @if (state.data.pendingInvitations.length > 0) {
+              <h3 class="invitation-group-title">Received</h3>
               <div class="contact-list">
                 @for (invitation of state.data.pendingInvitations; track invitation.id) {
                   <article class="contact-item contact-item--pending">
@@ -233,11 +249,11 @@
                     <div class="contact-item__body">
                       <div class="contact-item__topline">
                         <strong class="contact-name">{{ invitation.displayLabel }}</strong>
-                        <span class="contact-chip contact-chip--pending">Pending</span>
+                        <span class="contact-chip contact-chip--pending">Received</span>
                       </div>
 
                       <div class="contact-meta">
-                        Invited {{ invitation.createdLabel }}
+                        Received {{ invitation.createdLabel }}
                       </div>
                     </div>
 
@@ -263,20 +279,55 @@
                   </article>
                 }
               </div>
-            </section>
-          } @else if (state.data.contacts.length > 0) {
-            <section class="app-surface contacts-card app-section">
+            }
+
+            @if (state.data.sentInvitations.length > 0) {
+              <h3 class="invitation-group-title">Sent</h3>
+              <div class="contact-list">
+                @for (invitation of state.data.sentInvitations; track invitation.id) {
+                  <article class="contact-item contact-item--pending">
+                    <div class="contact-avatar">
+                      {{ invitation.initials }}
+                    </div>
+
+                    <div class="contact-item__body">
+                      <div class="contact-item__topline">
+                        <strong class="contact-name">{{ invitation.displayLabel }}</strong>
+                        <span class="contact-chip contact-chip--pending">Sent</span>
+                      </div>
+
+                      <div class="contact-meta">
+                        Sent {{ invitation.createdLabel }}
+                      </div>
+                    </div>
+
+                    <div class="contact-item__actions">
+                      <button
+                        type="button"
+                        class="reject-action-button"
+                        (click)="cancelInvitation(invitation)"
+                        [disabled]="rowActionBusyId() === invitation.id"
+                      >
+                        {{ rowActionBusyId() === invitation.id ? 'Cancelling…' : 'Cancel' }}
+                      </button>
+                    </div>
+                  </article>
+                }
+              </div>
+            }
+
+            @if (state.data.pendingInvitationsCount === 0) {
               <div class="empty-card">
                 <strong class="ready-state-card__title">No pending invitations right now</strong>
                 <p class="app-text-muted">
                   Your circle is feeling settled. Invite someone new whenever the moment feels right.
                 </p>
               </div>
-            </section>
-          }
+            }
+          </section>
 
-          @if (state.data.contacts.length > 0) {
-            <section class="app-surface contacts-card app-section">
+          <section id="accepted-contacts" class="app-surface contacts-card app-section contacts-target-section">
+            @if (state.data.contacts.length > 0) {
               <div class="card-header">
                 <div>
                   <h2 class="card-title">Accepted contacts</h2>
@@ -332,20 +383,32 @@
                   </article>
                 }
               </div>
-            </section>
-          } @else if (state.data.pendingInvitations.length > 0) {
-            <section class="app-surface contacts-card app-section">
-              <div class="empty-card">
-                <strong class="ready-state-card__title">Your accepted circle is still taking shape</strong>
-                <p class="app-text-muted">
-                  You’ve got invitations in motion. Once accepted, your trusted people will appear here.
-                </p>
-              </div>
-            </section>
-          }
+            } @else {
+              @if (state.data.showFullyEmptyState) {
+                <div class="empty-state">
+                  <div class="empty-state__icon">♡</div>
+                  <strong class="empty-state__title">Your circle starts small.</strong>
+                  <p class="empty-state__text app-text-muted">
+                    Invite someone you’d love to hear from more often. Veya works best with people you already know and trust.
+                  </p>
 
-          @if (state.data.blockedContacts.length > 0) {
-            <section class="app-surface contacts-card app-section">
+                  <ion-button class="empty-state__button" (click)="openInvite()">
+                    Invite your first contact
+                  </ion-button>
+                </div>
+              } @else {
+                <div class="empty-card">
+                  <strong class="ready-state-card__title">Your accepted circle is still taking shape</strong>
+                  <p class="app-text-muted">
+                    Once an invitation is accepted, your trusted people will appear here.
+                  </p>
+                </div>
+              }
+            }
+          </section>
+
+          <section id="blocked-contacts" class="app-surface contacts-card app-section contacts-target-section">
+            @if (state.data.blockedContacts.length > 0) {
               <div class="card-header">
                 <div>
                   <h2 class="card-title">Blocked contacts</h2>
@@ -386,24 +449,15 @@
                   </article>
                 }
               </div>
-            </section>
-          }
-
-          @if (state.data.showFullyEmptyState) {
-            <section class="app-surface contacts-card app-section">
-              <div class="empty-state">
-                <div class="empty-state__icon">♡</div>
-                <strong class="empty-state__title">Your circle starts small.</strong>
-                <p class="empty-state__text app-text-muted">
-                  Invite someone you’d love to hear from more often. Veya works best with people you already know and trust.
+            } @else {
+              <div class="empty-card">
+                <strong class="ready-state-card__title">No blocked contacts</strong>
+                <p class="app-text-muted">
+                  Anyone you block will appear here so you can manage them later.
                 </p>
-
-                <ion-button class="empty-state__button" (click)="openInvite()">
-                  Invite your first contact
-                </ion-button>
               </div>
-            </section>
-          }
+            }
+          </section>
         }
       }
     </div>

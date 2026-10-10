@@ -1,7 +1,10 @@
 import { Injectable, inject } from "@angular/core";
 import { forkJoin, Observable, throwError } from "rxjs";
 import { ContactView } from "src/app/core/api/model/contact-view.model";
-import { PendingContactInvitationView } from "src/app/core/api/model/pending-contact-invitation-view.model";
+import {
+    PendingIncomingContactInvitation,
+    PendingSentContactInvitation,
+} from "src/app/core/api/model/pending-contact-invitation-view.model";
 import { ContactsService } from "src/app/core/api/services/contacts.service";
 import { catchError, map } from "rxjs/operators";
 import { ContactInvitationView } from "src/app/core/api/model/contact-invitation-view.model";
@@ -12,7 +15,8 @@ import { toUserFacingApiError } from "src/app/core/api/api-error.util";
 export interface ContactsPageData {
     contacts: ContactView[],
     blockedContacts: ContactView[],
-    pendingInvitations: PendingContactInvitationView[],
+    pendingInvitations: PendingIncomingContactInvitation[],
+    sentInvitations: PendingSentContactInvitation[],
 }
 
 @Injectable({ providedIn: 'root' })
@@ -23,12 +27,13 @@ export class ContactsPageDataService {
         return forkJoin({
             contacts: this.contactsService.getContacts(),
             blockedContacts: this.contactsService.getBlockedContacts(),
-            pendingInvitations: this.contactsService.getPendingInvitations(),
+            pendingInvitationsResponse: this.contactsService.getPendingInvitations(),
         }).pipe(
-            map(({ contacts, blockedContacts, pendingInvitations }) => ({
+            map(({ contacts, blockedContacts, pendingInvitationsResponse }) => ({
                 contacts,
                 blockedContacts,
-                pendingInvitations,
+                pendingInvitations: pendingInvitationsResponse.incoming,
+                sentInvitations: pendingInvitationsResponse.sent,
             })),
             catchError((error) => {
                 console.error('[ContactsPageDataService] Failed to load contacts page', error);

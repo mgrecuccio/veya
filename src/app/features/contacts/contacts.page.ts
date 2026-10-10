@@ -33,6 +33,8 @@ interface ContactsPageVm {
   contacts: ContactCardVm[];
   blockedContacts: ContactCardVm[];
   pendingInvitations: PendingInvitationCardVm[];
+  sentInvitations: SentInvitationCardVm[];
+  pendingInvitationsCount: number;
   showFullyEmptyState: boolean;
 }
 
@@ -50,6 +52,14 @@ interface ContactCardVm {
 interface PendingInvitationCardVm {
   id: number;
   senderUserId: number | null;
+  displayLabel: string;
+  initials: string;
+  createdAt: string | null;
+  createdLabel: string;
+}
+
+interface SentInvitationCardVm {
+  id: number;
   displayLabel: string;
   initials: string;
   createdAt: string | null;
@@ -164,6 +174,13 @@ export class ContactsPage {
           nickName: '',
       });
       this.closePhoneNumberChoices();
+    }
+
+    scrollToSection(sectionId: string): void {
+      document.getElementById(sectionId)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
     }
 
     getCompactCountryLabel(country: PhoneCountry): string {
@@ -398,6 +415,29 @@ export class ContactsPage {
           this.rowActionBusyId.set(null);
           this.showToast(
             error.message || 'We couldn’t reject that invitation right now.',
+            'danger',
+          );
+        },
+      });
+    }
+
+    cancelInvitation(invitation: SentInvitationCardVm): void {
+      if (this.rowActionBusyId() !== null) {
+        return;
+      }
+
+      this.rowActionBusyId.set(invitation.id);
+
+      this.contactsDataService.cancelInvitation(invitation.id).subscribe({
+        next: () => {
+          this.rowActionBusyId.set(null);
+          this.retry();
+          this.showToast('Invitation cancelled.', 'success');
+        },
+        error: (error: Error) => {
+          this.rowActionBusyId.set(null);
+          this.showToast(
+            error.message || 'We couldn’t cancel that invitation right now.',
             'danger',
           );
         },
@@ -645,14 +685,33 @@ export class ContactsPage {
           } satisfies PendingInvitationCardVm;
       });
 
+      const sentInvitations = data.sentInvitations.map((invitation) => {
+          const displayLabel =
+              this.cleanText(invitation.nickName) ||
+              this.cleanText(invitation.recipientDisplayName) ||
+              this.cleanText(invitation.recipientPhoneNumber) ||
+              'Pending invitation';
+
+          return {
+              id: invitation.invitationId,
+              displayLabel,
+              initials: this.toInitials(displayLabel),
+              createdAt: invitation.createdAt ?? null,
+              createdLabel: this.formatRelativeDate(invitation.createdAt),
+          } satisfies SentInvitationCardVm;
+      });
+
       return {
           contacts,
           blockedContacts,
           pendingInvitations,
+          sentInvitations,
+          pendingInvitationsCount: pendingInvitations.length + sentInvitations.length,
           showFullyEmptyState:
             contacts.length === 0 &&
             blockedContacts.length === 0 &&
-            pendingInvitations.length === 0
+            pendingInvitations.length === 0 &&
+            sentInvitations.length === 0
       };
     }
 
