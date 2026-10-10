@@ -4,7 +4,7 @@ import { toSignal } from "@angular/core/rxjs-interop";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { RouterModule } from "@angular/router";
 import { IonicModule } from '@ionic/angular';
-import { catchError, finalize, map, merge, Observable, of, shareReplay, startWith, Subject, switchMap } from "rxjs";
+import { catchError, finalize, map, merge, Observable, of, shareReplay, startWith, Subject, switchMap, tap } from "rxjs";
 import { AvailabilityOverrideType } from "src/app/core/api/model/availability-override-view-model";
 import { AvailabilityChannelType, AvailabilityDayOfWeek, AvailabilityRuleView } from "src/app/core/api/model/availability-rule-view.model";
 import { EffectiveAvailabilityView } from "src/app/core/api/model/effective-availability-view.model";
@@ -16,6 +16,7 @@ import { getApiErrorMessage } from "src/app/core/api/api-error.util";
 import { AuthService } from "src/app/core/auth/auth.service";
 import { authenticatedSessionReload } from "src/app/core/auth/authenticated-session-reload.util";
 import { AppToastColor, AppToastService } from "src/app/shared/toast/app-toast.service";
+import { dayOffsetInTimeZone, fromDateTimeLocalValue, toDateTimeLocalValue } from "src/app/shared/time/zoned-date.util";
 
 type AvailabilityVmState =
   | { kind: 'loading' }
@@ -62,6 +63,8 @@ export class AvailabilityPage {
     private readonly authService = inject(AuthService);
     private readonly reload$ = new Subject<void>();
     private hasEntered = false;
+    // the user's profile time zone from the last load; null falls back to the device time zone.
+    private timeZone: string | null = null;
 
     readonly ruleFormExpanded = signal(false);
     readonly overrideFormExpanded = signal(false);
@@ -134,6 +137,7 @@ export class AvailabilityPage {
     ).pipe(
         switchMap(() =>
             this.availabilityPageDataService.getPageData().pipe(
+                tap((data) => this.timeZone = data.timeZone),
                 map((data): AvailabilityVmState => ({
                     kind: 'success',
                     data: this.mapToVm(data),
@@ -294,10 +298,15 @@ export class AvailabilityPage {
         }
 
         const raw = this.overrideForm.getRawValue();
-        const start = new Date(raw.startDateTime);
-        const end = new Date(raw.endDateTime);
+        const start = fromDateTimeLocalValue(raw.startDateTime, this.timeZone);
+        const end = fromDateTimeLocalValue(raw.endDateTime, this.timeZone);
         const earliestStart = new Date();
         earliestStart.setSeconds(0, 0);
+
+        if (!start || !end) {
+            this.overrideForm.markAllAsTouched();
+            return;
+        }
 
         if (start < earliestStart) {
             this.showToast('Start date must be now or in the future.', 'danger');
@@ -339,15 +348,15 @@ export class AvailabilityPage {
         this.toastState.update((state) => ({ ...state, isOpen: false }));
     }
 
+    // the override inputs show wall-clock time in the user's time zone.
     private toDatetimeLocalValue(date: Date): string {
-        const offsetMs = date.getTimezoneOffset() * 60_000;
-        return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
+        return toDateTimeLocalValue(date, this.timeZone);
     }
 
     private mapToVm(data: AvailabilityPageData): AvailabilityPageVm {
         return {
             rules: data.rules.map((rule) => this.mapRule(rule)),
-            effectiveGroups: this.groupEffectiveAvailability(data.effective),
+            effectiveGroups: this.groupEffectiveAvailability(data.effective, data.timeZone),
         };
     }
 
@@ -375,15 +384,17 @@ export class AvailabilityPage {
         return match ? `${match[1]}:${match[2]}:${match[3] ?? '00'}` : value;
     }
 
-    private formatDateLabel(date: Date): string {
+    private formatDateLabel(date: Date, timeZone: string | null): string {
         return new Intl.DateTimeFormat(undefined, {
             weekday: 'short',
             month: 'short',
             day: 'numeric',
+            timeZone: timeZone ?? undefined,
         }).format(date);
     }
 
-    private formatTime(value: string | Date): string {
+    // rule times are wall-clock strings and need no zone; effective windows are instants shown in `timeZone`.
+    private formatTime(value: string | Date, timeZone: string | null = null): string {
         const date =
         value instanceof Date
             ? value
@@ -392,6 +403,7 @@ export class AvailabilityPage {
         return new Intl.DateTimeFormat(undefined, {
             hour: '2-digit',
             minute: '2-digit',
+            timeZone: timeZone ?? undefined,
         }).format(date);
     }
 
@@ -406,10 +418,9 @@ export class AvailabilityPage {
 
     private groupEffectiveAvailability(
         windows: EffectiveAvailabilityView[],
+        timeZone: string | null,
     ): EffectiveAvailabilityGroupVm[] {
-        const today = new Date();
-        const tomorrow = new Date();
-        tomorrow.setDate(today.getDate() + 1);
+        const now = new Date();
 
         const groups: EffectiveAvailabilityGroupVm[] = [
             { title: 'Today', items: [] },
@@ -423,13 +434,15 @@ export class AvailabilityPage {
 
             const item: EffectiveAvailabilityItemVm = {
                 id: `${window.startDateTime}-${window.endDateTime}`,
-                dateLabel: this.formatDateLabel(start),
-                timeRange: `${this.formatTime(start)} - ${this.formatTime(end)}`,
+                dateLabel: this.formatDateLabel(start, timeZone),
+                timeRange: `${this.formatTime(start, timeZone)} - ${this.formatTime(end, timeZone)}`,
             };
 
-            if(this.isSameLocalDate(start,today)) {
+            const dayOffset = dayOffsetInTimeZone(start, now, timeZone);
+
+            if(dayOffset === 0) {
                 groups[0].items.push(item);
-            } else if(this.isSameLocalDate(start, tomorrow)) {
+            } else if(dayOffset === 1) {
                 groups[1].items.push(item);
             } else {
                 groups[2].items.push(item);
@@ -437,10 +450,6 @@ export class AvailabilityPage {
         }
 
         return groups;
-    }
-
-    private isSameLocalDate(left: Date, right: Date): boolean {
-        return left.toDateString() === right.toDateString();
     }
 
     private showToast(message: string, color: AppToastColor): void {

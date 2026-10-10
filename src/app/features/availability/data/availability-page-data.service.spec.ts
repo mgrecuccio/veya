@@ -4,11 +4,13 @@ import { AvailabilityRuleView } from "src/app/core/api/model/availability-rule-v
 import { CreateAvailabilityOverrideRequest } from "src/app/core/api/request/create-availability-override.request";
 import { CreateAvailabilityRuleRequest } from "src/app/core/api/request/create-availability-rule.request";
 import { AvailabilityService } from "src/app/core/api/services/availability.service";
+import { UserService } from "src/app/core/api/services/user.service";
 import { AvailabilityPageDataService } from "./availability-page-data.service";
 
 describe('AvailabilityPageDataService', () => {
     let service: AvailabilityPageDataService;
     let availabilityService: jasmine.SpyObj<AvailabilityService>;
+    let userService: jasmine.SpyObj<UserService>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -26,14 +28,20 @@ describe('AvailabilityPageDataService', () => {
                         'createOverride',
                     ]),
                 },
+                {
+                    provide: UserService,
+                    useValue: jasmine.createSpyObj<UserService>('UserService', ['getMe']),
+                },
             ],
         });
 
         service = TestBed.inject(AvailabilityPageDataService);
         availabilityService = TestBed.inject(AvailabilityService) as jasmine.SpyObj<AvailabilityService>;
+        userService = TestBed.inject(UserService) as jasmine.SpyObj<UserService>;
     });
 
     function mockBase(): void {
+        mockProfileTimeZone('Europe/Rome');
         availabilityService.getRules.and.returnValue(
             of([
                 {
@@ -61,15 +69,52 @@ describe('AvailabilityPageDataService', () => {
         );
     }
 
+    function mockProfileTimeZone(timezone: string | null): void {
+        userService.getMe.and.returnValue(
+            of({ id: 2, timezone, phoneNumber: '+390000000', status: 'ACTIVE' }),
+        );
+    }
+
     it('loads availability page data from the required API calls', (done) => {
         mockBase();
 
         service.getPageData().subscribe((data) => {
             expect(data.rules).toHaveSize(1);
             expect(data.effective).toHaveSize(1);
+            expect(data.timeZone).toBe('Europe/Rome');
             expect(availabilityService.getRules).toHaveBeenCalled();
             expect(availabilityService.getOverrides).not.toHaveBeenCalled();
             expect(availabilityService.getEffectiveAvailability).toHaveBeenCalled();
+            done();
+        });
+    });
+
+    it('requests the week starting at midnight in the profile time zone', () => {
+        jasmine.clock().install();
+        jasmine.clock().mockDate(new Date('2026-10-09T23:30:00.000Z'));
+
+        try {
+            mockBase();
+            mockProfileTimeZone('Asia/Tokyo');
+
+            service.getPageData().subscribe();
+
+            expect(availabilityService.getEffectiveAvailability).toHaveBeenCalledWith(
+                '2026-10-09T15:00:00.000Z',
+                '2026-10-17T14:59:59.999Z',
+            );
+        } finally {
+            jasmine.clock().uninstall();
+        }
+    });
+
+    it('falls back to the device time zone when the profile cannot be loaded', (done) => {
+        mockBase();
+        userService.getMe.and.returnValue(throwError(() => new Error('Profile unavailable')));
+
+        service.getPageData().subscribe((data) => {
+            expect(data.timeZone).toBeNull();
+            expect(data.effective).toHaveSize(1);
             done();
         });
     });
